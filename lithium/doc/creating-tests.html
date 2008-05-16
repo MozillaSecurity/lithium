@@ -1,0 +1,30 @@
+<html>
+<head>
+<title>Creating your own "interestingness" tests</title>
+</head>
+
+<body>
+
+<h3>Creating your own "interestingness" tests</h3>
+
+<p>The first argument will the file whose interestingness is in question.  If Lithium gets extra arguments on the command line, it will pass them to the test.</p>
+
+<p>The test should return 0 ("success") to indicate that the input is interesting, and nonzero to indicate that the input is uninteresting.</p>
+
+<p>Tests can be written in bash, python, or any other language that lets you handle command-line arguments and set exit codes.</p>
+
+<p>It's up to you whether your test will take extra arguments, perhaps making it more reusable, or whether you hard-code things, perhaps making it take less typing to use.</p>
+
+
+<h3>Ideas</h3>
+
+<ul>
+<li>"The testcase is displayed differently by version X and version Y of Firefox."  This could be an easy way to make reduced testcases for regressions that affect how web pages are displayed.</li>
+<li>Faster test for hangs: automatically reduce the timeout based on how long successful runs take, or assume it's hanging if it outputs nothing for two seconds.</li>
+<li>"Makes Firefox crash with function X at the top of the crash stack trace"</li>
+<li>An "outputs" test that doesn't require restarting Firefox (for reducing non-fatal assertion bugs).</li>
+<li>Interactive, if a bug can only be observed by a human.  (Using Lithium might be faster than manual reduction even in this case!)</li>
+</ul>
+
+</body>
+</html>
