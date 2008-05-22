@@ -111,7 +111,7 @@ def main():
         usageError("Unknown strategy!")
 
     createTempDir()
-    print "Intermediate files will be stored in " + tempDir + "/."
+    print "Intermediate files will be stored in " + tempDir + os.sep + "."
     writeTestcaseTemp("original", False)
 
     strategyFunction()
@@ -244,7 +244,7 @@ def writeTestcaseTemp(partialFilename, useNumber):
     if useNumber:
         tempFileCount += 1
         partialFilename = str(tempFileCount) + "-" + partialFilename
-    writeTestcase(tempDir + "/" + partialFilename + testcaseExtension)
+    writeTestcase(tempDir + os.sep + partialFilename + testcaseExtension)
 
 
 def createTempDir():
