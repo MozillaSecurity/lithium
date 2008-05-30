@@ -4,6 +4,8 @@
 import sys, os, platform, time
 import ntr
 
+exitBadUsage = 2
+
 
 
 def grabCrashLog():
