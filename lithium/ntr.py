@@ -61,6 +61,8 @@ def timed_run(commandWithArgs, timeout, logPrefix):
         raise TypeError, "timeout should be an int."
     if not isinstance(logPrefix, str):
         raise TypeError, "logPrefix should be a string."
+
+    commandWithArgs[0] = os.path.expanduser(commandWithArgs[0])
     
     global pid
     global CRASHED, TIMED_OUT, NORMAL, ABNORMAL, NONE
