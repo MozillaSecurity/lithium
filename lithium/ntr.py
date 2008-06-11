@@ -45,7 +45,7 @@ def forkexec(commandWithArgs, logPrefix):
             os.execvp(commandWithArgs[0], commandWithArgs)
              
         except OSError, e:
-            print "ERROR: %s %s failed: %d (%s)" % (command, args, e.errno, e.strerror)
+            print "ERROR: %s failed: %d (%s)" % (repr(commandWithArgs), e.errno, e.strerror)
             # Note that we can only make the child process exit from here!
             # Use a special exit code (HACK!) to tell the parent to exit, too.
             sys.exit(exitOSError)
