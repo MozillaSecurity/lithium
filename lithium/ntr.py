@@ -1,8 +1,8 @@
 #!/usr/bin/env python -u
 
-import os, signal, sys, time
+import os, signal, sys, time, platform
 
-
+exitBadUsage = 2
 exitOSError   = 66
 exitInterrupt = 99
 
@@ -64,6 +64,16 @@ def timed_run(commandWithArgs, timeout, logPrefix):
 
     commandWithArgs[0] = os.path.expanduser(commandWithArgs[0])
     
+    progname = commandWithArgs[0].split("/")[-1]
+
+    if progname == "firefox":
+        # Running the |firefox| shell script makes our time-out kills useless,
+        # prevents us from knowing the correct pid for crashes (needed on Leopard),
+        # and screws with exit codes.
+        print "I think you want firefox-bin!"
+        sys.exit(exitBadUsage)
+        
+        
     global pid
     global CRASHED, TIMED_OUT, NORMAL, ABNORMAL, NONE
     
@@ -111,8 +121,55 @@ def timed_run(commandWithArgs, timeout, logPrefix):
         signum = os.WTERMSIG(status)
         msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum))
         sta = CRASHED
+        grabCrashLog(progname, pid, logPrefix + "-crash")
     else:
         msg = 'NONE'
         sta = NONE
 
     return (sta, msg, elapsedtime)
+
+
+
+def grabCrashLog(progname, crashedPID, newFilename):
+    if os.path.exists(newFilename):
+        os.remove(newFilename)
+    if platform.system() == "Darwin":
+        found = False
+        while not found:
+            if platform.mac_ver()[0].startswith("10.4"):
+                # Shouldn't we try to remove the old crash log before we run the program,
+                # since on Tiger they all get concatenated?
+                if os.path.exists(tigerCrashLogName):
+                    os.rename(tigerCrashLogName, "crash")
+                    found = True
+            elif platform.mac_ver()[0].startswith("10.5"):
+                # Find a crash log for the right process name and pid, preferring
+                # newer crash logs (which sort last).
+                crashLogDir = os.path.expanduser("~/Library/Logs/CrashReporter/")
+                crashLogs = os.listdir(crashLogDir)
+                crashLogs = filter(lambda s: s.startswith(progname + "_"), crashLogs)
+                crashLogs.sort(reverse=True)
+                for fn in crashLogs:
+                    fullfn = os.path.join(crashLogDir, fn)
+                    c = file(fullfn)
+                    firstLine = c.readline()
+                    c.close()
+                    if firstLine.rstrip().endswith("[" + str(crashedPID) + "]"):
+                        os.rename(fullfn, newFilename)
+                        found = True
+                        break
+            if not found:
+                # print "[grabCrashLog] Waiting for the crash log to appear..."
+                time.sleep(0.100)
+
+
+
+## Move the existing crash log out of the way (Tiger only)
+#if platform.system() == "Darwin":
+#    if platform.mac_ver()[0].startswith("10.4"):
+#        tigerCrashLogName = os.path.expanduser("~/Library/Logs/CrashReporter/" + progname + ".crash.log")
+#        if os.path.exists(tigerCrashLogName):
+#            os.rename(tigerCrashLogName, "oldtigercrashlog")
+
+
+
