@@ -137,10 +137,12 @@ def grabCrashLog(progname, crashedPID, newFilename):
         found = False
         while not found:
             if platform.mac_ver()[0].startswith("10.4"):
-                # Shouldn't we try to remove the old crash log before we run the program,
-                # since on Tiger they all get concatenated?
+                # On Tiger, the crash log file just grows and grows, and it's hard to tell
+                # if the right crash is in there.  So sleep even if the file already exists.
+                tigerCrashLogName = os.path.expanduser("~/Library/Logs/CrashReporter/" + progname + ".crash.log")
+                time.sleep(2)
                 if os.path.exists(tigerCrashLogName):
-                    os.rename(tigerCrashLogName, "crash")
+                    os.rename(tigerCrashLogName, newFilename)
                     found = True
             elif platform.mac_ver()[0].startswith("10.5"):
                 # Find a crash log for the right process name and pid, preferring
@@ -164,10 +166,8 @@ def grabCrashLog(progname, crashedPID, newFilename):
 
 
 
-## Move the existing crash log out of the way (Tiger only)
-#if platform.system() == "Darwin":
-#    if platform.mac_ver()[0].startswith("10.4"):
-#        tigerCrashLogName = os.path.expanduser("~/Library/Logs/CrashReporter/" + progname + ".crash.log")
+# Move the existing crash log out of the way (Tiger only)
+# Not sure when to do this :(
 #        if os.path.exists(tigerCrashLogName):
 #            os.rename(tigerCrashLogName, "oldtigercrashlog")
 
