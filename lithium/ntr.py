@@ -135,6 +135,7 @@ def grabCrashLog(progname, crashedPID, newFilename):
         os.remove(newFilename)
     if platform.system() == "Darwin":
         found = False
+        loops = 0
         while not found:
             if platform.mac_ver()[0].startswith("10.4"):
                 # On Tiger, the crash log file just grows and grows, and it's hard to tell
@@ -153,16 +154,30 @@ def grabCrashLog(progname, crashedPID, newFilename):
                 crashLogs.sort(reverse=True)
                 for fn in crashLogs:
                     fullfn = os.path.join(crashLogDir, fn)
-                    c = file(fullfn)
-                    firstLine = c.readline()
-                    c.close()
-                    if firstLine.rstrip().endswith("[" + str(crashedPID) + "]"):
-                        os.rename(fullfn, newFilename)
-                        found = True
-                        break
+                    try:
+                        c = file(fullfn)
+                        firstLine = c.readline()
+                        c.close()
+                        if firstLine.rstrip().endswith("[" + str(crashedPID) + "]"):
+                            os.rename(fullfn, newFilename)
+                            found = True
+                            break
+                    except IOError, e:
+                        # Maybe the log was rotated out between when we got the list
+                        # of files and when we tried to open this file.  If so, it's
+                        # clearly not The One.
+                        pass
             if not found:
                 # print "[grabCrashLog] Waiting for the crash log to appear..."
                 time.sleep(0.100)
+                loops += 1
+                if loops > 100:
+                    # I suppose this might happen if the process corrupts itself so much that
+                    # the crash reporter gets confused about the process name, for example.
+                    # It also happens on Tiger (but not Leopard) whenever the application aborts,
+                    # since Tiger does not generate crash logs for aborts.
+                    print "[grabCrashLog] I waited a long time and the crash log never appeared!"
+                    break
 
 
 
