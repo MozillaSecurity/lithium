@@ -19,11 +19,14 @@ desiredCrashSignature = sys.argv[3]
 
 tigerCrashLogName = ""
 
-(sta, msg, elapsedtime) = ntr.timed_run([program, testcase], 120, "t")
+tmpPrefix = os.environ["LITHIUMTMP"]
+(sta, msg, elapsedtime) = ntr.timed_run([program, testcase], 120, tmpPrefix)
+
+crashLogName = tmpPrefix + "-crash"
 
 if sta == ntr.CRASHED:
-    if os.path.exists("t-crash"):
-        if filecontains(file("t-crash"), desiredCrashSignature):
+    if os.path.exists(crashLogName):
+        if filecontains(file(crashLogName), desiredCrashSignature):
             print "[CrashesAt] It crashed in " + desiredCrashSignature + " :)"
             sys.exit(0)
         else:

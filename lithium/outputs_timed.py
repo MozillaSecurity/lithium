@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, ntr
+import os, sys, ntr
 
 
 def filecontainsloud(f, s):
@@ -17,8 +17,10 @@ def main():
     program = sys.argv[2]
     timeout = int(sys.argv[3])
     searchFor = sys.argv[4]
+    
+    tmpPrefix = os.environ["LITHIUMTMP"]
 
-    (sta, _, elapsedtime) = ntr.timed_run([program, testcase], timeout, "t")
+    (sta, _, elapsedtime) = ntr.timed_run([program, testcase], timeout, tmpPrefix)
 
     #if sta == ntr.TIMED_OUT:
         #print "TIMED OUT"
@@ -26,7 +28,8 @@ def main():
 
     print "(%.1f seconds)" % elapsedtime
 
-    if filecontainsloud("t-out", searchFor) or filecontainsloud("t-err", searchFor):
+    if filecontainsloud(tmpPrefix + "-out", searchFor) or \
+       filecontainsloud(tmpPrefix + "-err", searchFor):
         sys.exit(0)
     else:
         sys.exit(1)

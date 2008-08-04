@@ -278,6 +278,10 @@ def interesting():
     testTotal += sum(enabled)
 
     try:
+        if tempDir != None:
+            os.environ['LITHIUMTMP'] = tempDir + os.sep + str(tempFileCount)
+        else:
+            os.environ['LITHIUMTMP'] = "t0"
         status = subprocess.call(testArgs)
     except OSError, e:
         print "Lithium tried to run:"
