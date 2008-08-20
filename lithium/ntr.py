@@ -121,7 +121,7 @@ def timed_run(commandWithArgs, timeout, logPrefix):
         signum = os.WTERMSIG(status)
         msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum))
         sta = CRASHED
-        grabCrashLog(progname, pid, logPrefix + "-crash")
+        grabCrashLog(progname, pid, logPrefix + "-crash", signum)
     else:
         msg = 'NONE'
         sta = NONE
@@ -130,7 +130,7 @@ def timed_run(commandWithArgs, timeout, logPrefix):
 
 
 
-def grabCrashLog(progname, crashedPID, newFilename):
+def grabCrashLog(progname, crashedPID, newFilename, signum):
     if os.path.exists(newFilename):
         os.remove(newFilename)
     if platform.system() == "Darwin":
@@ -138,6 +138,10 @@ def grabCrashLog(progname, crashedPID, newFilename):
         loops = 0
         while not found:
             if platform.mac_ver()[0].startswith("10.4"):
+                # Tiger doesn't create crash logs for aborts.
+                if signum == signal.SIGABRT:
+                    #print "[grabCrashLog] No crash logs for aborts on Tiger."
+                    break
                 # On Tiger, the crash log file just grows and grows, and it's hard to tell
                 # if the right crash is in there.  So sleep even if the file already exists.
                 tigerCrashLogName = os.path.expanduser("~/Library/Logs/CrashReporter/" + progname + ".crash.log")
