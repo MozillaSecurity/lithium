@@ -178,8 +178,6 @@ def grabCrashLog(progname, crashedPID, newFilename, signum):
                 if loops > 100:
                     # I suppose this might happen if the process corrupts itself so much that
                     # the crash reporter gets confused about the process name, for example.
-                    # It also happens on Tiger (but not Leopard) whenever the application aborts,
-                    # since Tiger does not generate crash logs for aborts.
                     print "[grabCrashLog] I waited a long time and the crash log never appeared!"
                     break
 
