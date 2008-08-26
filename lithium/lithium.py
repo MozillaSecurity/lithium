@@ -53,7 +53,7 @@ testCount = 0
 testTotal = 0
 
 tempDir = None
-tempFileCount = 0
+tempFileCount = 1
 
 before = ""
 after = ""
@@ -242,8 +242,8 @@ def writeTestcase(filename):
 def writeTestcaseTemp(partialFilename, useNumber):
     global tempFileCount
     if useNumber:
-        tempFileCount += 1
         partialFilename = str(tempFileCount) + "-" + partialFilename
+        tempFileCount += 1
     writeTestcase(tempDir + os.sep + partialFilename + testcaseExtension)
 
 
