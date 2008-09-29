@@ -121,7 +121,7 @@ def timed_run(commandWithArgs, timeout, logPrefix):
         signum = os.WTERMSIG(status)
         msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum))
         sta = CRASHED
-        grabCrashLog(progname, pid, logPrefix + "-crash", signum)
+        grabCrashLog(progname, pid, logPrefix, signum)
     else:
         msg = 'NONE'
         sta = NONE
@@ -130,9 +130,11 @@ def timed_run(commandWithArgs, timeout, logPrefix):
 
 
 
-def grabCrashLog(progname, crashedPID, newFilename, signum):
-    if os.path.exists(newFilename):
-        os.remove(newFilename)
+def grabCrashLog(progname, crashedPID, logPrefix, signum):
+    if os.path.exists(logPrefix + "-crash"):
+        os.remove(logPrefix + "-crash")
+    if os.path.exists(logPrefix + "-core"):
+        os.remove(logPrefix + "-core")
     if platform.system() == "Darwin":
         found = False
         loops = 0
@@ -147,9 +149,13 @@ def grabCrashLog(progname, crashedPID, newFilename, signum):
                 tigerCrashLogName = os.path.expanduser("~/Library/Logs/CrashReporter/" + progname + ".crash.log")
                 time.sleep(2)
                 if os.path.exists(tigerCrashLogName):
-                    os.rename(tigerCrashLogName, newFilename)
+                    os.rename(tigerCrashLogName, logPrefix + "-crash")
                     found = True
             elif platform.mac_ver()[0].startswith("10.5"):
+                # Look for a core file, in case the user did "ulimit -c unlimited"
+                coreFilename = "/cores/core." + str(crashedPID)
+                if os.path.exists(coreFilename):
+                    os.rename(coreFilename, logPrefix + "-core")
                 # Find a crash log for the right process name and pid, preferring
                 # newer crash logs (which sort last).
                 crashLogDir = os.path.expanduser("~/Library/Logs/CrashReporter/")
@@ -163,7 +169,7 @@ def grabCrashLog(progname, crashedPID, newFilename, signum):
                         firstLine = c.readline()
                         c.close()
                         if firstLine.rstrip().endswith("[" + str(crashedPID) + "]"):
-                            os.rename(fullfn, newFilename)
+                            os.rename(fullfn, logPrefix + "-crash")
                             found = True
                             break
                     except IOError, e:
