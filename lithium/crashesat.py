@@ -22,19 +22,21 @@ tigerCrashLogName = ""
 tmpPrefix = os.environ["LITHIUMTMP"]
 (sta, msg, elapsedtime) = ntr.timed_run([program, testcase], 120, tmpPrefix)
 
+timeString = " (%.1f seconds)" % elapsedtime
+
 crashLogName = tmpPrefix + "-crash"
 
 if sta == ntr.CRASHED:
     if os.path.exists(crashLogName):
         if filecontains(file(crashLogName), desiredCrashSignature):
-            print "[CrashesAt] It crashed in " + desiredCrashSignature + " :)"
+            print "[CrashesAt] It crashed in " + desiredCrashSignature + " :)" + timeString
             sys.exit(0)
         else:
-            print "[CrashesAt] It crashed somewhere else!"
+            print "[CrashesAt] It crashed somewhere else!" + timeString
             sys.exit(1)
     else:
-        print "[CrashesAt] It appeared to crash, but no crash log was found?"
+        print "[CrashesAt] It appeared to crash, but no crash log was found?" + timeString
         sys.exit(1)
 else:
-    print "[CrashesAt] It didn't crash."
+    print "[CrashesAt] It didn't crash." + timeString
     sys.exit(1)
