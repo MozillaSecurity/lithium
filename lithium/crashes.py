@@ -8,7 +8,8 @@ def main():
     program = sys.argv[2]
     timeout = int(sys.argv[3])
     
-    (sta, msg, elapsedtime) = ntr.timed_run([program, testcase], timeout, os.environ["LITHIUMTMP"])
+    runinfo = ntr.timed_run([program, testcase], timeout, os.environ["LITHIUMTMP"])
+    (sta, msg, elapsedtime) = (runinfo.sta, runinfo.msg, runinfo.elapsedtime)
     
     print "Exit status: %s (%.1f seconds)" % (msg, elapsedtime)
 

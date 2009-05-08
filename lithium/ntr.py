@@ -14,17 +14,28 @@ def getSignalName(num):
                 return p
     return "Unknown signal"
 
+class rundata(object):
+  def __init__(self, sta, msg, elapsedtime, killed, crashinfo, out, err):
+    self.sta = sta
+    self.msg = msg
+    self.elapsedtime = elapsedtime
+    self.killed = killed
+    self.crashinfo = crashinfo
+    self.out = out
+    self.err = err
 
-def timed_run(commandWithArgs, timeout, logPrefix):
+
+def timed_run(commandWithArgs, timeout, logPrefix, input=None):
+    '''If logPrefix is None, uses pipes instead of files for all output.'''
+
     if not isinstance(commandWithArgs, list):
         raise TypeError, "commandWithArgs should be a list (of strings)."
     if not isinstance(timeout, int):
         raise TypeError, "timeout should be an int."
-    if not isinstance(logPrefix, str):
-        raise TypeError, "logPrefix should be a string."
+
+    useLogFiles = isinstance(logPrefix, str)
 
     commandWithArgs[0] = os.path.expanduser(commandWithArgs[0])
-    
     progname = commandWithArgs[0].split("/")[-1]
 
     if progname == "firefox":
@@ -36,16 +47,29 @@ def timed_run(commandWithArgs, timeout, logPrefix):
         
     starttime = time.time()
     
+    if useLogFiles:
+        childStdOut = file(logPrefix + "-out", 'w')
+        childStdErr = file(logPrefix + "-err", 'w')
+
+    child = subprocess.Popen(
+        commandWithArgs,
+        stdin = (None         if useLogFiles else subprocess.PIPE),
+        stderr = (childStdErr if useLogFiles else subprocess.PIPE),
+        stdout = (childStdOut if useLogFiles else subprocess.PIPE),
+        close_fds = True # XXX this will have to be false on Windows; see close_fds on http://docs.python.org/library/subprocess.html
+    )
+
+    if not useLogFiles:
+        child.stdin.write(input)
+        child.stdin.close()
+
     sta = NONE
     msg = ''
 
-    childStdOut = file(logPrefix + "-out", 'w')
-    childStdErr = file(logPrefix + "-err", 'w')
-    child = subprocess.Popen(commandWithArgs, stderr = childStdErr, stdout = childStdOut)
-
     killed = False
 
-    while 1: 
+    # This part is a bit like subprocess.communicate, but with a timeout
+    while 1:
         rc = child.poll()
         elapsedtime = time.time() - starttime
         if rc == None:
@@ -60,9 +84,7 @@ def timed_run(commandWithArgs, timeout, logPrefix):
         else:
             break
     
-    # Am I supposed to do this?
-    childStdOut.close()
-    childStdErr.close()
+    crashinfo = None
 
     if rc == -signal.SIGKILL and killed:
         msg = 'TIMED OUT'
@@ -80,17 +102,31 @@ def timed_run(commandWithArgs, timeout, logPrefix):
         signum = -rc
         msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum))
         sta = CRASHED
-        grabCrashLog(progname, child.pid, logPrefix, signum)
+        crashinfo = grabCrashLog(progname, child.pid, logPrefix, signum)
 
-    return (sta, msg, elapsedtime)
+    if useLogFiles:
+        # Am I supposed to do this?
+        childStdOut.close()
+        childStdErr.close()
 
+    return rundata(
+        sta,
+        msg,
+        elapsedtime,
+        killed,
+        crashinfo,
+        logPrefix + "-out" if useLogFiles else child.stdout.read(),
+        logPrefix + "-err" if useLogFiles else child.stderr.read()
+    )
 
 
 def grabCrashLog(progname, crashedPID, logPrefix, signum):
-    if os.path.exists(logPrefix + "-crash"):
-        os.remove(logPrefix + "-crash")
-    if os.path.exists(logPrefix + "-core"):
-        os.remove(logPrefix + "-core")
+    useLogFiles = isinstance(logPrefix, str)
+    if useLogFiles:
+        if os.path.exists(logPrefix + "-crash"):
+            os.remove(logPrefix + "-crash")
+        if os.path.exists(logPrefix + "-core"):
+            os.remove(logPrefix + "-core")
     if platform.system() == "Darwin":
         found = False
         loops = 0
@@ -110,7 +146,7 @@ def grabCrashLog(progname, crashedPID, logPrefix, signum):
             elif platform.mac_ver()[0].startswith("10.5"):
                 # Look for a core file, in case the user did "ulimit -c unlimited"
                 coreFilename = "/cores/core." + str(crashedPID)
-                if os.path.exists(coreFilename):
+                if useLogFiles and os.path.exists(coreFilename):
                     os.rename(coreFilename, logPrefix + "-core")
                 # Find a crash log for the right process name and pid, preferring
                 # newer crash logs (which sort last).
@@ -125,9 +161,13 @@ def grabCrashLog(progname, crashedPID, logPrefix, signum):
                         firstLine = c.readline()
                         c.close()
                         if firstLine.rstrip().endswith("[" + str(crashedPID) + "]"):
-                            os.rename(fullfn, logPrefix + "-crash")
-                            found = True
-                            break
+                            if useLogFiles:
+                                os.rename(fullfn, logPrefix + "-crash")
+                                return logPrefix + "-crash"
+                            else:
+                                return fullfn
+                                #return open(fullfn).read()
+
                     except IOError, e:
                         # Maybe the log was rotated out between when we got the list
                         # of files and when we tried to open this file.  If so, it's

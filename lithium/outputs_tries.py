@@ -19,7 +19,10 @@ def main():
     searchFor = sys.argv[4]
 
     for i in range(tries):
-        (sta, _, elapsedtime) = ntr.timed_run([program, testcase], 180, "t")
+        runinfo = ntr.timed_run([program, testcase], 180, "t")
+        sta = runinfo.sta
+        elapsedtime = runinfo.elapsedtime
+
         print "(%.1f seconds)" % elapsedtime
         if filecontainsloud("t-out", searchFor) or filecontainsloud("t-err", searchFor):
             sys.exit(0)

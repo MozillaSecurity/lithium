@@ -20,7 +20,9 @@ def main():
     
     tmpPrefix = os.environ["LITHIUMTMP"]
 
-    (sta, _, elapsedtime) = ntr.timed_run([program, testcase], timeout, tmpPrefix)
+    runinfo = ntr.timed_run([program, testcase], timeout, tmpPrefix)
+    sta = runinfo.sta
+    elapsedtime = runinfo.elapsedtime
 
     #if sta == ntr.TIMED_OUT:
         #print "TIMED OUT"

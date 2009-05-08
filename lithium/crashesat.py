@@ -20,7 +20,9 @@ desiredCrashSignature = sys.argv[3]
 tigerCrashLogName = ""
 
 tmpPrefix = os.environ["LITHIUMTMP"]
-(sta, msg, elapsedtime) = ntr.timed_run([program, testcase], 120, tmpPrefix)
+runinfo = ntr.timed_run([program, testcase], 120, tmpPrefix)
+sta = runinfo.sta
+elapsedtime = runinfo.elapsedtime
 
 timeString = " (%.1f seconds)" % elapsedtime
 

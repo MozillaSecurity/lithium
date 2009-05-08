@@ -8,7 +8,9 @@ def main():
     program = sys.argv[2]
     timeout = int(sys.argv[3])
     
-    (sta, _, elapsedtime) = ntr.timed_run([program, testcase], timeout, os.environ["LITHIUMTMP"])
+    runinfo = ntr.timed_run([program, testcase], timeout, os.environ["LITHIUMTMP"])
+    sta = runinfo.sta
+    elapsedtime = runinfo.elapsedtime
 
     if sta == ntr.TIMED_OUT:
         sys.exit(0)
