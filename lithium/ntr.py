@@ -51,13 +51,20 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         childStdOut = file(logPrefix + "-out", 'w')
         childStdErr = file(logPrefix + "-err", 'w')
 
-    child = subprocess.Popen(
-        commandWithArgs,
-        stdin = (None         if useLogFiles else subprocess.PIPE),
-        stderr = (childStdErr if useLogFiles else subprocess.PIPE),
-        stdout = (childStdOut if useLogFiles else subprocess.PIPE),
-        close_fds = True # XXX this will have to be false on Windows; see close_fds on http://docs.python.org/library/subprocess.html
-    )
+    try:
+        child = subprocess.Popen(
+            commandWithArgs,
+            stdin = (None         if useLogFiles else subprocess.PIPE),
+            stderr = (childStdErr if useLogFiles else subprocess.PIPE),
+            stdout = (childStdOut if useLogFiles else subprocess.PIPE),
+            close_fds = True # XXX this will have to be false on Windows; see close_fds on http://docs.python.org/library/subprocess.html
+        )
+    except OSError, e:
+        print "Tried to run:"
+        print "  " + repr(commandWithArgs)
+        print "but got this error:"
+        print "  " + str(e)
+        sys.exit(2)
 
     if not useLogFiles:
         child.stdin.write(input)

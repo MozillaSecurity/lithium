@@ -6,20 +6,23 @@ def usage():
     
 Usage:
     
-./lith.py [options] test file [test parameters]
+./lithium.py [options] condition [condition options] file-to-reduce
 
-* test: an 'interestingness test' script
-     It must return 0 for "interesting" and nonzero for "uninteresting".
-* file: an 'interesting' file you would like reduced
-     If it has lines containing "DDBEGIN" and "DDEND", Lithium will
-     only reduce the section between those lines.
-* test parameters: extra command-line arguments to pass to the test
+Example:
+
+./lithium.py crashes 120 ~/tracemonkey/js/src/debug/js -j a.js
+     Lithium will reduce a.js subject to the condition that the following 
+     crashes in 120 seconds:
+     ~/tracemonkey/js/src/debug/js -j a.js
 
 Options:
 * --char (-c).
-    Don't treat lines as atomic units; treat the file as a sequence
-    of characters rather than a sequence of lines.
-* --strategy=[minimize, remove-pair, remove-substring]. default: minimize.
+      Don't treat lines as atomic units; treat the file as a sequence
+      of characters rather than a sequence of lines.
+* --strategy=[minimize, remove-pair, remove-substring, check-only].
+      default: minimize.
+* --testcase=filename.
+      default: last thing on the command line, which can double as passing in.
 
 Additional options for the default strategy (--strategy=minimize)
 * --repeat=[always, last, never]. default: last
@@ -44,8 +47,8 @@ minimizeMax = pow(2, 30)
     
 atom = "line"
 
-testFilename = None
-testArgs = None
+conditionScript = None
+conditionArgs = None
 testcaseFilename = None
 testcaseExtension = ""
 
@@ -66,34 +69,49 @@ boringnessCache = {}
 # Main and friends
 
 def main():
-    global testFilename, testArgs, testcaseFilename, testcaseExtension, strategy
+    global conditionScript, conditionArgs, testcaseFilename, testcaseExtension, strategy
     global parts, numParts, enabled
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "strategy=", "repeat=", "min=", "max=", "chunksize="])
+        opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "strategy=", "repeat=", "min=", "max=", "chunksize=", "testcase="])
     except getopt.GetoptError, exc:
         usageError(exc.msg)
+
+    if len(args) == 0:
+        # No arguments; not even a condition was specified
+        usage()
+        sys.exit(0)
+
+    if len(args) > 1:
+        testcaseFilename = args[-1] # can be overridden by --testcase in processOptions
         
     processOptions(opts)
 
-    if len(args) < 2:
-        usageError("You need to specify a test and a file.")
-        
-    testFilename = args[0]
-    testcaseFilename = args[1]
-    testArgs = args[:] # includes the name of the test program, which subprocess.call needs anyway
+    if testcaseFilename == None:
+        usageError("No testcase specified (use --testcase or last condition arg)")
+    
+    conditionF = args[0]
+    if conditionF.startswith("./"):
+        conditionF = conditionF[2:]
+    if conditionF.endswith(".py"):
+        conditionF = conditionF[:-3]
+    conditionScript = __import__(conditionF)
+    conditionArgs = args[1:]
 
     e = testcaseFilename.rsplit(".", 1)
     if len(e) > 1:
         testcaseExtension = "." + e[1]
 
+
     readTestcase()
     numParts = len(parts)
     enabled = [True for p in parts]
-    
+
+    if strategy == "check-only":
+        print '+' if interesting() else '-'
+        sys.exit(0)
     
     print "The original testcase has " + quantity(numParts, atom) + "."
-    
     print "Checking that the original testcase is 'interesting'..."
     if not interesting():
         usageError("The original testcase is not 'interesting'!")
@@ -118,12 +136,14 @@ def main():
 
 
 def processOptions(opts):
-    global atom, minimizeRepeat, minimizeMin, minimizeMax, strategy
+    global atom, minimizeRepeat, minimizeMin, minimizeMax, strategy, testcaseFilename
 
     for o, a in opts:
         if o in ("-h", "--help"):
             usage()
             sys.exit(0)
+        elif o == "--testcase":
+            testcaseFilename = a
         elif o in ("-c", "--char"): 
             atom = "char"
         elif o == "--strategy":
@@ -262,7 +282,7 @@ def createTempDir():
 # Interestingness test
 
 def interesting():
-    global tempFileCount, testcaseFilename, testArgs
+    global tempFileCount, testcaseFilename, conditionArgs
     global enabled, boringnessCache
     global testCount, testTotal
 
@@ -277,33 +297,20 @@ def interesting():
     testCount += 1
     testTotal += sum(enabled)
 
-    try:
-        if tempDir != None:
-            os.environ['LITHIUMTMP'] = tempDir + os.sep + str(tempFileCount)
-        else:
-            os.environ['LITHIUMTMP'] = "t0"
-        status = subprocess.call(testArgs)
-    except OSError, e:
-        print "Lithium tried to run:"
-        print "  " + repr(testArgs)
-        print "but got this error:"
-        print "  " + str(e)
-        sys.exit(2)
+    tempPrefix = ("t0") if (tempDir == None) else (tempDir + os.sep + str(tempFileCount))
+    inter = conditionScript.interesting(conditionArgs, tempPrefix)
 
     # Save an extra copy of the file inside the temp directory.
     # This is useful if you're reducing an assertion and encounter a crash:
     # it gives you a way to try to reproduce the crash.
     if tempDir != None:
-        if status == 0:
-          tempFileTag = "interesting"
-        else:
-          tempFileTag = "boring"
+        tempFileTag = "interesting" if inter else "boring"
         writeTestcaseTemp(tempFileTag, True)
 
-    if status != 0:
+    if not inter:
         boringnessCache[enabledKey] = True
 
-    return status == 0
+    return inter
 
 
 # Main reduction algorithm

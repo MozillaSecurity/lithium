@@ -1,22 +1,14 @@
 #!/usr/bin/env python
 
-import os, sys, ntr
+import ntr
 
-
-def main():
-    testcase = sys.argv[1]
-    program = sys.argv[2]
-    timeout = int(sys.argv[3])
+def interesting(args, tempPrefix):
+    timeout = int(args[0])
     
-    runinfo = ntr.timed_run([program, testcase], timeout, os.environ["LITHIUMTMP"])
-    sta = runinfo.sta
-    elapsedtime = runinfo.elapsedtime
+    runinfo = ntr.timed_run(args[1:], timeout, tempPrefix)
 
-    if sta == ntr.TIMED_OUT:
-        sys.exit(0)
+    if runinfo.sta == ntr.TIMED_OUT:
+        return True
     else:
-        print "Exited in %.1f seconds" % elapsedtime
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
+        print "Exited in %.1f seconds" % runinfo.elapsedtime
+        return False
