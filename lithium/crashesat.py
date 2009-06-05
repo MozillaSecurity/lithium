@@ -15,7 +15,7 @@ def interesting(args, tempPrefix):
 
     runinfo = ntr.timed_run(args[1:], 120, tempPrefix)
     
-    timeString = " (%.1f seconds)" % runinfo.elapsedtime
+    timeString = " (%.3f seconds)" % runinfo.elapsedtime
     
     crashLogName = tempPrefix + "-crash"
     

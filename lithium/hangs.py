@@ -10,5 +10,5 @@ def interesting(args, tempPrefix):
     if runinfo.sta == ntr.TIMED_OUT:
         return True
     else:
-        print "Exited in %.1f seconds" % runinfo.elapsedtime
+        print "Exited in %.3f seconds" % runinfo.elapsedtime
         return False

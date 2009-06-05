@@ -16,7 +16,7 @@ def interesting(args, tempPrefix):
     
     runinfo = ntr.timed_run(args[2:], timeout, tempPrefix)
 
-    print "(%.1f seconds)" % runinfo.elapsedtime
+    print "(%.3f seconds)" % runinfo.elapsedtime
 
     return filecontainsloud(tempPrefix + "-out", searchFor) or \
            filecontainsloud(tempPrefix + "-err", searchFor)
