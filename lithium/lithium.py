@@ -122,6 +122,7 @@ def main():
     strategyFunction = {
         'minimize': minimize,
         'remove-pair': tryRemovingPair,
+        'remove-adjacent-pairs': tryRemovingAdjacentPairs,
         'remove-substring': tryRemovingSubstring
     }.get(strategy, None)
 
@@ -416,6 +417,25 @@ def tryRemovingChunks(chunkSize):
 
 # Other reduction algorithms
 # (Use these if you're really frustrated with something you know is 1-minimal.)
+
+def tryRemovingAdjacentPairs():
+    # XXX capture the idea that after removing (4,5) it might be sensible to remove (3,6)
+    # but also that after removing (2,3) and (4,5) it might be sensible to remove (1,6)
+    # XXX also want to remove three at a time, and two at a time that are one line apart
+    for i in range(0, numParts - 2):
+        if enabled[i]:
+            enabled[i] = False
+            enabled[i + 1] = False
+            if interesting():
+                print "Removed an adjacent pair! " + str(i) + ", " + str(i + 1)
+            else:
+                enabled[i] = True
+                enabled[i + 1] = True
+    # Restore the original testcase
+    writeTestcase(testcaseFilename)
+    print "Done with one pass of removing adjacent pairs"
+
+
 
 def tryRemovingPair():
     for i in range(0, numParts):
