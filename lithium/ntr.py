@@ -75,6 +75,12 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
 
     killed = False
 
+    # It would be nice to have a timeout with less polling, but apparently that's hard
+    # http://mail.python.org/pipermail/python-bugs-list/2009-April/075008.html
+    # http://bugs.python.org/issue5673
+    # http://benjamin.smedbergs.us/blog/2006-11-09/adventures-in-python-launching-subprocesses/
+    # http://benjamin.smedbergs.us/blog/2006-12-11/killableprocesspy/
+
     # This part is a bit like subprocess.communicate, but with a timeout
     while 1:
         rc = child.poll()
@@ -87,7 +93,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
                 # but continue looping, because maybe kill takes a few seconds or maybe it's busy crashing!
                 killed = True
             else:
-                time.sleep(0.100)
+                time.sleep(0.010)
         else:
             break
     
