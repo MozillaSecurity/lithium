@@ -98,6 +98,9 @@ def main():
     conditionScript = __import__(conditionF)
     conditionArgs = args[1:]
 
+    if hasattr(conditionScript, "init"):
+        conditionScript.init(conditionArgs)
+
     e = testcaseFilename.rsplit(".", 1)
     if len(e) > 1:
         testcaseExtension = "." + e[1]
