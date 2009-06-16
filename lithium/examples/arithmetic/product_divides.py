@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-# Returns success (0) iff the product of the numbers in the file divides the argument.
+# Interesting if the product of the numbers in the file divides the argument.
 
-# Example: "./product_divides.py 11.txt 35" will return success because 11.txt contains "5" and "7".
+# e.g. lithium product_divides 35 11.txt
 
 import sys
 
-def main():
-    filename = sys.argv[1]
-    mod = int(sys.argv[2])
+def interesting(args, tempPrefix):
+    mod = int(args[0])
+    filename = args[1]
     
     file = open(filename, "r")
     prod = 1
@@ -19,9 +19,7 @@ def main():
                 
     if prod % mod == 0:
         print str(prod) + " is divisible by " + str(mod)
-        sys.exit(0)
+        return True
     else:
         print str(prod) + " is not divisible by " + str(mod)
-        sys.exit(1)
-
-main()
+        return False
