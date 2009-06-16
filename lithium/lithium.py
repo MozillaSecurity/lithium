@@ -276,11 +276,14 @@ def createTempDir():
     i = 1
     while 1:
         tempDir = "tmp" + str(i)
-        if not os.path.exists(tempDir):
+        # To avoid race conditions, we use try/except instead of exists/create
+        # Hopefully we don't get any errors other than "File exists" :)
+        try:
             os.mkdir(tempDir)
             break
-        i += 1
-
+        except OSError, e:
+            i += 1
+    print tempDir + os.sep
 
 
 # Interestingness test
