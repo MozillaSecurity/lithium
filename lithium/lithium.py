@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python -u
 import getopt, sys, os, subprocess
 
 def usage():
