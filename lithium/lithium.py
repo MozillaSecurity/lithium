@@ -109,14 +109,6 @@ def main():
         print '+' if interesting() else '-'
         sys.exit(0)
     
-    print "The original testcase has " + quantity(numParts, atom) + "."
-    print "Checking that the original testcase is 'interesting'..."
-    if not interesting():
-        usageError("The original testcase is not 'interesting'!")
-        
-    if numParts == 0:
-        usageError("The file has " + quantity(0, atom) + " so there's nothing for Lithium to try to remove!")
-
     strategyFunction = {
         'minimize': minimize,
         'remove-pair': tryRemovingPair,
@@ -126,6 +118,14 @@ def main():
 
     if not strategyFunction:
         usageError("Unknown strategy!")
+
+    print "The original testcase has " + quantity(numParts, atom) + "."
+    print "Checking that the original testcase is 'interesting'..."
+    if not interesting():
+        usageError("The original testcase is not 'interesting'!")
+        
+    if numParts == 0:
+        usageError("The file has " + quantity(0, atom) + " so there's nothing for Lithium to try to remove!")
 
     createTempDir()
     print "Intermediate files will be stored in " + tempDir + os.sep + "."
@@ -428,7 +428,7 @@ def tryRemovingAdjacentPairs():
             enabled[i] = False
             enabled[i + 1] = False
             if interesting():
-                print "Removed an adjacent pair! " + str(i) + ", " + str(i + 1)
+                print "Removed an adjacent pair based at " + str(i)
             else:
                 enabled[i] = True
                 enabled[i + 1] = True
