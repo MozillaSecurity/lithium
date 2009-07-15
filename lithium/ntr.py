@@ -109,7 +109,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
     
     crashinfo = None
 
-    if rc == -signal.SIGKILL and killed:
+    if killed and (os.name != "posix" or rc == -signal.SIGKILL):
         msg = 'TIMED OUT'
         sta = TIMED_OUT
     elif rc == 0:
