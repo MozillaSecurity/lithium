@@ -25,6 +25,15 @@ class rundata(object):
     self.err = err
 
 
+def xpkill(p):
+    if hasattr(p, "kill"): # only available in python 2.6+
+        p.kill()
+    elif os.name == "posix": # not available on Windows
+        os.kill(p.pid, signal.SIGKILL)
+    else:
+        print "ntr.py does not know how to kill processes on Windows using Python < 2.6 :("
+
+
 def timed_run(commandWithArgs, timeout, logPrefix, input=None):
     '''If logPrefix is None, uses pipes instead of files for all output.'''
 
@@ -36,9 +45,9 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
     useLogFiles = isinstance(logPrefix, str)
 
     commandWithArgs[0] = os.path.expanduser(commandWithArgs[0])
-    progname = commandWithArgs[0].split("/")[-1]
+    progname = commandWithArgs[0].split(os.path.sep)[-1]
 
-    if progname == "firefox":
+    if progname == "firefox" and os.name == "posix":
         # Running the |firefox| shell script makes our time-out kills useless,
         # prevents us from knowing the correct pid for crashes (needed on Leopard),
         # and screws with exit codes.
@@ -57,7 +66,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
             stdin = (None         if useLogFiles else subprocess.PIPE),
             stderr = (childStdErr if useLogFiles else subprocess.PIPE),
             stdout = (childStdOut if useLogFiles else subprocess.PIPE),
-            close_fds = True # XXX this will have to be false on Windows; see close_fds on http://docs.python.org/library/subprocess.html
+            close_fds = (os.name == "posix") # would be nice to use this everywhere, but it's broken on Windows (http://docs.python.org/library/subprocess.html)
         )
     except OSError, e:
         print "Tried to run:"
@@ -87,9 +96,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         elapsedtime = time.time() - starttime
         if rc == None:
             if elapsedtime > timeout and not killed:
-                # To be replaced with 'child.kill' when Python 2.6 is available,
-                # since os.kill doesn't work on Windows.
-                os.kill(child.pid, signal.SIGKILL)
+                xpkill(child)
                 # but continue looping, because maybe kill takes a few seconds or maybe it's busy crashing!
                 killed = True
             else:
