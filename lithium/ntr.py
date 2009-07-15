@@ -27,11 +27,14 @@ class rundata(object):
 
 def xpkill(p):
     if hasattr(p, "kill"): # only available in python 2.6+
+        # UNTESTED
         p.kill()
     elif os.name == "posix": # not available on Windows
         os.kill(p.pid, signal.SIGKILL)
     else:
-        print "ntr.py does not know how to kill processes on Windows using Python < 2.6 :("
+        # UNTESTED
+        import win32process
+        return win32process.TerminateProcess(process._handle, -1)
 
 
 def timed_run(commandWithArgs, timeout, logPrefix, input=None):
