@@ -61,16 +61,13 @@ tempFileCount = 1
 before = ""
 after = ""
 parts = []
-enabled = []
-numParts = 0
-boringnessCache = {}
 
 
 # Main and friends
 
 def main():
     global conditionScript, conditionArgs, testcaseFilename, testcaseExtension, strategy
-    global parts, numParts, enabled
+    global parts
 
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "strategy=", "repeat=", "min=", "max=", "chunksize=", "testcase="])
@@ -102,11 +99,9 @@ def main():
 
 
     readTestcase()
-    numParts = len(parts)
-    enabled = [True for p in parts]
 
     if strategy == "check-only":
-        print '+' if interesting() else '-'
+        print '+' if interesting(parts) else '-'
         sys.exit(0)
     
     strategyFunction = {
@@ -119,12 +114,12 @@ def main():
     if not strategyFunction:
         usageError("Unknown strategy!")
 
-    print "The original testcase has " + quantity(numParts, atom) + "."
+    print "The original testcase has " + quantity(len(parts), atom) + "."
     print "Checking that the original testcase is 'interesting'..."
-    if not interesting():
+    if not interesting(parts):
         usageError("The original testcase is not 'interesting'!")
         
-    if numParts == 0:
+    if len(parts) == 0:
         usageError("The file has " + quantity(0, atom) + " so there's nothing for Lithium to try to remove!")
 
     createTempDir()
@@ -236,7 +231,7 @@ def readTestcaseWithDDSection(file):
 
 def readTestcaseLine(line):
     global atom
-    global parts, numParts, enabled
+    global parts
     
     if atom == "line":
        parts.append(line)
@@ -244,20 +239,14 @@ def readTestcaseLine(line):
         for char in line:
             parts.append(char)
 
-
-
 def writeTestcase(filename):
-    global numParts
-    
     file = open(filename, "w")
     file.write(before)
-    for i in range(numParts):
-        if enabled[i]:
-            file.write(parts[i])
+    for i in range(len(parts)):
+        file.write(parts[i])
     file.write(after)
     file.close()
-   
-   
+
 def writeTestcaseTemp(partialFilename, useNumber):
     global tempFileCount
     if useNumber:
@@ -283,21 +272,17 @@ def createTempDir():
 
 # Interestingness test
 
-def interesting():
+def interesting(partsSuggestion):
     global tempFileCount, testcaseFilename, conditionArgs
-    global enabled, boringnessCache
     global testCount, testTotal
+    global parts
+    oldParts = parts # would rather be less side-effecty about this, and be passing partsSuggestion around
+    parts = partsSuggestion
 
     writeTestcase(testcaseFilename)
     
-    # This method of creating enabledKey is more compact than str(enabled)
-    enabledKey = "".join(str(int(b)) for b in enabled)  
-    if enabledKey in boringnessCache:
-        print "boringnessCache hit"
-        return False
-        
     testCount += 1
-    testTotal += sum(enabled)
+    testTotal += len(parts)
 
     tempPrefix = ("t0") if (tempDir == None) else (tempDir + os.sep + str(tempFileCount))
     inter = conditionScript.interesting(conditionArgs, tempPrefix)
@@ -310,16 +295,15 @@ def interesting():
         writeTestcaseTemp(tempFileTag, True)
 
     if not inter:
-        boringnessCache[enabledKey] = True
-
+        parts = oldParts
     return inter
 
 
 # Main reduction algorithm
 
 def minimize():
-
-    chunkSize = min(minimizeMax, largestPowerOfTwoSmallerThan(numParts))
+    origNumParts = len(parts)
+    chunkSize = min(minimizeMax, largestPowerOfTwoSmallerThan(origNumParts))
     finalChunkSize = max(minimizeMin, 1)
     
     while 1:
@@ -344,8 +328,8 @@ def minimize():
     if finalChunkSize == 1 and minimizeRepeat != "never":
         print "  Removing any single " + atom + " from the final file makes it uninteresting!"
 
-    print "  Initial size: " + quantity(numParts, atom)
-    print "  Final size: " + quantity(sum(enabled), atom)
+    print "  Initial size: " + quantity(origNumParts, atom)
+    print "  Final size: " + quantity(len(parts), atom)
     print "  Tests performed: " + str(testCount)
     print "  Test total: " + quantity(testTotal, atom)
 
@@ -355,7 +339,7 @@ def tryRemovingChunks(chunkSize):
     
     Returns True iff any chunks were removed."""
     
-    global enabled
+    global parts
     
     chunksSoFar = 0
     summary = ""
@@ -367,39 +351,33 @@ def tryRemovingChunks(chunkSize):
 
     print "Starting a round with chunks of " + quantity(chunkSize, atom) + "."
 
-    for chunkStart in range(0, numParts, chunkSize):
+    
+    numChunks = divideRoundingUp(len(parts), chunkSize)
+    chunkStart = 0
+    while chunkStart < len(parts):
 
-        if not enabled[chunkStart]:
-            continue
-
-        chunkEnd = min(numParts, chunkStart + chunkSize)
+        chunksSoFar += 1
+        chunkEnd = min(len(parts), chunkStart + chunkSize)
+        description = "chunk #" + str(chunksSoFar) + " of " + str(numChunks) + " chunks of size " + str(chunkSize)
         
-        for pos in range(chunkStart, chunkEnd):
-            enabled[pos] = False
-        
-        if interesting():
-            print "Yay, reduced it by removing " + str(chunkStart) + ".." + str(chunkEnd - 1) + " :)"
-            
+        if interesting(parts[:chunkStart] + parts[chunkEnd:]):
+            print "Yay, reduced it by removing " + description + " :)"
             chunksRemoved += 1
             atomsRemoved += (chunkEnd - chunkStart)
             summary += '-';
+            # leave chunkStart the same
         else:
-            print "Removing " + str(chunkStart) + ".." + str(chunkEnd - 1) + " made the file 'uninteresting'.  Putting it back."
-
+            print "Removing " + description + " made the file 'uninteresting'."
             chunksSurviving += 1
             atomsSurviving += (chunkEnd - chunkStart)
             summary += 'S';
-    
-            for pos in range(chunkStart, chunkEnd):
-                enabled[pos] = True
-  
+            chunkStart += chunkSize
+
         # Put a space between each pair of chunks in the summary.
         # During 'minimize', this is useful because it shows visually which 
         # chunks used to be part of a single larger chunk.
-        
-        chunksSoFar += 1
         if chunksSoFar % 2 == 0:
-          summary += " ";
+            summary += " ";
   
     print ""
     print "Done with a round of chunk size " + str(chunkSize) + "!"
@@ -473,6 +451,9 @@ def tryRemovingSubstring():
 
 # Helpers
 
+def divideRoundingUp(n, d):
+    return (n // d) + (1 if n % d != 0 else 0)
+
 def isPowerOfTwo(n):
     i = 1
     while 1:
@@ -482,14 +463,12 @@ def isPowerOfTwo(n):
             return False
         i *= 2
     
-
 def largestPowerOfTwoSmallerThan(n):
     i = 1
     while 1:
         if i * 2 >= n:
             return i
         i *= 2
-
 
 def quantity(n, s):
     """Convert a quantity to a string, with correct pluralization."""
