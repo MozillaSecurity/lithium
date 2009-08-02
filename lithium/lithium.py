@@ -100,10 +100,13 @@ def main():
 
     readTestcase()
 
+    createTempDir()
+    print "Intermediate files will be stored in " + tempDir + os.sep + "."
+
     if strategy == "check-only":
-        print '+' if interesting(parts) else '-'
+        print 'Interesting.' if interesting(parts) else 'Not interesting.'
         sys.exit(0)
-    
+
     strategyFunction = {
         'minimize': minimize,
         'remove-pair': tryRemovingPair,
@@ -118,14 +121,11 @@ def main():
     print "Checking that the original testcase is 'interesting'..."
     if not interesting(parts):
         usageError("The original testcase is not 'interesting'!")
-        
+
     if len(parts) == 0:
         usageError("The file has " + quantity(0, atom) + " so there's nothing for Lithium to try to remove!")
 
-    createTempDir()
-    print "Intermediate files will be stored in " + tempDir + os.sep + "."
     writeTestcaseTemp("original", False)
-
     strategyFunction()
 
 
@@ -267,7 +267,6 @@ def createTempDir():
             break
         except OSError, e:
             i += 1
-    print tempDir + os.sep
 
 
 # Interestingness test
@@ -284,7 +283,7 @@ def interesting(partsSuggestion):
     testCount += 1
     testTotal += len(parts)
 
-    tempPrefix = ("t0") if (tempDir == None) else (tempDir + os.sep + str(tempFileCount))
+    tempPrefix = tempDir + os.sep + str(tempFileCount)
     inter = conditionScript.interesting(conditionArgs, tempPrefix)
 
     # Save an extra copy of the file inside the temp directory.
@@ -427,7 +426,7 @@ def tryRemovingPair():
                 sys.exit(0)
             enabled[j] = True
         enabled[i] = True
-        
+
     # Restore the original testcase
     writeTestcase(testcaseFilename)
     print "Failure!  No pair can be removed."
