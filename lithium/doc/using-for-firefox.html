@@ -12,7 +12,7 @@
 
 <h3>Preparing the testcase</h3>
 
-<p>If the testcase is pure JavaScript with no DOM interaction, use the <a href="http://developer.mozilla.org/en/docs/Introduction_to_the_JavaScript_shell">command-line JavaScript Shell</a> instead of Firefox.</p>
+<p>If the testcase is pure JavaScript with no DOM interaction, use the <a href="http://developer.mozilla.org/en/docs/Introduction_to_the_JavaScript_shell">command-line JavaScript Shell</a> instead of Firefox, as it will be much faster to start the process each time.</p>
 
 <p>If the testcase has to run in Firefox:</p>
 
@@ -27,30 +27,24 @@
 
 <h3>Running Lithium</h3>
 
-<p>Lithium's general syntax is:</p>
-
-<pre>
-    ./lithium.py (interestingness-test) (file-to-reduce) [extra arguments for the test]
-</pre>
-
-<p>You'll usually be able to use one of the tests that comes with Lithium:</p>
+<p>You'll usually be able to use one of the tests that comes with Lithium.  For these tests, the "..." means (app with args, including testcase).</p>
 
 <table border="1" style="border-collapse: collapse; border-color: #bbb;">
 <thead>
 <tr><th>Test</th><th>Parameters</th><th>What it tests</th></tr>
 </thead>
 <tbody>
-<tr><td>outputs.sh</td><td>app, X</td><td>(App run with the testcase) outputs X</td></tr>
-<tr><td>outputs1.sh</td><td>app, X, Y</td><td>(App run with the testcase) outputs X but not Y</td></tr>
-<tr><td>crashes.py</td><td>app, [timeout=300]</td><td>(App run with the testcase) crashes</td></tr>
-<tr><td>hangs.py</td><td>app, [timeout=30]</td><td>(App run with the testcase) does not exit within the timeout, in seconds</td></tr>
+<tr><td>outputs_timed.py</td><td>timeout, string, app+args</td><td>app+args outputs <i>string</i> (on stdout or stderr) within <i>timeout</i> seconds.</td></tr>
+<tr><td>hangs.py</td><td>timeout, app+args</td><td>app+args does not exit within <i>timeout</i> seconds.</td></tr>
+<tr><td>crashes.py</td><td>timeout, app+args</td><td>app+args crashes</td></tr>
+<tr><td>crashesat.py (Mac-only)</td><td>timeout, signature, app+args</td><td>app+args crashes, with <em>signature</em> somewhere in the crash log.  Recommend using a function near the top of the stack trace.</td></tr>
 </tbody>
 </table>
 
-<p>For example, suppose you have a large file called boom.html that triggers an assertion in debug builds of Firefox.  To make a reduced testcase, you might use something like:</p>
+<p>For example, suppose you have a large file called boom.html that triggers an array-bound assertion in debug builds of Firefox.  To make a reduced testcase, you might use something like:</p>
 
 <pre>
-    ./lithium.py ./outputs.sh boom.html fxdebug/firefox-bin "ASSERTION: index out of range"
+    ./lithium.py outputs_timed.py 120 "ASSERTION: index out of range" fxdebug/firefox-bin boom.html
 </pre>
 
 <p>Lithium will try to remove as many lines from boom.html as possible while still causing Firefox to print that assertion message.</p>
@@ -58,24 +52,25 @@
 
 <h3>Tips</h3>
 
+
 <h4>All operating systems</h4>
 
 <ul>
 <li>Before testing a given build of Firefox, make sure that build of Firefox is the one you ran most recently.  Otherwise, Firefox will restart in a way that makes it seem to Lithium like Firefox has exited (see <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=271613">bug 271613</a>).  This kind of restart can also cause a testcase filename to be treated as a hostname (<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=396003">bug 396003</a>).</li>
 <li>Before testing crashes, <a href="http://kb.mozillazine.org/Breakpad#Enabling_Breakpad">turn off Firefox's Breakpad crash reporter</a>.</li>
 <li>Before testing crashes, <a href="http://kb.mozillazine.org/Browser.sessionstore.resume_from_crash">turn off session restore</a>.</li>
-<li>When testing crashes, it's usually better to use outputs1.sh than crashes.py.  Lithium often gets confused by random startup crashes if you use crashes.py; it thinks an intermediate testcase crashes Firefox when the crash was just a random startup crash.</li>
 <li>You might want to edit the test files to hard-code your Firefox path and/or -P profilename.</li>
 </ul>
+
 
 <h4>Mac</h4>
 
 <ul>
 <li>Before testing crashes in GUI apps, turn off the OS crash dialog by running CrashReporterPrefs and set it on "Server" mode.  Remember to set it back to "Developer" mode when you're done.</li>
-<li>When using tests based on timed_run.py (crashes.py / hangs.py), give it "firefox-bin", not "firefox".  The "firefox" shell script runs firefox-bin in a way that prevents timed_run.py's hang protection from killing firefox-bin.</li>
-<li>Since you'll be using your computer for other things while Lithium reduces the testcase, you'll probably want to work around <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=320746">bug 320746</a> (pressing the Alt key while Firefox is starting triggers the Safe Mode dialog, even if Firefox doesn't have focus) by commenting out that code in your Firefox tree.</li>
-<li>If Firefox opens two windows, you're probably hitting <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=366009">bug 366009</a>.  Apply the patch there.</li>
+<li>When using tests based on timed_run.py (crashes.py / hangs.py), give it "firefox-bin", not "firefox".  The "firefox" shell script runs firefox-bin in a way that prevents ntr.py's hang protection from killing firefox-bin.</li>
+<li>Since you'll be using your computer for other things while Lithium reduces the testcase, you'll probably want to work around <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=507782">bug 507782</a> (pressing the Alt key while Firefox is starting triggers the Safe Mode dialog, even if Firefox doesn't have focus) by commenting out that code in your Firefox tree.</li>
 </ul>
+
 
 <h4>Windows</h4>
 

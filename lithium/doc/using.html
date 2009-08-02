@@ -13,7 +13,7 @@
 
 <ul>
 <li><a href="using-for-firefox.html">How to use Lithium to reduce Firefox bugs</a>.  Lithium has been used it to make reduced testcases for hundreds of Firefox crashes and assertions.</li>
-<li><a href="creating-tests.html">How to create your own 'interestingness' tests</a>.  Lithium is flexible enough to reduce files for complicated properties such as "parsed differently by Opera and Firefox".  Just supply a small program that determines when a given file has the property.</li>
+<li><a href="creating-tests.html">How to create your own "interestingness tests"</a>.  Lithium is flexible enough to reduce files for complicated properties such as "parsed differently by Opera and Firefox".  Just supply a small program that determines when a given file has the property.</li>
 </ul>
 
 
@@ -23,19 +23,22 @@
 
 <p>If <i>n</i> is the size of the testcase and <i>m</i> is the size of the 1-minimal testcase found by Lithium, then Lithium usually performs O(m &sdot; lg(n)) tests with a total test size of O(m &sdot; n).  See the <a href="algorithm.html">analysis of Lithium's algorithm</a> for more information and proofs.</p>
 
-<p>To keep <i>m</i> small, make sure Lithium's smallest removals won't introduce fatal syntax errors into the file it is trying to reduce.  For example, don't use --atom=char when trying to reduce a long sequence of JavaScript statements, and don't feed XHTML to Lithium.  (Convert it to HTML first and let Firefox's tag-soup parser sort out the invalidity.)</p>
+<p>To keep <i>m</i> small, make sure Lithium's smallest removals won't introduce fatal syntax errors into the file it is trying to reduce.  For example, don't use --char when trying to reduce a long sequence of JavaScript statements, and don't feed XHTML to Lithium.  (Convert it to HTML first and let Firefox's tag-soup parser sort out the invalidity, or use serializeDOMAsScript.)</p>
 
 
 <h3>Command line syntax</h3>
 
 <pre>
-    ./lithium.py (interestingness-test) (file-to-reduce) [extra arguments for the test]
+    ./lithium.py [options] interestingness-test.py [arguments for interestingness test]
 </pre>
 
 
 <h3>Command line options</h3>
 
 <dl>
+
+<dt>--testcase=filename</dt>
+<dd>Tells Lithium which file to reduce.  By default, it will assume the last argument to the interestingness test is the file to reduce.</dd>
 
 <dt>--char (-c)<dt>
 <dd>By default, Lithium treats lines as atomic units.  This is great if each line is a JavaScript statement, but sometimes you want to go further.  Use this option to tell Lithium to treat the file as a sequence of characters instead of a sequence of lines.</dd>
@@ -58,18 +61,19 @@
 
 <h3>Hints</h3>
 
-<p>If you find a non-deterministic bug, don't despair.  Lithium will do fine as long as you make the bug happen at least 70% of the time.  You can repeat the test either within the application, by adding a loop or reload in the testcase (outside of the DDBEGIN/DDEND markers!), or outside of the application, by adding a loop to the test script.</p>
+<p>If you find a non-deterministic bug, don't despair.  Lithium will do fine as long as you make the bug happen at least 70% of the time.  You can repeat the test either within the application, by adding a loop or reload in the testcase (outside of the DDBEGIN/DDEND markers!), or outside of the application, by adding a loop to the "interestingness test" script.</p>
 
 
 <h3>Requirements</h3>
 
 <p>Lithium is written in <a href="http://www.python.org/">Python</a> and requires Python 2.4.  (It uses <a href="http://www.python.org/dev/peps/pep-0289/">generator expressions</a> and the <a href="http://docs.python.org/lib/module-subprocess.html">subprocess</a> module, both of which were introduced with Python 2.4)
 
-<p>Lithium is known to work with:</p>
+<p>Various versions of Lithium have been used successfully with:</p>
 
 <ul>
 <li>Mac 10.4.10 + Python 2.4.3</li>
 <li>Mac 10.4.10 + Python 2.5.1</li>
+<li>Mac 10.5.7 + Python 2.5.1</li>
 <li>Windows XP + the <a href="http://www.cygwin.com/">Cygwin</a> version of Python 2.5, under both DOS and Bash</li>
 </ul>
 
@@ -79,9 +83,9 @@
 <h3>Credits</h3>
 
 <ul>
-<li>The testcase reduction algorithm implemented in Lithium is a modified version of the "ddmin" algorithm in Andreas Zeller's paper, <a href="http://www.st.cs.uni-sb.de/papers/tse2002/">Simplifying and Isolating Failure-Inducing Input</a>.</li>
-<li>The idea of using an external "test" program came from <a href="http://delta.tigris.org/">Delta</a>, a similar tool that's <a href="http://gcc.gnu.org/wiki/A_guide_to_testcase_reduction">used in clever ways by the GCC project</a>.</li>
-<li><a href="http://bclary.com/log/2007/03/07/timed_run">timed_run.py</a> was written by <a href="http://coop.deadsquid.com/">Chris Cooper</a> and <a href="http://bclary.com/">Bob Clary</a>.</li>
+<li><a href="algorithm.html">Lithium's testcase reduction algorithm</a> is a modified version of the "ddmin" algorithm in Andreas Zeller's paper, <a href="http://www.st.cs.uni-sb.de/papers/tse2002/">Simplifying and Isolating Failure-Inducing Input</a>.</li>
+<li>The idea of using an external "interestingness test" program came from <a href="http://delta.tigris.org/">Delta</a>, a similar tool that's <a href="http://gcc.gnu.org/wiki/A_guide_to_testcase_reduction">used in clever ways by the GCC project</a>.</li>
+<li>ntr.py, used by many of the "interestingness test" scripts that come with Lithium, is based on <a href="http://bclary.com/log/2007/03/07/timed_run">timed_run.py</a>, which was written by <a href="http://coop.deadsquid.com/">Chris Cooper</a> and <a href="http://bclary.com/">Bob Clary</a>.</li>
 </ul>
 
 </body>
