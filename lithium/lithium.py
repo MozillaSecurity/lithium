@@ -70,7 +70,7 @@ def main():
     global parts
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "strategy=", "repeat=", "min=", "max=", "chunksize=", "testcase="])
+        opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "strategy=", "repeat=", "min=", "max=", "chunksize=", "testcase=", "tempdir="])
     except getopt.GetoptError, exc:
         usageError(exc.msg)
 
@@ -100,8 +100,9 @@ def main():
 
     readTestcase()
 
-    createTempDir()
-    print "Intermediate files will be stored in " + tempDir + os.sep + "."
+    if tempDir == None:
+        createTempDir()
+        print "Intermediate files will be stored in " + tempDir + os.sep + "."
 
     if strategy == "check-only":
         print 'Interesting.' if interesting(parts) else 'Not interesting.'
@@ -130,7 +131,7 @@ def main():
 
 
 def processOptions(opts):
-    global atom, minimizeRepeat, minimizeMin, minimizeMax, strategy, testcaseFilename
+    global atom, minimizeRepeat, minimizeMin, minimizeMax, strategy, testcaseFilename, tempDir
 
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -138,6 +139,8 @@ def processOptions(opts):
             sys.exit(0)
         elif o == "--testcase":
             testcaseFilename = a
+        elif o == "--tempdir":
+            tempDir = a
         elif o in ("-c", "--char"): 
             atom = "char"
         elif o == "--strategy":
