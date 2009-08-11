@@ -66,7 +66,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
     try:
         child = subprocess.Popen(
             commandWithArgs,
-            stdin = (None         if useLogFiles else subprocess.PIPE),
+            stdin = (None         if (input == None) else subprocess.PIPE),
             stderr = (childStdErr if useLogFiles else subprocess.PIPE),
             stdout = (childStdOut if useLogFiles else subprocess.PIPE),
             close_fds = (os.name == "posix") # would be nice to use this everywhere, but it's broken on Windows (http://docs.python.org/library/subprocess.html)
@@ -78,7 +78,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         print "  " + str(e)
         sys.exit(2)
 
-    if not useLogFiles:
+    if input != None:
         child.stdin.write(input)
         child.stdin.close()
 
