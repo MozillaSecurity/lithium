@@ -34,7 +34,7 @@ def xpkill(p):
     else:
         # UNTESTED
         import win32process
-        return win32process.TerminateProcess(process._handle, -1)
+        return win32process.TerminateProcess(p._handle, -1)
 
 
 def timed_run(commandWithArgs, timeout, logPrefix, input=None):
