@@ -32,7 +32,7 @@ def xpkill(p):
     elif os.name == "posix": # not available on Windows
         os.kill(p.pid, signal.SIGKILL)
     else:
-        # UNTESTED
+        print "Untested Windows process-killing; Gary, can you tell me whether this works?"
         import win32process
         return win32process.TerminateProcess(p._handle, -1)
 
