@@ -200,7 +200,7 @@ def grabCrashLog(progname, crashedPID, logPrefix, signum):
                 # print "[grabCrashLog] Waiting for the crash log to appear..."
                 time.sleep(0.100)
                 loops += 1
-                if loops > 100:
+                if loops > 1000:
                     # I suppose this might happen if the process corrupts itself so much that
                     # the crash reporter gets confused about the process name, for example.
                     print "[grabCrashLog] I waited a long time and the crash log never appeared!"
