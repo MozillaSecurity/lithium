@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import getopt, sys, os, subprocess
+import getopt, sys, os, subprocess, time
 
 def usage():
     print """Lithium, an automated testcase reduction tool by Jesse Ruderman
@@ -32,6 +32,12 @@ Additional options for the default strategy (--strategy=minimize)
      What chunk sizes to test.  Must be powers of two.
 * --chunksize=n
      Shortcut for "repeat=never, min=n, max=n"
+* --chunkstart=n
+     For the first round only, start n chars/lines into the file. Best for max to divide n.  [Mostly intended for internal use]
+* --repeatfirstround
+     Repeat the first round.  [Mostly intended for internal use]
+* --maxruntime=n
+     If reduction takes more than n seconds, stop (and print instructions for continuing).
 
 See doc/using.html for more information.
 
@@ -44,7 +50,9 @@ strategy = "minimize"
 minimizeRepeat = "last"
 minimizeMin = 1
 minimizeMax = pow(2, 30)
-    
+minimizeChunkStart = 0
+minimizeRepeatFirstRound = False
+
 atom = "line"
 
 conditionScript = None
@@ -61,18 +69,22 @@ tempFileCount = 1
 before = ""
 after = ""
 parts = []
+allPositionalArgs = []
+stopAfterTime = None
 
 
 # Main and friends
 
 def main():
-    global conditionScript, conditionArgs, testcaseFilename, testcaseExtension, strategy
+    global conditionScript, conditionArgs, testcaseFilename, testcaseExtension, strategy, allPositionalArgs
     global parts
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "strategy=", "repeat=", "min=", "max=", "chunksize=", "testcase=", "tempdir="])
+        opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "strategy=", "repeat=", "min=", "max=", "chunksize=", "chunkstart=", "testcase=", "tempdir=", "repeatfirstround", "maxruntime="])
     except getopt.GetoptError, exc:
         usageError(exc.msg)
+        
+    allPositionalArgs = args
 
     if len(args) == 0:
         # No arguments; not even a condition was specified
@@ -131,7 +143,8 @@ def main():
 
 
 def processOptions(opts):
-    global atom, minimizeRepeat, minimizeMin, minimizeMax, strategy, testcaseFilename, tempDir
+    global atom, strategy, testcaseFilename, tempDir
+    global minimizeRepeat, minimizeMin, minimizeMax, minimizeChunkStart, minimizeRepatFirstRound, stopAfterTime
 
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -163,6 +176,12 @@ def processOptions(opts):
             minimizeRepeat = "never"
             if not isPowerOfTwo(minimizeMin):
                 usageError("Chunk size must be a power of two.")
+        elif o == "--chunkstart":
+            minimizeChunkStart = int(a)
+        elif o == "--repeatfirstround":
+            minimizeRepatFirstRound = True
+        elif o == "--maxruntime":
+            stopAfterTime = time.time() + int(a)
 
 
 def usageError(s):
@@ -272,8 +291,7 @@ def createTempDir():
             i += 1
 
 
-# Interestingness test
-
+# If the file is still interesting after the change, changes the global "parts" and returns True.
 def interesting(partsSuggestion):
     global tempFileCount, testcaseFilename, conditionArgs
     global testCount, testTotal
@@ -304,30 +322,57 @@ def interesting(partsSuggestion):
 # Main reduction algorithm
 
 def minimize():
+    global parts, testCount, testTotal
+    global minimizeMax, minimizeMin, minimizeChunkStart, minimizeRepeatFirstRound
     origNumParts = len(parts)
     chunkSize = min(minimizeMax, largestPowerOfTwoSmallerThan(origNumParts))
     finalChunkSize = max(minimizeMin, 1)
+    chunkStart = minimizeChunkStart
+    anyChunksRemoved = minimizeRepeatFirstRound
     
     while 1:
-        anyChunksRemoved = tryRemovingChunks(chunkSize);
-    
-        last = (chunkSize == finalChunkSize)
-
-        if anyChunksRemoved and (minimizeRepeat == "always" or (minimizeRepeat == "last" and last)):
-            # Repeat with the same chunk size
-            pass
-        elif last:
-            # Done
+        if stopAfterTime != None and time.time() > stopAfterTime:
+            # Not all switches will be copied!  Be sure to add --tempdir, --maxruntime if desired.
+            print "To continue, run lithium.py with: " + " ".join(
+                 [
+                 "--testcase=" + testcaseFilename,
+                 "--max=" + str(chunkSize),
+                 "--chunkstart=" + str(chunkStart)] +
+                (["--repeatfirstround"] if anyChunksRemoved else []) +
+                (["--char"] if atom == "char" else []) +
+                allPositionalArgs
+                )
             break
+
+        if chunkStart >= len(parts):
+            writeTestcaseTemp("did-round-" + str(chunkSize), True);
+            last = (chunkSize == finalChunkSize)
+            print ""
+            if anyChunksRemoved and (minimizeRepeat == "always" or (minimizeRepeat == "last" and last)):
+                chunkStart = 0
+                print "Starting another round of chunk size " + str(chunkSize)
+            elif last:
+                print "Lithium is done!"
+                break
+            else:
+                chunkStart = 0
+                chunkSize /= 2
+                print "Halving chunk size to " + str(chunkSize)
+            anyChunksRemoved = False
+
+        chunkEnd = min(len(parts), chunkStart + chunkSize)
+        description = "Removing a chunk of size " + str(chunkSize) + " starting at " + str(chunkStart) + " of " + str(len(parts))
+        if interesting(parts[:chunkStart] + parts[chunkEnd:]):
+            print description + " was a successful reduction :)"
+            anyChunksRemoved = True
+            # leave chunkStart the same
         else:
-            # Continue with the next smaller chunk size
-            chunkSize /= 2
+            print description + " made the file 'uninteresting'."
+            chunkStart += chunkSize
 
     writeTestcase(testcaseFilename)
-    
-    print "Lithium is done!"
 
-    if finalChunkSize == 1 and minimizeRepeat != "never":
+    if chunkSize == 1 and not anyChunksRemoved and minimizeRepeat != "never":
         print "  Removing any single " + atom + " from the final file makes it uninteresting!"
 
     print "  Initial size: " + quantity(origNumParts, atom)
@@ -337,62 +382,9 @@ def minimize():
 
 
 def tryRemovingChunks(chunkSize):
-    """Make a single run through the testcase, trying to remove chunks of size chunkSize.
     
-    Returns True iff any chunks were removed."""
-    
-    global parts
-    
-    chunksSoFar = 0
-    summary = ""
-
-    chunksRemoved = 0
-    chunksSurviving = 0
-    atomsRemoved = 0
-    atomsSurviving = 0
-
-    print "Starting a round with chunks of " + quantity(chunkSize, atom) + "."
-
-    
-    numChunks = divideRoundingUp(len(parts), chunkSize)
-    chunkStart = 0
-    while chunkStart < len(parts):
-
-        chunksSoFar += 1
-        chunkEnd = min(len(parts), chunkStart + chunkSize)
-        description = "chunk #" + str(chunksSoFar) + " of " + str(numChunks) + " chunks of size " + str(chunkSize)
-        
-        if interesting(parts[:chunkStart] + parts[chunkEnd:]):
-            print "Yay, reduced it by removing " + description + " :)"
-            chunksRemoved += 1
-            atomsRemoved += (chunkEnd - chunkStart)
-            summary += '-';
-            # leave chunkStart the same
-        else:
-            print "Removing " + description + " made the file 'uninteresting'."
-            chunksSurviving += 1
-            atomsSurviving += (chunkEnd - chunkStart)
-            summary += 'S';
-            chunkStart += chunkSize
-
-        # Put a space between each pair of chunks in the summary.
-        # During 'minimize', this is useful because it shows visually which 
-        # chunks used to be part of a single larger chunk.
-        if chunksSoFar % 2 == 0:
-            summary += " ";
-  
-    print ""
     print "Done with a round of chunk size " + str(chunkSize) + "!"
-    print quantity(chunksSurviving, "chunk") + " survived; " + \
-          quantity(chunksRemoved, "chunk") + " removed."
-    print quantity(atomsSurviving, atom) + " survived; " + \
-          quantity(atomsRemoved, atom) + " removed."
-    print "Which chunks survived: " + summary
-    print ""
-    
-    writeTestcaseTemp("did-round-" + str(chunkSize), True);
-   
-    return (chunksRemoved > 0)
+    return anyChunksRemoved
     
     
 
