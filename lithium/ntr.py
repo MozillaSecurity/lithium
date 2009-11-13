@@ -177,7 +177,7 @@ def grabCrashLog(progname, crashedPID, logPrefix, signum):
                 crashLogDir = os.path.expanduser(crashLogDir)
                 try:
                     crashLogs = os.listdir(crashLogDir)
-                except OSError, e:
+                except (OSError, IOError), e:
                     # Maybe this is the first crash ever on this computer, and the directory doesn't exist yet.
                     crashLogs = []
                 crashLogs = filter(lambda s: s.startswith(progname + "_"), crashLogs)
@@ -196,7 +196,7 @@ def grabCrashLog(progname, crashedPID, logPrefix, signum):
                                 return fullfn
                                 #return open(fullfn).read()
 
-                    except IOError, e:
+                    except (OSError, IOError), e:
                         # Maybe the log was rotated out between when we got the list
                         # of files and when we tried to open this file.  If so, it's
                         # clearly not The One.
