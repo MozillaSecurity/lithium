@@ -173,7 +173,8 @@ def grabCrashLog(progname, crashedPID, logPrefix, signum):
                     os.rename(coreFilename, logPrefix + "-core")
                 # Find a crash log for the right process name and pid, preferring
                 # newer crash logs (which sort last).
-                crashLogDir = os.path.expanduser("~/Library/Logs/CrashReporter/")
+                crashLogDir = "~/Library/Logs/CrashReporter/" if platform.mac_ver()[0].startswith("10.5") else "~/Library/Logs/DiagnosticReports/"
+                crashLogDir = os.path.expanduser(crashLogDir)
                 crashLogs = os.listdir(crashLogDir)
                 crashLogs = filter(lambda s: s.startswith(progname + "_"), crashLogs)
                 crashLogs.sort(reverse=True)
