@@ -177,7 +177,7 @@ def grabCrashLog(progname, crashedPID, logPrefix, signum):
                 crashLogDir = os.path.expanduser(crashLogDir)
                 try:
                     crashLogs = os.listdir(crashLogDir)
-                except IOError, e:
+                except OSError, e:
                     # Maybe this is the first crash ever on this computer, and the directory doesn't exist yet.
                     crashLogs = []
                 crashLogs = filter(lambda s: s.startswith(progname + "_"), crashLogs)
