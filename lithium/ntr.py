@@ -175,7 +175,11 @@ def grabCrashLog(progname, crashedPID, logPrefix, signum):
                 # newer crash logs (which sort last).
                 crashLogDir = "~/Library/Logs/CrashReporter/" if platform.mac_ver()[0].startswith("10.5") else "~/Library/Logs/DiagnosticReports/"
                 crashLogDir = os.path.expanduser(crashLogDir)
-                crashLogs = os.listdir(crashLogDir)
+                try:
+                    crashLogs = os.listdir(crashLogDir)
+                except IOError, e:
+                    # Maybe this is the first crash ever on this computer, and the directory doesn't exist yet.
+                    crashLogs = []
                 crashLogs = filter(lambda s: s.startswith(progname + "_"), crashLogs)
                 crashLogs.sort(reverse=True)
                 for fn in crashLogs:
