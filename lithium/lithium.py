@@ -477,7 +477,7 @@ def importRelativeOrAbsolute(f):
         f = f[:-3]
     if f.rfind(os.path.sep):
         # Add the path part of the filename to the import path
-        (p, _, f) = f.rpartition(os.path.sep)
+        (p, _, f) = f.rpartition(os.path.sep)  # os.path.split might work here
         sys.path.append(p)
     else:
         # Add working directory to the import path
