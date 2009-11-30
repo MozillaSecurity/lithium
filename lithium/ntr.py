@@ -7,12 +7,12 @@ exitBadUsage = 2
 (CRASHED, TIMED_OUT, NORMAL, ABNORMAL, NONE) = range(5)
 
 
-def getSignalName(num):
+def getSignalName(num, default=None):
     for p in dir(signal):
         if p.startswith("SIG") and not p.startswith("SIG_"):
             if getattr(signal, p) == num:
                 return p
-    return "Unknown signal"
+    return default
 
 class rundata(object):
   def __init__(self, sta, msg, elapsedtime, killed, crashinfo, out, err):
@@ -123,7 +123,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         # The program was terminated by a signal, which usually indicates a crash.
         # Mac/Linux only!
         signum = -rc
-        msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum))
+        msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum, "Unknown signal"))
         sta = CRASHED
         crashinfo = grabCrashLog(progname, child.pid, logPrefix, signum)
 
