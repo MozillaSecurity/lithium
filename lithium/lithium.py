@@ -185,8 +185,8 @@ def processOptions(opts):
 
 
 def usageError(s):
+    print "=== LITHIUM SUMMARY ==="
     print s
-    print "Use --help if you need it :)"
     sys.exit(2)
 
 
@@ -372,6 +372,7 @@ def minimize():
 
     writeTestcase(testcaseFilename)
 
+    print "=== LITHIUM SUMMARY ==="
     if chunkSize == 1 and not anyChunksRemoved and minimizeRepeat != "never":
         print "  Removing any single " + atom + " from the final file makes it uninteresting!"
 
