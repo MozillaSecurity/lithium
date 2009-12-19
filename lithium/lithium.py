@@ -484,7 +484,7 @@ def importRelativeOrAbsolute(f):
         # Add working directory to the import path
         sys.path.append(".")
     module = __import__(f)
-    del sys.path[0]
+    del sys.path[0] # O RLY? Doesn't this remove the wrong one?
     return module
 
 # Run main
