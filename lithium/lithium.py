@@ -35,7 +35,7 @@ Additional options for the default strategy (--strategy=minimize)
 * --chunkstart=n
      For the first round only, start n chars/lines into the file. Best for max to divide n.  [Mostly intended for internal use]
 * --repeatfirstround
-     Repeat the first round.  [Mostly intended for internal use]
+     Treat the first round as if it removed chunks; possibly repeat it.  [Mostly intended for internal use]
 * --maxruntime=n
      If reduction takes more than n seconds, stop (and print instructions for continuing).
 
@@ -133,7 +133,8 @@ def main():
     print "The original testcase has " + quantity(len(parts), atom) + "."
     print "Checking that the original testcase is 'interesting'..."
     if not interesting(parts):
-        usageError("The original testcase is not 'interesting'!")
+        print "Lithium result: the original testcase is not 'interesting'!"
+        sys.exit(0)
 
     if len(parts) == 0:
         usageError("The file has " + quantity(0, atom) + " so there's nothing for Lithium to try to remove!")
@@ -280,7 +281,7 @@ def writeTestcaseTemp(partialFilename, useNumber):
 def createTempDir():
     global tempDir
     i = 1
-    while 1:
+    while True:
         tempDir = "tmp" + str(i)
         # To avoid race conditions, we use try/except instead of exists/create
         # Hopefully we don't get any errors other than "File exists" :)
@@ -330,12 +331,12 @@ def minimize():
     chunkStart = minimizeChunkStart
     anyChunksRemoved = minimizeRepeatFirstRound
     
-    while 1:
+    while True:
         if stopAfterTime != None and time.time() > stopAfterTime:
             # Not all switches will be copied!  Be sure to add --tempdir, --maxruntime if desired.
-            print "To continue, run lithium.py with: " + " ".join(
+            print "Lithium result: please continue using: " + " ".join(
                  [
-                 "--testcase=" + testcaseFilename,
+                 #"--testcase=" + testcaseFilename,
                  "--max=" + str(chunkSize),
                  "--chunkstart=" + str(chunkStart)] +
                 (["--repeatfirstround"] if anyChunksRemoved else []) +
@@ -352,7 +353,7 @@ def minimize():
                 chunkStart = 0
                 print "Starting another round of chunk size " + str(chunkSize)
             elif last:
-                print "Lithium is done!"
+                print "Lithium result: succeeded, reduced to: " + quantity(len(parts), atom)
                 break
             else:
                 chunkStart = 0
@@ -451,7 +452,7 @@ def divideRoundingUp(n, d):
 
 def isPowerOfTwo(n):
     i = 1
-    while 1:
+    while True:
         if i == n:
             return True
         if i > n:
@@ -460,7 +461,7 @@ def isPowerOfTwo(n):
     
 def largestPowerOfTwoSmallerThan(n):
     i = 1
-    while 1:
+    while True:
         if i * 2 >= n:
             return i
         i *= 2
