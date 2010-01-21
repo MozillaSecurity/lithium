@@ -15,8 +15,9 @@ def getSignalName(num, default=None):
     return default
 
 class rundata(object):
-  def __init__(self, sta, msg, elapsedtime, killed, crashinfo, out, err):
+  def __init__(self, sta, rc, msg, elapsedtime, killed, crashinfo, out, err):
     self.sta = sta
+    self.rc = rc
     self.msg = msg
     self.elapsedtime = elapsedtime
     self.killed = killed
@@ -134,6 +135,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
 
     return rundata(
         sta,
+        rc,
         msg,
         elapsedtime,
         killed,
