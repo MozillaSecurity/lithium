@@ -349,11 +349,12 @@ def minimize():
         if chunkStart >= len(parts):
             writeTestcaseTemp("did-round-" + str(chunkSize), True);
             last = (chunkSize == finalChunkSize)
+            empty = (len(parts) == 0)
             print ""
-            if anyChunksRemoved and (minimizeRepeat == "always" or (minimizeRepeat == "last" and last)):
+            if not empty and anyChunksRemoved and (minimizeRepeat == "always" or (minimizeRepeat == "last" and last)):
                 chunkStart = 0
                 print "Starting another round of chunk size " + str(chunkSize)
-            elif last:
+            elif empty or last:
                 print "Lithium result: succeeded, reduced to: " + quantity(len(parts), atom)
                 break
             else:
