@@ -27,16 +27,25 @@ class rundata(object):
 
 
 def xpkill(p):
+    '''Based on mozilla-central/source/build/automation.py.in'''
     if hasattr(p, "kill"): # only available in python 2.6+
         # UNTESTED
         p.kill()
-    elif os.name == "posix": # not available on Windows
-        os.kill(p.pid, signal.SIGKILL)
+    elif os.name == "nt": # Windows
+        pidString = str(p.pid)
+        if platform.release() == "2000":
+            # Windows 2000 needs 'kill.exe' from the 
+            #'Windows 2000 Resource Kit tools'. (See bug 475455.)
+            try:
+                subprocess.Popen(["kill", "-f", pidString]).wait()
+            except:
+                print("Missing 'kill' utility to kill process with pid=%s. Kill it manually!" % pidString)
+        else:
+            # Windows XP and later.
+            subprocess.Popen(["taskkill", "/F", "/PID", pidString]).wait()
     else:
-        print "Untested Windows process-killing; Gary, can you tell me whether this works?"
-        import win32process
-        return win32process.TerminateProcess(p._handle, -1)
-
+        os.kill(p.pid, signal.SIGKILL)
+ 
 
 def timed_run(commandWithArgs, timeout, logPrefix, input=None):
     '''If logPrefix is None, uses pipes instead of files for all output.'''
