@@ -479,9 +479,9 @@ def importRelativeOrAbsolute(f):
     # maybe there's a way to do this more sanely with the |imp| module...
     if f.endswith(".py"):
         f = f[:-3]
-    if f.rfind(os.path.sep):
-        # Add the path part of the filename to the import path
-        (p, _, f) = f.rpartition(os.path.sep)  # os.path.split might work here
+    p, f = os.path.split(f)
+    if p:
+        # Add the path part of the given filename to the import path
         sys.path.append(p)
     else:
         # Add working directory to the import path
