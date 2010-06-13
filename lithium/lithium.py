@@ -118,7 +118,7 @@ def main():
         print "Intermediate files will be stored in " + tempDir + os.sep + "."
 
     if strategy == "check-only":
-        print 'Interesting.' if interesting(parts) else 'Not interesting.'
+        print 'Interesting.' if interesting(parts, writeIt=False) else 'Not interesting.'
         sys.exit(0)
 
     strategyFunction = {
@@ -294,14 +294,15 @@ def createTempDir():
 
 
 # If the file is still interesting after the change, changes the global "parts" and returns True.
-def interesting(partsSuggestion):
+def interesting(partsSuggestion, writeIt=True):
     global tempFileCount, testcaseFilename, conditionArgs
     global testCount, testTotal
     global parts
     oldParts = parts # would rather be less side-effecty about this, and be passing partsSuggestion around
     parts = partsSuggestion
 
-    writeTestcase(testcaseFilename)
+    if writeIt:
+        writeTestcase(testcaseFilename)
     
     testCount += 1
     testTotal += len(parts)
