@@ -133,7 +133,7 @@ def main():
 
     print "The original testcase has " + quantity(len(parts), atom) + "."
     print "Checking that the original testcase is 'interesting'..."
-    if not interesting(parts):
+    if not interesting(parts, writeIt=False):
         print "Lithium result: the original testcase is not 'interesting'!"
         sys.exit(0)
 
