@@ -155,6 +155,8 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
 
 
 def grabCrashLog(progname, crashedPID, logPrefix, signum):
+    if progname == "valgrind":
+        return
     useLogFiles = isinstance(logPrefix, str)
     if useLogFiles:
         if os.path.exists(logPrefix + "-crash"):
