@@ -118,7 +118,8 @@ def main():
         print "Intermediate files will be stored in " + tempDir + os.sep + "."
 
     if strategy == "check-only":
-        print 'Interesting.' if interesting(parts, writeIt=False) else 'Not interesting.'
+        r = interesting(parts, writeIt=False)
+        print 'Lithium result: ' + ('interesting.' if r else 'not interesting.')
         sys.exit(0)
 
     strategyFunction = {
