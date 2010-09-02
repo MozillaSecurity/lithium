@@ -14,6 +14,12 @@ def importRelativeOrAbsolute(f):
     else:
         # Add working directory to the import path
         sys.path.append(".")
-    module = __import__(f)
+    try:
+        module = __import__(f)
+    except ImportError as e:
+        print "Failed to import: " + f
+        print "From: " + __file__
+        print str(e)
+        raise
     sys.path.pop()
     return module
