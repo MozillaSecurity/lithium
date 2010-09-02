@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import getopt, sys, os, subprocess, time
+import ximport
 
 def usage():
     print """Lithium, an automated testcase reduction tool by Jesse Ruderman
@@ -100,7 +101,7 @@ def main():
     if testcaseFilename == None:
         usageError("No testcase specified (use --testcase or last condition arg)")
 
-    conditionScript = importRelativeOrAbsolute(args[0])
+    conditionScript = ximport.importRelativeOrAbsolute(args[0])
     conditionArgs = args[1:]
 
     if hasattr(conditionScript, "init"):
@@ -476,21 +477,6 @@ def quantity(n, s):
     if n != 1:
         r += "s"
     return r
-
-def importRelativeOrAbsolute(f):
-    # maybe there's a way to do this more sanely with the |imp| module...
-    if f.endswith(".py"):
-        f = f[:-3]
-    p, f = os.path.split(f)
-    if p:
-        # Add the path part of the given filename to the import path
-        sys.path.append(p)
-    else:
-        # Add working directory to the import path
-        sys.path.append(".")
-    module = __import__(f)
-    sys.path.pop()
-    return module
 
 # Run main
 
