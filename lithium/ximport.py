@@ -16,7 +16,7 @@ def importRelativeOrAbsolute(f):
         sys.path.append(".")
     try:
         module = __import__(f)
-    except ImportError as e:
+    except ImportError, e:
         print "Failed to import: " + f
         print "From: " + __file__
         print str(e)
