@@ -91,7 +91,7 @@ def main():
     if len(args) == 0:
         # No arguments; not even a condition was specified
         usage()
-        sys.exit(0)
+        return
 
     if len(args) > 1:
         testcaseFilename = args[-1] # can be overridden by --testcase in processOptions
@@ -104,46 +104,51 @@ def main():
     conditionScript = ximport.importRelativeOrAbsolute(args[0])
     conditionArgs = args[1:]
 
-    if hasattr(conditionScript, "init"):
-        conditionScript.init(conditionArgs)
-
     e = testcaseFilename.rsplit(".", 1)
     if len(e) > 1:
         testcaseExtension = "." + e[1]
 
-
     readTestcase()
 
-    if tempDir == None:
-        createTempDir()
-        print "Intermediate files will be stored in " + tempDir + os.sep + "."
+    if hasattr(conditionScript, "init"):
+        conditionScript.init(conditionArgs)
 
-    if strategy == "check-only":
-        r = interesting(parts, writeIt=False)
-        print 'Lithium result: ' + ('interesting.' if r else 'not interesting.')
-        sys.exit(0)
+    try:
 
-    strategyFunction = {
-        'minimize': minimize,
-        'remove-pair': tryRemovingPair,
-        'remove-adjacent-pairs': tryRemovingAdjacentPairs,
-        'remove-substring': tryRemovingSubstring
-    }.get(strategy, None)
+        if tempDir == None:
+            createTempDir()
+            print "Intermediate files will be stored in " + tempDir + os.sep + "."
 
-    if not strategyFunction:
-        usageError("Unknown strategy!")
+        if strategy == "check-only":
+            r = interesting(parts, writeIt=False)
+            print 'Lithium result: ' + ('interesting.' if r else 'not interesting.')
+            return
 
-    print "The original testcase has " + quantity(len(parts), atom) + "."
-    print "Checking that the original testcase is 'interesting'..."
-    if not interesting(parts, writeIt=False):
-        print "Lithium result: the original testcase is not 'interesting'!"
-        sys.exit(0)
+        strategyFunction = {
+            'minimize': minimize,
+            'remove-pair': tryRemovingPair,
+            'remove-adjacent-pairs': tryRemovingAdjacentPairs,
+            'remove-substring': tryRemovingSubstring
+        }.get(strategy, None)
 
-    if len(parts) == 0:
-        usageError("The file has " + quantity(0, atom) + " so there's nothing for Lithium to try to remove!")
+        if not strategyFunction:
+            usageError("Unknown strategy!")
 
-    writeTestcaseTemp("original", False)
-    strategyFunction()
+        print "The original testcase has " + quantity(len(parts), atom) + "."
+        print "Checking that the original testcase is 'interesting'..."
+        if not interesting(parts, writeIt=False):
+            print "Lithium result: the original testcase is not 'interesting'!"
+            return
+
+        if len(parts) == 0:
+            usageError("The file has " + quantity(0, atom) + " so there's nothing for Lithium to try to remove!")
+
+        writeTestcaseTemp("original", False)
+        strategyFunction()
+
+    finally:
+        if hasattr(conditionScript, "cleanup"):
+            conditionScript.cleanup(conditionArgs)
 
 
 def processOptions(opts):
@@ -191,7 +196,7 @@ def processOptions(opts):
 def usageError(s):
     print "=== LITHIUM SUMMARY ==="
     print s
-    sys.exit(2)
+    raise Exception(s)
 
 
 # Functions for manipulating the testcase (aka the 'interesting' file)
@@ -425,7 +430,7 @@ def tryRemovingPair():
             print "Trying removing the pair " + str(i) + ", " + str(j)
             if interesting():
                 print "Success!  Removed a pair!  Exiting."
-                sys.exit(0)
+                sys.exit(0) # XXX not nice
             enabled[j] = True
         enabled[i] = True
 
@@ -441,7 +446,7 @@ def tryRemovingSubstring():
             print "Trying removing the substring " + str(i) + ".." + str(j)
             if interesting():
                 print "Success!  Removed a substring!  Exiting."
-                sys.exit(0)
+                sys.exit(0) # XXX not nice
         for j in range(i, numParts):
             enabled[j] = True
 
