@@ -1,0 +1,6 @@
+set pagination 0
+set backtrace limit 250
+echo \n\nthread apply all bt\n\n
+thread apply all bt
+echo \n\ninfo reg\n\n
+info reg
