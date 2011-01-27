@@ -180,7 +180,7 @@ def grabCrashLog(progname, crashedPID, logPrefix, signum):
                     os.rename(tigerCrashLogName, logPrefix + "-crash")
                     found = True
             elif platform.mac_ver()[0].startswith("10.5") or platform.mac_ver()[0].startswith("10.6"):
-                # Look for a core file, in case the user did "ulimit -c unlimited"
+                # Look for a core file, in case the user did "mkdir -p /cores/" and "ulimit -c unlimited"
                 coreFilename = "/cores/core." + str(crashedPID)
                 if useLogFiles and os.path.exists(coreFilename):
                     os.rename(coreFilename, logPrefix + "-core")
