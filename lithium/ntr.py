@@ -210,13 +210,3 @@ def grabCrashLog(progname, crashedPID, logPrefix, signum):
                     # the crash reporter gets confused about the process name, for example.
                     print "grabCrashLog waited a long time, but a crash log for " + progname + " [" + str(crashedPID) + "] never appeared!"
                     break
-
-
-
-# Move the existing crash log out of the way (Tiger only)
-# Not sure when to do this :(
-#        if os.path.exists(tigerCrashLogName):
-#            os.rename(tigerCrashLogName, "oldtigercrashlog")
-
-
-
