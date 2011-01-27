@@ -192,6 +192,7 @@ def grabCrashLog(progname, progfullname, crashedPID, logPrefix, signum):
         )
         if useLogFiles:
             os.rename(coreFilename, logPrefix + "-core")
+            subprocess.call(["gzip", logPrefix + "-core"])
             return logPrefix + "-crash"
         else:
             print "I don't know what to do with a core file when logPrefix is null"
