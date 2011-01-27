@@ -8,6 +8,7 @@ thread apply all bt
 echo \n\ninfo reg\n\n
 info registers
 
-# Dump the disassembly of the crashing instruction ($pc is an alias for $eip or $rip as needed)
-echo \n\nx/i $pc\n\n
-x/i $pc
+# Dump the disassembly of the crashing instruction and several following instructions.
+# ($pc is an alias for $eip or $rip as needed)
+echo \n\nx/8i $pc\n\n
+x/8i $pc
