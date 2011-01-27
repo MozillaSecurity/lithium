@@ -167,53 +167,40 @@ def grabCrashLog(progname, crashedPID, logPrefix, signum):
         found = False
         loops = 0
         while not found:
-            if platform.mac_ver()[0].startswith("10.4"):
-                # Tiger doesn't create crash logs for aborts.
-                if signum == signal.SIGABRT:
-                    #print "[grabCrashLog] No crash logs for aborts on Tiger."
-                    break
-                # On Tiger, the crash log file just grows and grows, and it's hard to tell
-                # if the right crash is in there.  So sleep even if the file already exists.
-                tigerCrashLogName = os.path.expanduser("~/Library/Logs/CrashReporter/" + progname + ".crash.log")
-                time.sleep(2)
-                if os.path.exists(tigerCrashLogName):
-                    os.rename(tigerCrashLogName, logPrefix + "-crash")
-                    found = True
-            elif platform.mac_ver()[0].startswith("10.5") or platform.mac_ver()[0].startswith("10.6"):
-                # Look for a core file, in case the user did "mkdir -p /cores/" and "ulimit -c unlimited"
-                coreFilename = "/cores/core." + str(crashedPID)
-                if useLogFiles and os.path.exists(coreFilename):
-                    os.rename(coreFilename, logPrefix + "-core")
-                # Find a crash log for the right process name and pid, preferring
-                # newer crash logs (which sort last).
-                crashLogDir = "~/Library/Logs/CrashReporter/" if platform.mac_ver()[0].startswith("10.5") else "~/Library/Logs/DiagnosticReports/"
-                crashLogDir = os.path.expanduser(crashLogDir)
+            # Look for a core file, in case the user did "mkdir -p /cores/" and "ulimit -c unlimited"
+            coreFilename = "/cores/core." + str(crashedPID)
+            if useLogFiles and os.path.exists(coreFilename):
+                os.rename(coreFilename, logPrefix + "-core")
+            # Find a crash log for the right process name and pid, preferring
+            # newer crash logs (which sort last).
+            crashLogDir = "~/Library/Logs/CrashReporter/" if platform.mac_ver()[0].startswith("10.5") else "~/Library/Logs/DiagnosticReports/"
+            crashLogDir = os.path.expanduser(crashLogDir)
+            try:
+                crashLogs = os.listdir(crashLogDir)
+            except (OSError, IOError), e:
+                # Maybe this is the first crash ever on this computer, and the directory doesn't exist yet.
+                crashLogs = []
+            crashLogs = filter(lambda s: s.startswith(progname + "_"), crashLogs)
+            crashLogs.sort(reverse=True)
+            for fn in crashLogs:
+                fullfn = os.path.join(crashLogDir, fn)
                 try:
-                    crashLogs = os.listdir(crashLogDir)
-                except (OSError, IOError), e:
-                    # Maybe this is the first crash ever on this computer, and the directory doesn't exist yet.
-                    crashLogs = []
-                crashLogs = filter(lambda s: s.startswith(progname + "_"), crashLogs)
-                crashLogs.sort(reverse=True)
-                for fn in crashLogs:
-                    fullfn = os.path.join(crashLogDir, fn)
-                    try:
-                        c = file(fullfn)
-                        firstLine = c.readline()
-                        c.close()
-                        if firstLine.rstrip().endswith("[" + str(crashedPID) + "]"):
-                            if useLogFiles:
-                                os.rename(fullfn, logPrefix + "-crash")
-                                return logPrefix + "-crash"
-                            else:
-                                return fullfn
-                                #return open(fullfn).read()
+                    c = file(fullfn)
+                    firstLine = c.readline()
+                    c.close()
+                    if firstLine.rstrip().endswith("[" + str(crashedPID) + "]"):
+                        if useLogFiles:
+                            os.rename(fullfn, logPrefix + "-crash")
+                            return logPrefix + "-crash"
+                        else:
+                            return fullfn
+                            #return open(fullfn).read()
 
-                    except (OSError, IOError), e:
-                        # Maybe the log was rotated out between when we got the list
-                        # of files and when we tried to open this file.  If so, it's
-                        # clearly not The One.
-                        pass
+                except (OSError, IOError), e:
+                    # Maybe the log was rotated out between when we got the list
+                    # of files and when we tried to open this file.  If so, it's
+                    # clearly not The One.
+                    pass
             if not found:
                 # print "[grabCrashLog] Waiting for the crash log to appear..."
                 time.sleep(0.100)
