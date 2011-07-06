@@ -31,8 +31,12 @@ class rundata(object):
 def xpkill(p):
     '''Based on mozilla-central/source/build/automation.py.in'''
     if hasattr(p, "kill"): # only available in python 2.6+
-        # UNTESTED
-        p.kill()
+        try:
+            p.kill()
+        except WindowsError:
+            if p.poll() == 0:
+                # Verify that the process is really killed.
+                p.kill()
     elif os.name == "nt": # Windows
         pidString = str(p.pid)
         if platform.release() == "2000":
@@ -45,6 +49,7 @@ def xpkill(p):
         else:
             # Windows XP and later.
             subprocess.Popen(["taskkill", "/F", "/PID", pidString]).wait()
+            assert False, 'We should no longer hit this since Python 2.6.5 is on MozillaBuild 1.5.1, already released for 1 year.'
     else:
         os.kill(p.pid, signal.SIGKILL)
  
