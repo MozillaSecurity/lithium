@@ -40,7 +40,7 @@ def xpkill(p):
     elif os.name == "nt": # Windows
         pidString = str(p.pid)
         if platform.release() == "2000":
-            # Windows 2000 needs 'kill.exe' from the 
+            # Windows 2000 needs 'kill.exe' from the
             #'Windows 2000 Resource Kit tools'. (See bug 475455.)
             try:
                 subprocess.Popen(["kill", "-f", pidString]).wait()
@@ -52,7 +52,7 @@ def xpkill(p):
             assert False, 'We should no longer hit this since Python 2.6.5 is on MozillaBuild 1.5.1, already released for 1 year.'
     else:
         os.kill(p.pid, signal.SIGKILL)
- 
+
 
 def timed_run(commandWithArgs, timeout, logPrefix, input=None):
     '''If logPrefix is None, uses pipes instead of files for all output.'''
@@ -73,9 +73,9 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         # and screws with exit codes.
         print "I think you want firefox-bin!"
         sys.exit(exitBadUsage)
-        
+
     starttime = time.time()
-    
+
     if useLogFiles:
         childStdOut = file(logPrefix + "-out", 'w')
         childStdErr = file(logPrefix + "-err", 'w')
@@ -123,7 +123,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
                 time.sleep(0.010)
         else:
             break
-    
+
     crashinfo = None
 
     if killed and (os.name != "posix" or rc == -signal.SIGKILL):
@@ -206,6 +206,7 @@ def grabCrashLog(progname, progfullname, crashedPID, logPrefix, signum):
     if platform.system() == "Darwin":
         found = False
         loops = 0
+        maxLoops = 500 if progname.startswith("firefox") else 30
         while not found:
             # Find a crash log for the right process name and pid, preferring
             # newer crash logs (which sort last).
@@ -239,9 +240,9 @@ def grabCrashLog(progname, progfullname, crashedPID, logPrefix, signum):
                     pass
             if not found:
                 # print "[grabCrashLog] Waiting for the crash log to appear..."
-                time.sleep(0.100)
+                time.sleep(0.200)
                 loops += 1
-                if loops > 1000:
+                if loops > maxLoops:
                     # I suppose this might happen if the process corrupts itself so much that
                     # the crash reporter gets confused about the process name, for example.
                     print "grabCrashLog waited a long time, but a crash log for " + progname + " [" + str(crashedPID) + "] never appeared!"
