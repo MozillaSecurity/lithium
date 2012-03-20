@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import ntr
+import timedRun
 
 def filecontainsloud(f, s):
    found = False
@@ -13,8 +13,8 @@ def filecontainsloud(f, s):
 def interesting(args, tempPrefix):
     timeout = int(args[0])
     searchFor = args[1]
-    
-    runinfo = ntr.timed_run(args[2:], timeout, tempPrefix)
+
+    runinfo = timedRun.timed_run(args[2:], timeout, tempPrefix)
 
     print "(%.3f seconds)" % runinfo.elapsedtime
 

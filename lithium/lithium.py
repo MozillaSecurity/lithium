@@ -1,18 +1,27 @@
 #!/usr/bin/env python
-import getopt, sys, os, subprocess, time
+
+import getopt
+import os
+import subprocess
+import time
+import sys
+
+path0 = os.path.dirname(__file__)
+path1 = os.path.abspath(os.path.join(path0, os.pardir, 'interestingness'))
+sys.path.append(path1)
 import ximport
 
 def usage():
     print """Lithium, an automated testcase reduction tool by Jesse Ruderman
-    
+
 Usage:
-    
+
 ./lithium.py [options] condition [condition options] file-to-reduce
 
 Example:
 
 ./lithium.py crashes 120 ~/tracemonkey/js/src/debug/js -j a.js
-     Lithium will reduce a.js subject to the condition that the following 
+     Lithium will reduce a.js subject to the condition that the following
      crashes in 120 seconds:
      ~/tracemonkey/js/src/debug/js -j a.js
 
@@ -85,7 +94,7 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "strategy=", "repeat=", "min=", "max=", "chunksize=", "chunkstart=", "testcase=", "tempdir=", "repeatfirstround", "maxruntime="])
     except getopt.GetoptError, exc:
         usageError(exc.msg)
-        
+
     allPositionalArgs = args
 
     if len(args) == 0:
@@ -95,7 +104,7 @@ def main():
 
     if len(args) > 1:
         testcaseFilename = args[-1] # can be overridden by --testcase in processOptions
-        
+
     processOptions(opts)
 
     if testcaseFilename == None:
@@ -163,7 +172,7 @@ def processOptions(opts):
             testcaseFilename = a
         elif o == "--tempdir":
             tempDir = a
-        elif o in ("-c", "--char"): 
+        elif o in ("-c", "--char"):
             atom = "char"
         elif o == "--strategy":
             strategy = a
@@ -201,14 +210,14 @@ def usageError(s):
 
 # Functions for manipulating the testcase (aka the 'interesting' file)
 
-def readTestcase():    
+def readTestcase():
     hasDDSection = False
 
     try:
         file = open(testcaseFilename, "r")
     except IOError:
         usageError("Can't read the original testcase file, " + testcaseFilename + "!")
-    
+
     # Determine whether the file has a DDBEGIN..DDEND section.
     for line in file:
         if line.find("DDEND") != -1:
@@ -229,7 +238,7 @@ def readTestcase():
         #print "Testcase does not have a DD section"
         for line in file:
             readTestcaseLine(line)
-        
+
     file.close()
 
 
@@ -252,7 +261,7 @@ def readTestcaseWithDDSection(file):
 
     for line in file:
         after += line
-    
+
     if atom == "char" and len(parts) > 0:
         # Move the line break at the end of the last line out of the reducible
         # part so the "DDEND" line doesn't get combined with another line.
@@ -263,7 +272,7 @@ def readTestcaseWithDDSection(file):
 def readTestcaseLine(line):
     global atom
     global parts
-    
+
     if atom == "line":
        parts.append(line)
     elif atom == "char":
@@ -310,7 +319,7 @@ def interesting(partsSuggestion, writeIt=True):
 
     if writeIt:
         writeTestcase(testcaseFilename)
-    
+
     testCount += 1
     testTotal += len(parts)
 
@@ -339,7 +348,7 @@ def minimize():
     finalChunkSize = max(minimizeMin, 1)
     chunkStart = minimizeChunkStart
     anyChunksRemoved = minimizeRepeatFirstRound
-    
+
     while True:
         if stopAfterTime != None and time.time() > stopAfterTime:
             # Not all switches will be copied!  Be sure to add --tempdir, --maxruntime if desired.
@@ -394,11 +403,11 @@ def minimize():
 
 
 def tryRemovingChunks(chunkSize):
-    
+
     print "Done with a round of chunk size " + str(chunkSize) + "!"
     return anyChunksRemoved
-    
-    
+
+
 
 # Other reduction algorithms
 # (Use these if you're really frustrated with something you know is 1-minimal.)
@@ -437,7 +446,7 @@ def tryRemovingPair():
     # Restore the original testcase
     writeTestcase(testcaseFilename)
     print "Failure!  No pair can be removed."
-            
+
 
 def tryRemovingSubstring():
     for i in range(0, numParts):
@@ -453,7 +462,7 @@ def tryRemovingSubstring():
     # Restore the original testcase
     writeTestcase(testcaseFilename)
     print "Failure!  No substring can be removed."
-    
+
 
 # Helpers
 
@@ -468,7 +477,7 @@ def isPowerOfTwo(n):
         if i > n:
             return False
         i *= 2
-    
+
 def largestPowerOfTwoSmallerThan(n):
     i = 1
     while True:

@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
-import os, signal, sys, time, platform, subprocess
+import os
+import platform
+import signal
+import subprocess
+import sys
+import time
+
 THIS_SCRIPT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 
 exitBadUsage = 2
