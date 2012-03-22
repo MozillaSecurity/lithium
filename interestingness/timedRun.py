@@ -192,6 +192,7 @@ def grabCrashLog(progname, progfullname, crashedPID, logPrefix, signum):
         # Run gdb and move the core file.
         # Tip: gdb gives more info for (debug with intact build dir > debug > opt with frame pointers > opt)
         gdbCommandFile = os.path.join(THIS_SCRIPT_DIRECTORY, "gdb-quick.txt")
+        assert os.path.exists(gdbCommandFile)
         gdbArgs = ["gdb", "-n", "-batch", "-x", gdbCommandFile, progfullname, coreFilename]
         print " ".join(gdbArgs)
         child = subprocess.call(
