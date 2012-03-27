@@ -1,0 +1,5 @@
+http://delta.tigris.org/
+c_delta (see http://gcc.gnu.org/wiki/A_guide_to_testcase_reduction)
+langddmin
+http://llvm.org/releases/1.3/docs/CommandGuide/html/bugpoint.html
+http://blog.regehr.org/archives/645
