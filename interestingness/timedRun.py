@@ -122,6 +122,9 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         elapsedtime = time.time() - starttime
         if rc == None:
             if elapsedtime > timeout and not killed:
+                if progname == 'gdb':
+                    raise Exception('Do not use this with gdb, because xpkill in timedRun will ' + \
+                                    'kill gdb but leave the process within gdb still running')
                 xpkill(child)
                 # but continue looping, because maybe kill takes a few seconds or maybe it's busy crashing!
                 killed = True

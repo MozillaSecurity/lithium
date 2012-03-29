@@ -27,26 +27,11 @@ def parseOptions(arguments):
 def interesting(cliArgs, tempPrefix):
     (timeout, regexEnabled, args) = parseOptions(cliArgs)
 
-    desiredCrashSignature = args[0]
+    searchFor = args[0]
+
     runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix)
 
-    timeString = " (%.3f seconds)" % runinfo.elapsedtime
+    print "(%.3f seconds)" % runinfo.elapsedtime
 
-    crashLogName = tempPrefix + "-crash"
-
-    if runinfo.sta == timedRun.CRASHED:
-        if os.path.exists(crashLogName):
-            # When using this script, remember to escape characters, e.g. "\(" instead of "(" !
-            found, foundSig = fileContains(crashLogName, desiredCrashSignature, regexEnabled)
-            if found:
-                print "[CrashesAt] It crashed in " + foundSig + " :)" + timeString
-                return True
-            else:
-                print "[CrashesAt] It crashed somewhere else!" + timeString
-                return False
-        else:
-            print "[CrashesAt] It appeared to crash, but no crash log was found?" + timeString
-            return False
-    else:
-        print "[CrashesAt] It didn't crash." + timeString
-        return False
+    return fileContains(tempPrefix + "-out", searchFor, regexEnabled)[0] or \
+           fileContains(tempPrefix + "-err", searchFor, regexEnabled)[0]
