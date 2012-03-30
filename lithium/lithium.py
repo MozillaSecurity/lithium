@@ -90,7 +90,7 @@ def main():
     global parts
 
     try:
-        # XXX Consider using optparse (with disable_interspersed_args)
+        # XXX Consider using optparse (with disable_interspersed_args) or argparse (with argparse.REMAINDER)
         opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "strategy=", "repeat=", "min=", "max=", "chunksize=", "chunkstart=", "testcase=", "tempdir=", "repeatfirstround", "maxruntime="])
     except getopt.GetoptError, exc:
         usageError(exc.msg)
