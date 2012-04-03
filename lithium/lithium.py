@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import with_statement
 import getopt
 import os
 import subprocess
@@ -280,12 +281,11 @@ def readTestcaseLine(line):
             parts.append(char)
 
 def writeTestcase(filename):
-    file = open(filename, "w")
-    file.write(before)
-    for i in range(len(parts)):
-        file.write(parts[i])
-    file.write(after)
-    file.close()
+    with open(filename, "w") as file:
+        file.write(before)
+        for i in range(len(parts)):
+            file.write(parts[i])
+        file.write(after)
 
 def writeTestcaseTemp(partialFilename, useNumber):
     global tempFileCount

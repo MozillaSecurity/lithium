@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import with_statement
+
 import os
 import platform
 import signal
@@ -83,8 +85,8 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
     starttime = time.time()
 
     if useLogFiles:
-        childStdOut = file(logPrefix + "-out", 'w')
-        childStdErr = file(logPrefix + "-err", 'w')
+        childStdOut = open(logPrefix + "-out", 'w')
+        childStdErr = open(logPrefix + "-err", 'w')
 
     try:
         child = subprocess.Popen(
@@ -202,7 +204,7 @@ def grabCrashLog(progname, progfullname, crashedPID, logPrefix, signum):
             gdbArgs,
             stdin =  None,
             stderr = subprocess.STDOUT,
-            stdout = file(logPrefix + "-crash", 'w') if useLogFiles else None,
+            stdout = open(logPrefix + "-crash", 'w') if useLogFiles else None,
             close_fds = close_fds
         )
         if useLogFiles:
@@ -232,9 +234,8 @@ def grabCrashLog(progname, progfullname, crashedPID, logPrefix, signum):
             for fn in crashLogs:
                 fullfn = os.path.join(crashLogDir, fn)
                 try:
-                    c = file(fullfn)
-                    firstLine = c.readline()
-                    c.close()
+                    with open(fullfn) as c:
+                        firstLine = c.readline()
                     if firstLine.rstrip().endswith("[" + str(crashedPID) + "]"):
                         if useLogFiles:
                             os.rename(fullfn, logPrefix + "-crash")
