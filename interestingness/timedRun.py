@@ -183,16 +183,12 @@ def grabCrashLog(progname, progfullname, crashedPID, logPrefix, signum):
             os.remove(logPrefix + "-core")
 
     # On Mac and Linux, look for a core file.
-    # In addition to the one-time setup mentioned below for each OS,
-    # use the bash command "ulimit -c unlimited" before each invocation.
     coreFilename = None
     if platform.system() == "Darwin":
         # Assuming you ran: mkdir -p /cores/
         coreFilename = "/cores/core." + str(crashedPID)
     elif platform.system() == "Linux":
-        # Assuming you ran: echo 1 | sudo tee /proc/sys/kernel/core_uses_pid
-        # (I want to require this because otherwise multi-threading jsfunfuzz would result in core file collisions.)
-        coreFilename = "core." + str(crashedPID)
+        coreFilename = "core"
     if coreFilename and os.path.exists(coreFilename):
         # Run gdb and move the core file.
         # Tip: gdb gives more info for (debug with intact build dir > debug > opt with frame pointers > opt)
