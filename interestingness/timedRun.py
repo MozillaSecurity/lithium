@@ -188,7 +188,11 @@ def grabCrashLog(progname, progfullname, crashedPID, logPrefix, signum):
         # Assuming you ran: mkdir -p /cores/
         coreFilename = "/cores/core." + str(crashedPID)
     elif platform.system() == "Linux":
-        coreFilename = "core"
+        isPidUsed = False
+        if os.path.exists('/proc/sys/kernel/core_uses_pid'):
+            with open('/proc/sys/kernel/core_uses_pid') as f:
+                isPidUsed = bool(int(f.read()[0]))  # Setting [0] turns the input to a str.
+        coreFilename = 'core.' + str(crashedPID) if isPidUsed else 'core'
     if coreFilename and os.path.exists(coreFilename):
         # Run gdb and move the core file.
         # Tip: gdb gives more info for (debug with intact build dir > debug > opt with frame pointers > opt)
