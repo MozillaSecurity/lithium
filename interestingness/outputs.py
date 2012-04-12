@@ -6,7 +6,7 @@ import sys
 import timedRun
 
 from optparse import OptionParser
-path0 = os.path.dirname(__file__)
+path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
 from fileIngredients import fileContains
