@@ -13,6 +13,10 @@ path1 = os.path.abspath(os.path.join(path0, os.pardir, 'interestingness'))
 sys.path.append(path1)
 import ximport
 
+path2 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
+sys.path.append(path2)
+from subprocesses import shellify
+
 def usage():
     print """Lithium, an automated testcase reduction tool by Jesse Ruderman
 
@@ -353,7 +357,7 @@ def minimize():
     while True:
         if stopAfterTime != None and time.time() > stopAfterTime:
             # Not all switches will be copied!  Be sure to add --tempdir, --maxruntime if desired.
-            print "Lithium result: please continue using: " + " ".join(
+            print "Lithium result: please continue using: " + shellify(
                  [
                  #"--testcase=" + testcaseFilename,
                  "--max=" + str(chunkSize),
