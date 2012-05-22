@@ -153,7 +153,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         signum = -rc
         msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum, "Unknown signal"))
         sta = CRASHED
-        crashinfo = grabCrashLog(progname, commandWithArgs[0], child.pid, logPrefix, signum)
+        crashinfo = grabCrashLog(progname, commandWithArgs[0], child.pid, logPrefix)
 
     if useLogFiles:
         # Am I supposed to do this?
@@ -171,8 +171,50 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         logPrefix + "-err" if useLogFiles else child.stderr.read()
     )
 
+def grabMacCrashLog(progname, crashedPID, logPrefix, useLogFiles):
+    '''Finds the required crash log in the given crash reporter directory.'''
+    assert platform.system() == 'Darwin'
+    isLeopard = platform.mac_ver()[0].startswith("10.5")
+    reportDirList = [os.path.expanduser('~'), '/']
+    for baseDir in reportDirList:
+        # Sometimes the crash reports end up in the root directory.
+        # This possibly happens when the value of <value>:
+        #     defaults write com.apple.CrashReporter DialogType <value>
+        # is none, instead of server, or some other option.
+        # See http://en.wikipedia.org/wiki/Crash_Reporter_%28Mac_OS_X%29
+        reportDir = os.path.join(baseDir, 'Library/Logs/CrashReporter/') if isLeopard \
+            else os.path.join(baseDir, 'Library/Logs/DiagnosticReports/')
+        # Find a crash log for the right process name and pid, preferring
+        # newer crash logs (which sort last).
+        try:
+            crashLogs = os.listdir(reportDir)
+        except (OSError, IOError), e:
+            # Maybe this is the first crash ever on this computer, and the dir does not yet exist.
+            crashLogs = []
+        crashLogs = filter(lambda s: s.startswith(progname + "_"), crashLogs)
+        crashLogs.sort(reverse=True)
+        for fn in crashLogs:
+            fullfn = os.path.join(reportDir, fn)
+            try:
+                with open(fullfn) as c:
+                    firstLine = c.readline()
+                if firstLine.rstrip().endswith("[" + str(crashedPID) + "]"):
+                    if useLogFiles:
+                        os.rename(fullfn, logPrefix + "-crash")
+                        return logPrefix + "-crash"
+                    else:
+                        return fullfn
+                        #return open(fullfn).read()
 
-def grabCrashLog(progname, progfullname, crashedPID, logPrefix, signum):
+            except (OSError, IOError), e:
+                # Maybe the log was rotated out between when we got the list
+                # of files and when we tried to open this file.  If so, it's
+                # clearly not The One.
+                pass
+    return None
+
+def grabCrashLog(progname, progfullname, crashedPID, logPrefix):
+    '''Returns the crash log if found.'''
     if progname == "valgrind":
         return
     useLogFiles = isinstance(logPrefix, str)
@@ -220,35 +262,10 @@ def grabCrashLog(progname, progfullname, crashedPID, logPrefix, signum):
         loops = 0
         maxLoops = 500 if progname.startswith("firefox") else 30
         while not found:
-            # Find a crash log for the right process name and pid, preferring
-            # newer crash logs (which sort last).
-            crashLogDir = "~/Library/Logs/CrashReporter/" if platform.mac_ver()[0].startswith("10.5") else "~/Library/Logs/DiagnosticReports/"
-            crashLogDir = os.path.expanduser(crashLogDir)
-            try:
-                crashLogs = os.listdir(crashLogDir)
-            except (OSError, IOError), e:
-                # Maybe this is the first crash ever on this computer, and the directory doesn't exist yet.
-                crashLogs = []
-            crashLogs = filter(lambda s: s.startswith(progname + "_"), crashLogs)
-            crashLogs.sort(reverse=True)
-            for fn in crashLogs:
-                fullfn = os.path.join(crashLogDir, fn)
-                try:
-                    with open(fullfn) as c:
-                        firstLine = c.readline()
-                    if firstLine.rstrip().endswith("[" + str(crashedPID) + "]"):
-                        if useLogFiles:
-                            os.rename(fullfn, logPrefix + "-crash")
-                            return logPrefix + "-crash"
-                        else:
-                            return fullfn
-                            #return open(fullfn).read()
+            cLogFound = grabMacCrashLog(progname, crashedPID, logPrefix, useLogFiles)
+            if cLogFound is not None:
+                return cLogFound
 
-                except (OSError, IOError), e:
-                    # Maybe the log was rotated out between when we got the list
-                    # of files and when we tried to open this file.  If so, it's
-                    # clearly not The One.
-                    pass
             if not found:
                 # print "[grabCrashLog] Waiting for the crash log to appear..."
                 time.sleep(0.200)
