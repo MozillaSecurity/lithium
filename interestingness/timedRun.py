@@ -82,6 +82,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         # Running the |firefox| shell script makes our time-out kills useless,
         # prevents us from knowing the correct pid for crashes (needed on Leopard),
         # and screws with exit codes.
+        # This block will be moot when bug 658850 is fixed, if it isn't already.
         print "I think you want firefox-bin!"
         sys.exit(exitBadUsage)
 
