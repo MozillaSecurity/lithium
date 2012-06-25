@@ -32,7 +32,7 @@ def interesting(cliArgs, tempPrefix):
 
     timeString = " (%.3f seconds)" % runinfo.elapsedtime
 
-    crashLogName = tempPrefix + "-crash"
+    crashLogName = tempPrefix + "-crash.txt"
 
     if runinfo.sta == timedRun.CRASHED:
         if os.path.exists(crashLogName):
