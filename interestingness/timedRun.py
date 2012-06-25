@@ -60,7 +60,6 @@ def xpkill(p):
         else:
             # Windows XP and later.
             subprocess.Popen(["taskkill", "/F", "/PID", pidString]).wait()
-            assert False, 'We should no longer hit this since Python 2.6.5 is on MozillaBuild 1.5.1, already released for 1 year.'
     else:
         os.kill(p.pid, signal.SIGKILL)
 
