@@ -89,8 +89,8 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
     starttime = time.time()
 
     if useLogFiles:
-        childStdOut = open(logPrefix + "-out", 'w')
-        childStdErr = open(logPrefix + "-err", 'w')
+        childStdOut = open(logPrefix + "-out.txt", 'w')
+        childStdErr = open(logPrefix + "-err.txt", 'w')
 
     try:
         child = subprocess.Popen(
@@ -171,6 +171,6 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         elapsedtime,
         killed,
         crashinfo,
-        logPrefix + "-out" if useLogFiles else child.stdout.read(),
-        logPrefix + "-err" if useLogFiles else child.stderr.read()
+        logPrefix + "-out.txt" if useLogFiles else child.stdout.read(),
+        logPrefix + "-err.txt" if useLogFiles else child.stderr.read()
     )

@@ -33,5 +33,5 @@ def interesting(cliArgs, tempPrefix):
 
     print "(%.3f seconds)" % runinfo.elapsedtime
 
-    return fileContains(tempPrefix + "-out", searchFor, regexEnabled)[0] or \
-           fileContains(tempPrefix + "-err", searchFor, regexEnabled)[0]
+    return fileContains(tempPrefix + "-out.txt", searchFor, regexEnabled)[0] or \
+           fileContains(tempPrefix + "-err.txt", searchFor, regexEnabled)[0]
