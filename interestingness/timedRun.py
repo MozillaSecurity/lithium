@@ -8,6 +8,7 @@ import signal
 import subprocess
 import sys
 import time
+from copy import deepcopy
 
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
@@ -91,13 +92,18 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         childStdOut = open(logPrefix + "-out.txt", 'w')
         childStdErr = open(logPrefix + "-err.txt", 'w')
 
+    currEnv = deepcopy(os.environ)
+    if platform.system() == 'Linux':
+        # Hack for Linux machines. LD_LIBRARY_PATH needs to be set for Linux js shells.
+        currEnv['LD_LIBRARY_PATH'] = os.path.dirname(commandWithArgs[0])
     try:
         child = subprocess.Popen(
             commandWithArgs,
             stdin = (None         if (input == None) else subprocess.PIPE),
             stderr = (childStdErr if useLogFiles else subprocess.PIPE),
             stdout = (childStdOut if useLogFiles else subprocess.PIPE),
-            close_fds = close_fds
+            close_fds = close_fds,
+            env = currEnv
         )
     except OSError, e:
         print "Tried to run:"
