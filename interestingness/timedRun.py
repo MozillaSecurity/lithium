@@ -96,6 +96,16 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
     if platform.system() == 'Linux':
         # Hack for Linux machines. LD_LIBRARY_PATH needs to be set for Linux js shells.
         currEnv['LD_LIBRARY_PATH'] = os.path.dirname(commandWithArgs[0])
+
+    def ulimitSet():
+        # Sets soft limit of corefile size to be 500 million bytes in child process,
+        # after fork() but before exec(), only on POSIX platforms (Linux / Mac).
+        # See http://stackoverflow.com/a/1689991
+        if os.name == 'posix':
+            import resource; resource.setrlimit(resource.RLIMIT_CORE, (500000000, -1))
+        else:
+            pass
+
     try:
         child = subprocess.Popen(
             commandWithArgs,
@@ -103,7 +113,8 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
             stderr = (childStdErr if useLogFiles else subprocess.PIPE),
             stdout = (childStdOut if useLogFiles else subprocess.PIPE),
             close_fds = close_fds,
-            env = currEnv
+            env = currEnv,
+            preexec_fn = ulimitSet
         )
     except OSError, e:
         print "Tried to run:"
