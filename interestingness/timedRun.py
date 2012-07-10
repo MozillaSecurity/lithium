@@ -114,7 +114,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
             stdout = (childStdOut if useLogFiles else subprocess.PIPE),
             close_fds = close_fds,
             env = currEnv,
-            preexec_fn = ulimitSet if not platform.system() in ('Microsoft', 'Windows') else None
+            preexec_fn = ulimitSet if os.name == 'posix' else None
         )
     except OSError, e:
         print "Tried to run:"
