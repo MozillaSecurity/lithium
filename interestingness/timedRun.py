@@ -107,15 +107,25 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
             pass
 
     try:
-        child = subprocess.Popen(
-            commandWithArgs,
-            stdin = (None         if (input == None) else subprocess.PIPE),
-            stderr = (childStdErr if useLogFiles else subprocess.PIPE),
-            stdout = (childStdOut if useLogFiles else subprocess.PIPE),
-            close_fds = close_fds,
-            env = currEnv,
-            preexec_fn = ulimitSet
-        )
+        if platform.system() in ('Microsoft', 'Windows'):
+            child = subprocess.Popen(
+                commandWithArgs,
+                stdin = (None         if (input == None) else subprocess.PIPE),
+                stderr = (childStdErr if useLogFiles else subprocess.PIPE),
+                stdout = (childStdOut if useLogFiles else subprocess.PIPE),
+                close_fds = close_fds,
+                env = currEnv
+            )
+        else:
+            child = subprocess.Popen(
+                commandWithArgs,
+                stdin = (None         if (input == None) else subprocess.PIPE),
+                stderr = (childStdErr if useLogFiles else subprocess.PIPE),
+                stdout = (childStdOut if useLogFiles else subprocess.PIPE),
+                close_fds = close_fds,
+                env = currEnv,
+                preexec_fn = ulimitSet
+            )
     except OSError, e:
         print "Tried to run:"
         print "  " + repr(commandWithArgs)
