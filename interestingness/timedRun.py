@@ -16,7 +16,6 @@ sys.path.append(path1)
 from subprocesses import grabCrashLog, isLinux
 
 exitBadUsage = 2
-close_fds = (os.name == "posix") # would be nice to use this everywhere, but it's broken on Windows (http://docs.python.org/library/subprocess.html)
 
 (CRASHED, TIMED_OUT, NORMAL, ABNORMAL, NONE) = range(5)
 
@@ -49,7 +48,7 @@ def xpkill(p):
             if p.poll() == 0:
                 # Verify that the process is really killed.
                 p.kill()
-    elif os.name == "nt": # Windows
+    elif isWin:
         pidString = str(p.pid)
         if platform.release() == "2000":
             # Windows 2000 needs 'kill.exe' from the
@@ -112,7 +111,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
             stdin = (None         if (input == None) else subprocess.PIPE),
             stderr = (childStdErr if useLogFiles else subprocess.PIPE),
             stdout = (childStdOut if useLogFiles else subprocess.PIPE),
-            close_fds = close_fds,
+            close_fds = (os.name == "posix"),  # close_fds should not be changed on Windows
             env = currEnv,
             preexec_fn = ulimitSet if os.name == 'posix' else None
         )
