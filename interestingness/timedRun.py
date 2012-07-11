@@ -13,7 +13,7 @@ from copy import deepcopy
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
-from subprocesses import grabCrashLog
+from subprocesses import grabCrashLog, isLinux
 
 exitBadUsage = 2
 close_fds = (os.name == "posix") # would be nice to use this everywhere, but it's broken on Windows (http://docs.python.org/library/subprocess.html)
@@ -93,7 +93,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         childStdErr = open(logPrefix + "-err.txt", 'w')
 
     currEnv = deepcopy(os.environ)
-    if platform.system() == 'Linux':
+    if isLinux:
         # Hack for Linux machines. LD_LIBRARY_PATH needs to be set for Linux js shells.
         currEnv['LD_LIBRARY_PATH'] = os.path.dirname(commandWithArgs[0])
 
