@@ -31,7 +31,9 @@ def interesting(cliArgs, tempPrefix):
 
     runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix)
 
-    print "(%.3f seconds)" % runinfo.elapsedtime
+    result = fileContains(tempPrefix + "-out.txt", searchFor, regexEnabled)[0] or \
+             fileContains(tempPrefix + "-err.txt", searchFor, regexEnabled)[0]
 
-    return fileContains(tempPrefix + "-out.txt", searchFor, regexEnabled)[0] or \
-           fileContains(tempPrefix + "-err.txt", searchFor, regexEnabled)[0]
+    print 'Exit status: ' + runinfo.msg + " (%.3f seconds)" % runinfo.elapsedtime
+
+    return result

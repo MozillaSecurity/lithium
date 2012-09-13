@@ -11,13 +11,13 @@
 
 # Example usage on m-c changeset 92fe907ddac8 with RANGENUM:
 # $ python -u ~/fuzzing/lithium/lithium.py --strategy=check-only range 1 20 outputs --timeout=3 "enumerators" ./js-dbg-32-mozilla-central-linux -m -n -e "LOOPCOUNT=RANGENUM;" 740654.js
-# $ python -u ~/fuzzing/lithium/lithium.py --strategy=check-only range 1 20 crashes 3 ./js-dbg-32-mozilla-central-linux -m -n -e "LOOPCOUNT=RANGENUM;" 740654.js
+# $ python -u ~/fuzzing/lithium/lithium.py --strategy=check-only range 1 20 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -m -n -e "LOOPCOUNT=RANGENUM;" 740654.js
 # (LOOPCOUNT is the upper limit of the for loop which wraps the testcase in bug 740654, note that
 # this for loop has to be added manually. RANGENUM is defined in this file, see below)
 
 # Example usage without RANGENUM:
 # $ python -u ~/fuzzing/lithium/lithium.py --strategy=check-only range 1 20 outputs --timeout=3 "enumerators" ./js-dbg-32-mozilla-central-linux -m -n 740654.js
-# $ python -u ~/fuzzing/lithium/lithium.py --strategy=check-only range 1 20 crashes 3 ./js-dbg-32-mozilla-central-linux -m -n 740654.js
+# $ python -u ~/fuzzing/lithium/lithium.py --strategy=check-only range 1 20 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -m -n 740654.js
 
 import os
 import sys
