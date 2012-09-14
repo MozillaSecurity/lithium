@@ -1,23 +1,26 @@
 #!/usr/bin/env python
 
-# Repeats an interestingness test a given number of times. To only loop the execution of the tests,
-# RANGENUM is not needed. Add RANGENUM only if the testcase needs a variance of max loop iterations,
-# such as a varying mjitChunkLimit depending on the m-c changeset.
-
+# Repeats an interestingness test a given number of times.
+# If "RANGENUM" is present, it is replaced in turn with each number in the range.
+#
 # Use for:
-# * Intermittent testcases.  If the testcase only triggers the bug 25% of the time, use |range 1 8|
-# * Unstable testcases, where removing part of the testcase mysteriously requires changing a number
-#   somewhere else in the testcase, e.g. needing to vary the number in mjitChunkLimit
-
-# Example usage on m-c changeset 92fe907ddac8 with RANGENUM:
-# $ python -u ~/fuzzing/lithium/lithium.py --strategy=check-only range 1 20 outputs --timeout=3 "enumerators" ./js-dbg-32-mozilla-central-linux -m -n -e "LOOPCOUNT=RANGENUM;" 740654.js
-# $ python -u ~/fuzzing/lithium/lithium.py --strategy=check-only range 1 20 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -m -n -e "LOOPCOUNT=RANGENUM;" 740654.js
-# (LOOPCOUNT is the upper limit of the for loop which wraps the testcase in bug 740654, note that
-# this for loop has to be added manually. RANGENUM is defined in this file, see below)
-
-# Example usage without RANGENUM:
-# $ python -u ~/fuzzing/lithium/lithium.py --strategy=check-only range 1 20 outputs --timeout=3 "enumerators" ./js-dbg-32-mozilla-central-linux -m -n 740654.js
-# $ python -u ~/fuzzing/lithium/lithium.py --strategy=check-only range 1 20 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -m -n 740654.js
+#
+# 1. Intermittent testcases.
+#
+#    Repeating the test can make the bug occur often enough for Lithium to make progress.
+#
+#     lithium.py range 1 20 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -m -n intermittent.js
+#
+# 2. Unstable testcases.
+#
+#    Varying a number in the test (using RANGENUM) may allow other parts of the testcase to be
+#    removed (Lithium), or may allow different versions of the shell to crash (autoBisect).
+#
+#    In the testcase:
+#      mjitChunkLimit(climit);
+#
+#    On the command line:
+#      lithium.py range 1 50 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -m -n -e "climit=RANGENUM;" 740654.js
 
 import os
 import sys
