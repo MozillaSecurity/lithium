@@ -28,13 +28,14 @@ def getSignalName(num, default=None):
     return default
 
 class rundata(object):
-  def __init__(self, sta, rc, msg, elapsedtime, killed, crashinfo, out, err):
+  def __init__(self, sta, rc, msg, elapsedtime, killed, crashinfo, pid, out, err):
     self.sta = sta
     self.rc = rc
     self.msg = msg
     self.elapsedtime = elapsedtime
     self.killed = killed
     self.crashinfo = crashinfo
+    self.pid = pid
     self.out = out
     self.err = err
 
@@ -186,6 +187,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         elapsedtime,
         killed,
         crashinfo,
+        child.pid,
         logPrefix + "-out.txt" if useLogFiles else child.stdout.read(),
         logPrefix + "-err.txt" if useLogFiles else child.stderr.read()
     )
