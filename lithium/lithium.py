@@ -152,7 +152,7 @@ def main():
             return
 
         if len(parts) == 0:
-            usageError("The file has " + quantity(0, atom) + " so there's nothing for Lithium to try to remove!")
+            print "The file has " + quantity(0, atom) + " so there's nothing for Lithium to try to remove!"
 
         writeTestcaseTemp("original", False)
         strategyFunction()
