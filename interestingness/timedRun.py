@@ -47,8 +47,11 @@ def xpkill(p):
             p.kill()
         except WindowsError:
             if p.poll() == 0:
-                # Verify that the process is really killed.
-                p.kill()
+                try:
+                    p.kill() # Verify that the process is really killed.
+                except WindowsError:
+                    if p.poll() == 0:
+                        p.kill() # Re-verify that the process is really killed.
     elif isWin:
         pidString = str(p.pid)
         if platform.release() == "2000":
