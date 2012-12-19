@@ -98,7 +98,10 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
     currEnv = deepcopy(os.environ)
     if isLinux:
         # Hack for Linux machines. LD_LIBRARY_PATH needs to be set for Linux js shells.
-        currEnv['LD_LIBRARY_PATH'] = os.path.dirname(commandWithArgs[0])
+        if 'LD_LIBRARY_PATH' in currEnv:
+            currEnv['LD_LIBRARY_PATH'] += ';' + os.path.dirname(os.path.abspath(commandWithArgs[0]))
+        else:
+            currEnv['LD_LIBRARY_PATH'] = os.path.dirname(os.path.abspath(commandWithArgs[0]))
 
     def ulimitSet():
         # Sets soft limit of corefile size to be 500 million bytes in child process,
