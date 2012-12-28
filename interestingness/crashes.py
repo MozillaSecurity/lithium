@@ -10,6 +10,7 @@ path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
 from fileIngredients import fileContains
+from subprocesses import isWin
 
 def parseOptions(arguments):
     parser = OptionParser()
@@ -38,7 +39,16 @@ def interesting(cliArgs, tempPrefix):
     crashLogName = tempPrefix + "-crash.txt"
 
     if runinfo.sta == timedRun.CRASHED:
-        if os.path.exists(crashLogName):
+        if isWin:
+            # Our harness does not work with Windows core dumps. Yet, if in Windows, we enter
+            # this function, we should have an interesting crash, so just go ahead and return.
+            assert crashSig == '', 'The harness is not yet able to look for specific signatures' + \
+                                    ' in Windows core dumps.'
+            assert regexEnabled == False, 'The harness is not yet able to look for specific' + \
+                                    ' regex signatures in Windows core dumps.'
+            print 'Exit status: ' + runinfo.msg + timeString
+            return True
+        elif os.path.exists(crashLogName):
             # When using this script, remember to escape characters, e.g. "\(" instead of "(" !
             found, foundSig = fileContains(crashLogName, crashSig, regexEnabled)
             if found:
