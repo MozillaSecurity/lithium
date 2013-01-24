@@ -48,9 +48,11 @@ def xpkill(p):
         except WindowsError:
             if p.poll() == 0:
                 try:
+                    print 'Trying to kill the process the first time...'
                     p.kill() # Verify that the process is really killed.
                 except WindowsError:
                     if p.poll() == 0:
+                        print 'Trying to kill the process the second time...'
                         p.kill() # Re-verify that the process is really killed.
     elif isWin:
         pidString = str(p.pid)
