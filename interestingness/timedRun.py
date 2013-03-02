@@ -13,7 +13,7 @@ from copy import deepcopy
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
-from subprocesses import grabCrashLog, isLinux, isWin
+from subprocesses import envWithPath, grabCrashLog, isLinux, isWin
 
 exitBadUsage = 2
 
@@ -98,12 +98,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         childStdErr = open(logPrefix + "-err.txt", 'w')
 
     currEnv = deepcopy(os.environ)
-    if isLinux:
-        # Hack for Linux machines. LD_LIBRARY_PATH needs to be set for Linux js shells.
-        if 'LD_LIBRARY_PATH' in currEnv:
-            currEnv['LD_LIBRARY_PATH'] += ';' + os.path.dirname(os.path.abspath(commandWithArgs[0]))
-        else:
-            currEnv['LD_LIBRARY_PATH'] = os.path.dirname(os.path.abspath(commandWithArgs[0]))
+    currEnv = envWithPath(os.path.dirname(os.path.abspath(commandWithArgs[0])))
 
     def ulimitSet():
         # Sets soft limit of corefile size to be 500 million bytes in child process,
