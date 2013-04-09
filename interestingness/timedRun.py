@@ -106,6 +106,9 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         # See http://stackoverflow.com/a/1689991
         if os.name == 'posix':
             import resource; resource.setrlimit(resource.RLIMIT_CORE, (500000000, -1))
+        elif platform.uname()[4] == 'armv7l':
+            # Pandaboards only have 1GB RAM, so restrict this early in the harness
+            import resource; resource.setrlimit(resource.RLIMIT_AS, (500000000, -1))
         else:
             pass
 
