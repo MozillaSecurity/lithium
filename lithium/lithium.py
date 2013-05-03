@@ -346,7 +346,7 @@ def minimize():
     global minimizeMax, minimizeMin, minimizeChunkStart, minimizeRepeatFirstRound
     origNumParts = len(parts)
     chunkSize = min(minimizeMax, largestPowerOfTwoSmallerThan(origNumParts))
-    finalChunkSize = max(minimizeMin, 1)
+    finalChunkSize = min(chunkSize, max(minimizeMin, 1))
     chunkStart = minimizeChunkStart
     anyChunksRemoved = minimizeRepeatFirstRound
 
