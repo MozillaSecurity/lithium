@@ -17,10 +17,10 @@
 #    removed (Lithium), or may allow different versions of the shell to crash (autoBisect).
 #
 #    In the testcase:
-#      mjitChunkLimit(climit);
+#      schedulegc(n);
 #
 #    On the command line:
-#      lithium.py range 1 50 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -m -n -e "climit=RANGENUM;" 740654.js
+#      lithium.py range 1 50 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -e "n=RANGENUM;" 740654.js
 
 import os
 import sys
