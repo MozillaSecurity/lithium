@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import with_statement
-
 import os
 import platform
 import signal
@@ -13,7 +11,7 @@ from copy import deepcopy
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
-from subprocesses import envWithPath, grabCrashLog, isLinux, isWin
+from subprocesses import envWithPath, grabCrashLog
 
 exitBadUsage = 2
 
@@ -42,32 +40,17 @@ class rundata(object):
 
 def xpkill(p):
     '''Based on mozilla-central/source/build/automation.py.in'''
-    if hasattr(p, "kill"): # only available in python 2.6+
-        try:
-            p.kill()
-        except WindowsError:
-            if p.poll() == 0:
-                try:
-                    print 'Trying to kill the process the first time...'
-                    p.kill() # Verify that the process is really killed.
-                except WindowsError:
-                    if p.poll() == 0:
-                        print 'Trying to kill the process the second time...'
-                        p.kill() # Re-verify that the process is really killed.
-    elif isWin:
-        pidString = str(p.pid)
-        if platform.release() == "2000":
-            # Windows 2000 needs 'kill.exe' from the
-            #'Windows 2000 Resource Kit tools'. (See bug 475455.)
+    try:
+        p.kill()
+    except WindowsError:
+        if p.poll() == 0:
             try:
-                subprocess.Popen(["kill", "-f", pidString]).wait()
-            except:
-                print("Missing 'kill' utility to kill process with pid=%s. Kill it manually!" % pidString)
-        else:
-            # Windows XP and later.
-            subprocess.Popen(["taskkill", "/F", "/PID", pidString]).wait()
-    else:
-        os.kill(p.pid, signal.SIGKILL)
+                print 'Trying to kill the process the first time...'
+                p.kill() # Verify that the process is really killed.
+            except WindowsError:
+                if p.poll() == 0:
+                    print 'Trying to kill the process the second time...'
+                    p.kill() # Re-verify that the process is really killed.
 
 
 def timed_run(commandWithArgs, timeout, logPrefix, input=None):
