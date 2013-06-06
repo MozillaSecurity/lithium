@@ -32,7 +32,9 @@ def parseOptions(arguments):
 def interesting(cliArgs, tempPrefix):
     (regexEnabled, crashSig, timeout, args) = parseOptions(cliArgs)
 
-    runinfo = timedRun.timed_run(args, timeout, tempPrefix)
+    # Examine stack for crash signature, this is needed if crashSig is specified.
+    wantStack = (crashSig != '')
+    runinfo = timedRun.timed_run(args, timeout, tempPrefix, wantStack)
 
     timeString = " (%.3f seconds)" % runinfo.elapsedtime
 
@@ -46,6 +48,9 @@ def interesting(cliArgs, tempPrefix):
                                     ' in Windows core dumps.'
             assert regexEnabled == False, 'The harness is not yet able to look for specific' + \
                                     ' regex signatures in Windows core dumps.'
+            print 'Exit status: ' + runinfo.msg + timeString
+            return True
+        elif not wantStack:
             print 'Exit status: ' + runinfo.msg + timeString
             return True
         elif os.path.exists(crashLogName):

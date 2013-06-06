@@ -5,7 +5,8 @@ import timedRun
 def interesting(args, tempPrefix):
     timeout = int(args[0])
 
-    runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix)
+    wantStack = False  # No need to examine crash signatures here.
+    runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix, wantStack)
 
     if runinfo.sta == timedRun.TIMED_OUT:
         return True

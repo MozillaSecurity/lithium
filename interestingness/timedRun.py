@@ -53,7 +53,7 @@ def xpkill(p):
                     p.kill() # Re-verify that the process is really killed.
 
 
-def timed_run(commandWithArgs, timeout, logPrefix, input=None):
+def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
     '''If logPrefix is None, uses pipes instead of files for all output.'''
 
     if not isinstance(commandWithArgs, list):
@@ -162,7 +162,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None):
         signum = -rc
         msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum, "Unknown signal"))
         sta = CRASHED
-        crashinfo = grabCrashLog(progname, commandWithArgs[0], child.pid, logPrefix)
+        crashinfo = grabCrashLog(progname, commandWithArgs[0], child.pid, logPrefix, wantStack)
 
     if useLogFiles:
         # Am I supposed to do this?

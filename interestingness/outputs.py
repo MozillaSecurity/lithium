@@ -29,7 +29,8 @@ def interesting(cliArgs, tempPrefix):
 
     searchFor = args[0]
 
-    runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix)
+    wantStack = False  # No need to examine crash signatures when considering stdout/stderr.
+    runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix, wantStack)
 
     result = fileContains(tempPrefix + "-out.txt", searchFor, regexEnabled)[0] or \
              fileContains(tempPrefix + "-err.txt", searchFor, regexEnabled)[0]
