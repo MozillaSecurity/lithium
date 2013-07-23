@@ -41,16 +41,7 @@ def interesting(cliArgs, tempPrefix):
     crashLogName = tempPrefix + "-crash.txt"
 
     if runinfo.sta == timedRun.CRASHED:
-        if isWin:
-            # Our harness does not work with Windows core dumps. Yet, if in Windows, we enter
-            # this function, we should have an interesting crash, so just go ahead and return.
-            assert crashSig == '', 'The harness is not yet able to look for specific signatures' + \
-                                    ' in Windows core dumps.'
-            assert regexEnabled == False, 'The harness is not yet able to look for specific' + \
-                                    ' regex signatures in Windows core dumps.'
-            print 'Exit status: ' + runinfo.msg + timeString
-            return True
-        elif not wantStack:
+        if not wantStack:
             print 'Exit status: ' + runinfo.msg + timeString
             return True
         elif os.path.exists(crashLogName):
