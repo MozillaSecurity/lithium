@@ -11,7 +11,7 @@ from copy import deepcopy
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
-from subprocesses import envWithPath, grabCrashLog
+from subprocesses import envWithPath, grabCrashLog, normExpUserPath, vdump
 
 exitBadUsage = 2
 
@@ -82,6 +82,26 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
 
     currEnv = deepcopy(os.environ)
     currEnv = envWithPath(os.path.dirname(os.path.abspath(commandWithArgs[0])))
+
+    # Ideally we should use LLVM_ROOT from buildOptions.py, but we do not feel like importing
+    # an entire options object for a non-default use-case, so hard-coding it here.
+    ASAN_LLVM_ROOT = os.path.expanduser(os.path.join('~', 'llvm'))
+    ASAN_SYMBOLIZE_PATH_WITH_CMAKE = normExpUserPath(
+        os.path.join(ASAN_LLVM_ROOT, 'build', 'bin', 'llvm-symbolizer'))
+    ASAN_SYMBOLIZE_PATH_NO_CMAKE = normExpUserPath(
+        os.path.join(ASAN_LLVM_ROOT, 'build', 'Release+Asserts', 'bin', 'llvm-symbolizer'))
+
+    vdump('progname is: ' + progname)
+    if '-asan-' in progname:  # This is likely only going to work with js shells through the harness
+        if os.path.isfile(ASAN_SYMBOLIZE_PATH_WITH_CMAKE):
+            currEnv['ASAN_SYMBOLIZER_PATH'] = ASAN_SYMBOLIZE_PATH_WITH_CMAKE
+            vdump('ASAN_SYMBOLIZE_PATH_WITH_CMAKE is found at: ' + ASAN_SYMBOLIZE_PATH_WITH_CMAKE)
+        elif os.path.isfile(ASAN_SYMBOLIZE_PATH_NO_CMAKE):
+            currEnv['ASAN_SYMBOLIZER_PATH'] = ASAN_SYMBOLIZE_PATH_NO_CMAKE
+            vdump('ASAN_SYMBOLIZE_PATH_NO_CMAKE is found at: ' + ASAN_SYMBOLIZE_PATH_NO_CMAKE)
+        else:
+            print 'WARNING: Not symbolizing - ASan symbolizer is neither at ' + \
+                ASAN_SYMBOLIZE_PATH_WITH_CMAKE + ' nor at ' + ASAN_SYMBOLIZE_PATH_NO_CMAKE
 
     def ulimitSet():
         # Sets soft limit of corefile size to be 500 million bytes in child process,
