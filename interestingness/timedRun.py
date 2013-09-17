@@ -107,7 +107,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
         # Sets soft limit of corefile size to be 500 million bytes in child process,
         # after fork() but before exec(), only on POSIX platforms (Linux / Mac).
         # See http://stackoverflow.com/a/1689991
-        if os.name == 'posix' and '-vg-' not in progname:
+        if os.name == 'posix':
             import resource; resource.setrlimit(resource.RLIMIT_CORE, (500000000, -1))
         if platform.uname()[4] == 'armv7l':
             # Pandaboards only have 1GB RAM, so restrict this early in the harness
