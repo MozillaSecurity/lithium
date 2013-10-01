@@ -11,7 +11,7 @@ from copy import deepcopy
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
-from subprocesses import envWithPath, grabCrashLog, normExpUserPath, vdump
+from subprocesses import envWithPath, grabCrashLog, isARMv7l, normExpUserPath, vdump
 
 exitBadUsage = 2
 
@@ -109,7 +109,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
         # See http://stackoverflow.com/a/1689991
         if os.name == 'posix':
             import resource; resource.setrlimit(resource.RLIMIT_CORE, (500000000, -1))
-        if platform.uname()[4] == 'armv7l':
+        if isARMv7l:
             # Pandaboards only have 1GB RAM, so restrict this early in the harness
             import resource; resource.setrlimit(resource.RLIMIT_AS, (400000000, -1))
 
