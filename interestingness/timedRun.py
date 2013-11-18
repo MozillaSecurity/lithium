@@ -111,7 +111,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
             import resource; resource.setrlimit(resource.RLIMIT_CORE, (500000000, -1))
         if isARMv7l:
             # Pandaboards only have 1GB RAM, so restrict this early in the harness
-            import resource; resource.setrlimit(resource.RLIMIT_AS, (400000000, -1))
+            import resource; resource.setrlimit(resource.RLIMIT_AS, (500000000, -1))
 
     try:
         child = subprocess.Popen(
