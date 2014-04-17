@@ -180,7 +180,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
         signum = -rc
         msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum, "Unknown signal"))
         sta = CRASHED
-        crashinfo = grabCrashLog(progname, commandWithArgs[0], child.pid, logPrefix, wantStack)
+        crashinfo = grabCrashLog(commandWithArgs[0], child.pid, logPrefix, wantStack)
 
     if useLogFiles:
         # Am I supposed to do this?
