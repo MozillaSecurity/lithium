@@ -43,6 +43,9 @@ def interesting(cliArgs, tempPrefix):
     conditionScript = ximport.importRelativeOrAbsolute(arguments[0])
     conditionArgs = arguments[1:]
 
+    if hasattr(conditionScript, "init"):
+        conditionScript.init(conditionArgs)
+
     assert (rangeMax - rangeMin) >= 0
     for i in xrange(rangeMin, rangeMax + 1):
         # This doesn't do anything if RANGENUM is not found.
