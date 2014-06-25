@@ -15,6 +15,8 @@ from subprocesses import envWithPath, findLlvmBinPath, grabCrashLog, isARMv7l, n
 
 exitBadUsage = 2
 
+ASAN_EXIT_CODE = 77
+
 (CRASHED, TIMED_OUT, NORMAL, ABNORMAL, NONE) = range(5)
 
 
@@ -84,8 +86,9 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
     currEnv = envWithPath(os.path.dirname(os.path.abspath(commandWithArgs[0])))
 
     vdump('progname is: ' + progname)
-    if '-asan-' in progname:  # This is likely only going to work with js shells through the harness
-        currEnv['ASAN_OPTIONS'] = 'exitcode=77'
+    isAsanShell = '-asan-' in progname
+    if isAsanShell:  # This is likely only going to work with js shells through the harness
+        currEnv['ASAN_OPTIONS'] = 'exitcode=' + str(ASAN_EXIT_CODE)
         ASAN_SYMBOLIZER = normExpUserPath(os.path.join(findLlvmBinPath(), 'llvm-symbolizer'))
         if os.path.isfile(ASAN_SYMBOLIZER):
             currEnv['ASAN_SYMBOLIZER_PATH'] = ASAN_SYMBOLIZER
@@ -160,7 +163,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
     elif rc == 0:
         msg = 'NORMAL'
         sta = NORMAL
-    elif rc > 0:
+    elif (rc > 0) and not (rc == ASAN_EXIT_CODE and isAsanShell):
         msg = 'ABNORMAL return code ' + str(rc)
         sta = ABNORMAL
     else:
