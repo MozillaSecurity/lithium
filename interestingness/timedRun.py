@@ -97,14 +97,24 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
             print 'WARNING: Not symbolizing - ASan symbolizer not found.'
 
     def ulimitSet():
-        # Sets soft limit of corefile size to be 500 million bytes in child process,
-        # after fork() but before exec(), only on POSIX platforms (Linux / Mac).
-        # See http://stackoverflow.com/a/1689991
-        if os.name == 'posix':
-            import resource; resource.setrlimit(resource.RLIMIT_CORE, (500000000, -1))
-        if isARMv7l:
-            # Pandaboards only have 1GB RAM, so restrict this early in the harness
-            import resource; resource.setrlimit(resource.RLIMIT_AS, (500000000, -1))
+        # Adapted in part from bug 573646 and the following:
+        #   https://hg.mozilla.org/mozilla-central/file/6a63bcb6e0d3/js/src/tests/lib/tests.py#l27
+        try:
+            import resource  # resource module not supported on all platforms
+            GB = 2**30
+            if isARMv7l:
+                # ODROID boards only have 2GB RAM, so restrict to half of it.
+                resource.setrlimit(resource.RLIMIT_AS, (1*GB, 1*GB))
+            else:
+                resource.setrlimit(resource.RLIMIT_AS, (2*GB, 2*GB))
+
+            # Sets soft limit of corefile size to be half a GB in child process,
+            # after fork() but before exec(), only on POSIX platforms (Linux / Mac).
+            # See http://stackoverflow.com/a/1689991
+            if os.name == 'posix':
+                resource.setrlimit(resource.RLIMIT_CORE, (1/2*GB, 1/2*GB))
+        except:
+            return
 
     try:
         child = subprocess.Popen(
