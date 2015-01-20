@@ -10,7 +10,6 @@ path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
 from fileIngredients import fileContains
-from subprocesses import isWin
 
 def parseOptions(arguments):
     parser = OptionParser()

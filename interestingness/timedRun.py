@@ -11,7 +11,7 @@ from copy import deepcopy
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
-from subprocesses import envWithPath, findLlvmBinPath, grabCrashLog, isARMv7l, normExpUserPath, vdump
+import subprocesses as sps
 
 exitBadUsage = 2
 
@@ -83,16 +83,17 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
         childStdErr = open(logPrefix + "-err.txt", 'w')
 
     currEnv = deepcopy(os.environ)
-    currEnv = envWithPath(os.path.dirname(os.path.abspath(commandWithArgs[0])))
+    currEnv = sps.envWithPath(os.path.dirname(os.path.abspath(commandWithArgs[0])))
 
-    vdump('progname is: ' + progname)
+    sps.vdump('progname is: ' + progname)
     isAsanShell = '-asan-' in progname
     if isAsanShell:  # This is likely only going to work with js shells through the harness
         currEnv['ASAN_OPTIONS'] = 'exitcode=' + str(ASAN_EXIT_CODE)
-        ASAN_SYMBOLIZER = normExpUserPath(os.path.join(findLlvmBinPath(), 'llvm-symbolizer'))
+        ASAN_SYMBOLIZER = sps.normExpUserPath(
+            os.path.join(sps.findLlvmBinPath(), 'llvm-symbolizer'))
         if os.path.isfile(ASAN_SYMBOLIZER):
             currEnv['ASAN_SYMBOLIZER_PATH'] = ASAN_SYMBOLIZER
-            vdump('ASAN_SYMBOLIZER is found at: ' + ASAN_SYMBOLIZER)
+            sps.vdump('ASAN_SYMBOLIZER is found at: ' + ASAN_SYMBOLIZER)
         else:
             print 'WARNING: Not symbolizing - ASan symbolizer not found.'
 
@@ -102,7 +103,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
         try:
             import resource  # resource module not supported on all platforms
             GB = 2**30
-            if isARMv7l:
+            if sps.isARMv7l:
                 # ODROID boards only have 2GB RAM, so restrict to half of it.
                 resource.setrlimit(resource.RLIMIT_AS, (1*GB, 1*GB))
             else:
@@ -183,7 +184,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
         signum = -rc
         msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum, "Unknown signal"))
         sta = CRASHED
-        crashinfo = grabCrashLog(commandWithArgs[0], child.pid, logPrefix, wantStack)
+        crashinfo = sps.grabCrashLog(commandWithArgs[0], child.pid, logPrefix, wantStack)
 
     if useLogFiles:
         # Am I supposed to do this?
