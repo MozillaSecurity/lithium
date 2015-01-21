@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
+import copy
 import os
-import platform
 import signal
 import subprocess
 import sys
 import time
-from copy import deepcopy
 
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
@@ -82,7 +81,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
         childStdOut = open(logPrefix + "-out.txt", 'w')
         childStdErr = open(logPrefix + "-err.txt", 'w')
 
-    currEnv = deepcopy(os.environ)
+    currEnv = copy.deepcopy(os.environ)
     currEnv = sps.envWithPath(os.path.dirname(os.path.abspath(commandWithArgs[0])))
 
     sps.vdump('progname is: ' + progname)
