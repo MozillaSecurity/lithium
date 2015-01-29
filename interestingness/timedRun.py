@@ -99,8 +99,8 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
     def ulimitSet():
         # Adapted in part from bug 573646 and the following:
         #   https://hg.mozilla.org/mozilla-central/file/6a63bcb6e0d3/js/src/tests/lib/tests.py#l27
-        try:
-            import resource  # resource module not supported on all platforms
+        if os.name == 'posix':
+            import resource  # resource module is only available on POSIX
             GB = 2**30
             if sps.isARMv7l:
                 # ODROID boards only have 2GB RAM, so restrict to half of it.
@@ -111,10 +111,11 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
             # Sets soft limit of corefile size to be half a GB in child process,
             # after fork() but before exec(), only on POSIX platforms (Linux / Mac).
             # See http://stackoverflow.com/a/1689991
-            if os.name == 'posix':
-                resource.setrlimit(resource.RLIMIT_CORE, (1/2*GB, 1/2*GB))
-        except:
-            return
+            # Do not use 1/2*GB, see http://stackoverflow.com/a/2958717
+            # float(1)/2*GB, or 0.5*GB (these 2 result in floats) or GB/2 (results in int)
+            halfGB = int(GB / 2)
+            assert halfGB != 0, 'halfGB should not be zero.'
+            resource.setrlimit(resource.RLIMIT_CORE, (halfGB, halfGB))
 
     try:
         child = subprocess.Popen(
