@@ -48,11 +48,11 @@ def xpkill(p):
         if p.poll() == 0:
             try:
                 print 'Trying to kill the process the first time...'
-                p.kill() # Verify that the process is really killed.
+                p.kill()  # Verify that the process is really killed.
             except WindowsError:
                 if p.poll() == 0:
                     print 'Trying to kill the process the second time...'
-                    p.kill() # Re-verify that the process is really killed.
+                    p.kill()  # Re-verify that the process is really killed.
 
 
 def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None, preexec_fn=None):
