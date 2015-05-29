@@ -26,6 +26,7 @@ def getSignalName(num, default=None):
                 return p
     return default
 
+
 class rundata(object):
   def __init__(self, sta, rc, msg, elapsedtime, killed, crashinfo, pid, out, err):
     self.sta = sta
@@ -58,9 +59,9 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None, preexe
     '''If logPrefix is None, uses pipes instead of files for all output.'''
 
     if not isinstance(commandWithArgs, list):
-        raise TypeError, "commandWithArgs should be a list (of strings)."
+        raise TypeError("commandWithArgs should be a list (of strings).")
     if not isinstance(timeout, int):
-        raise TypeError, "timeout should be an int."
+        raise TypeError("timeout should be an int.")
 
     useLogFiles = isinstance(logPrefix, str)
 
@@ -113,7 +114,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None, preexe
         print "  " + str(e)
         sys.exit(2)
 
-    if input != None:
+    if input is not None:
         child.stdin.write(input)
         child.stdin.close()
 
@@ -132,10 +133,10 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None, preexe
     while 1:
         rc = child.poll()
         elapsedtime = time.time() - starttime
-        if rc == None:
+        if rc is None:
             if elapsedtime > timeout and not killed:
                 if progname == 'gdb':
-                    raise Exception('Do not use this with gdb, because xpkill in timedRun will ' + \
+                    raise Exception('Do not use this with gdb, because xpkill in timedRun will ' +
                                     'kill gdb but leave the process within gdb still running')
                 xpkill(child)
                 # but continue looping, because maybe kill takes a few seconds or maybe it's busy crashing!
