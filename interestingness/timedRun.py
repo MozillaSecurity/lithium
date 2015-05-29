@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import copy
 import os
 import signal
 import subprocess
@@ -8,11 +7,9 @@ import sys
 import time
 
 path0 = os.path.dirname(os.path.abspath(__file__))
-path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
+path1 = os.path.abspath(os.path.join(path0, os.pardir, 'interestingness'))
 sys.path.append(path1)
-import subprocesses as sps
-
-exitBadUsage = 2
+import envVars
 
 ASAN_EXIT_CODE = 77
 
@@ -54,6 +51,15 @@ def xpkill(p):
                     p.kill()  # Re-verify that the process is really killed.
 
 
+def makeEnv(binPath):
+    env = envVars.envWithPath(os.path.abspath(os.path.dirname(binPath)))
+    env['ASAN_OPTIONS'] = 'exitcode=' + str(ASAN_EXIT_CODE)
+    symbolizer_path = envVars.findLlvmBinPath()
+    if symbolizer_path is not None:
+        env['ASAN_SYMBOLIZER_PATH'] = symbolizer_path
+    return env
+
+
 def timed_run(commandWithArgs, timeout, logPrefix, input=None, preexec_fn=None):
     '''If logPrefix is None, uses pipes instead of files for all output.'''
 
@@ -73,21 +79,6 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None, preexec_fn=None):
         childStdOut = open(logPrefix + "-out.txt", 'w')
         childStdErr = open(logPrefix + "-err.txt", 'w')
 
-    currEnv = copy.deepcopy(os.environ)
-    currEnv = sps.envWithPath(os.path.dirname(os.path.abspath(commandWithArgs[0])))
-
-    sps.vdump('progname is: ' + progname)
-    isAsanShell = '-asan-' in progname
-    if isAsanShell:  # This is likely only going to work with js shells through the harness
-        currEnv['ASAN_OPTIONS'] = 'exitcode=' + str(ASAN_EXIT_CODE)
-        ASAN_SYMBOLIZER = sps.normExpUserPath(
-            os.path.join(sps.findLlvmBinPath(), 'llvm-symbolizer'))
-        if os.path.isfile(ASAN_SYMBOLIZER):
-            currEnv['ASAN_SYMBOLIZER_PATH'] = ASAN_SYMBOLIZER
-            sps.vdump('ASAN_SYMBOLIZER is found at: ' + ASAN_SYMBOLIZER)
-        else:
-            print 'WARNING: Not symbolizing - ASan symbolizer not found.'
-
     try:
         child = subprocess.Popen(
             commandWithArgs,
@@ -95,7 +86,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None, preexec_fn=None):
             stderr = (childStdErr if useLogFiles else subprocess.PIPE),
             stdout = (childStdOut if useLogFiles else subprocess.PIPE),
             close_fds = (os.name == "posix"),  # close_fds should not be changed on Windows
-            env = currEnv,
+            env = makeEnv(commandWithArgs[0]),
             preexec_fn = preexec_fn
         )
     except OSError, e:
@@ -143,8 +134,11 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None, preexec_fn=None):
     elif rc == 0:
         msg = 'NORMAL'
         sta = NORMAL
-    elif (rc > 0) and not (rc == ASAN_EXIT_CODE and isAsanShell):
-        msg = 'ABNORMAL return code ' + str(rc)
+    elif rc == ASAN_EXIT_CODE:
+        msg = 'CRASHED (Address Sanitizer fault)'
+        sta = CRASHED
+    elif rc > 0:
+        msg = 'ABNORMAL exit code ' + str(rc)
         sta = ABNORMAL
     else:
         # rc < 0
