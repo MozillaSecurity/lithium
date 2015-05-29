@@ -10,22 +10,24 @@ path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
 import fileIngredients
 
+
 def parseOptions(arguments):
     parser = OptionParser()
     parser.disable_interspersed_args()
     parser.add_option('-r', '--regex', action='store_true', dest='useRegex',
-                      default = False,
-                      help = 'Allow search for regular expressions instead of strings.')
+                      default=False,
+                      help='Allow search for regular expressions instead of strings.')
     parser.add_option('-s', '--sig', action='store', dest='sig',
-                      default = '',
+                      default='',
                       help='Optionally set the crash signature. Defaults to "%default".')
     parser.add_option('-t', '--timeout', type='int', action='store', dest='condTimeout',
-                      default = 120,
+                      default=120,
                       help='Optionally set the timeout. Defaults to "%default" seconds.')
 
     options, args = parser.parse_args(arguments)
 
     return options.useRegex, options.sig, options.condTimeout, args
+
 
 def interesting(cliArgs, tempPrefix):
     (regexEnabled, crashSig, timeout, args) = parseOptions(cliArgs)
