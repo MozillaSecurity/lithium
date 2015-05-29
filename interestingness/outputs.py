@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 
-import os
-import sys
-import timedRun
-
 from optparse import OptionParser
-path0 = os.path.dirname(os.path.abspath(__file__))
-path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
-sys.path.append(path1)
+
+import timedRun
 import fileIngredients
+
 
 def parseOptions(arguments):
     parser = OptionParser()
