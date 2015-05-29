@@ -28,13 +28,12 @@ def getSignalName(num, default=None):
 
 
 class rundata(object):
-  def __init__(self, sta, rc, msg, elapsedtime, killed, crashinfo, pid, out, err):
+  def __init__(self, sta, rc, msg, elapsedtime, killed, pid, out, err):
     self.sta = sta
     self.rc = rc
     self.msg = msg
     self.elapsedtime = elapsedtime
     self.killed = killed
-    self.crashinfo = crashinfo
     self.pid = pid
     self.out = out
     self.err = err
@@ -138,8 +137,6 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None, preexe
         else:
             break
 
-    crashinfo = None
-
     if killed and (os.name != "posix" or rc == -signal.SIGKILL):
         msg = 'TIMED OUT'
         sta = TIMED_OUT
@@ -156,7 +153,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None, preexe
         signum = -rc
         msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum, "Unknown signal"))
         sta = CRASHED
-        crashinfo = sps.grabCrashLog(commandWithArgs[0], child.pid, logPrefix, wantStack)
+        sps.grabCrashLog(commandWithArgs[0], child.pid, logPrefix, wantStack)
 
     if useLogFiles:
         # Am I supposed to do this?
@@ -169,7 +166,6 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None, preexe
         msg,
         elapsedtime,
         killed,
-        crashinfo,
         child.pid,
         logPrefix + "-out.txt" if useLogFiles else child.stdout.read(),
         logPrefix + "-err.txt" if useLogFiles else child.stderr.read()
