@@ -54,7 +54,7 @@ def xpkill(p):
                     p.kill() # Re-verify that the process is really killed.
 
 
-def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
+def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None, preexec_fn=None):
     '''If logPrefix is None, uses pipes instead of files for all output.'''
 
     if not isinstance(commandWithArgs, list):
@@ -96,27 +96,6 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
         else:
             print 'WARNING: Not symbolizing - ASan symbolizer not found.'
 
-    def ulimitSet():
-        # Adapted in part from bug 573646 and the following:
-        #   https://hg.mozilla.org/mozilla-central/file/6a63bcb6e0d3/js/src/tests/lib/tests.py#l27
-        if os.name == 'posix':
-            import resource  # resource module is only available on POSIX
-            GB = 2**30
-            if sps.isARMv7l:
-                # ODROID boards only have 2GB RAM, so restrict to half of it.
-                resource.setrlimit(resource.RLIMIT_AS, (1*GB, 1*GB))
-            else:
-                resource.setrlimit(resource.RLIMIT_AS, (2*GB, 2*GB))
-
-            # Sets soft limit of corefile size to be half a GB in child process,
-            # after fork() but before exec(), only on POSIX platforms (Linux / Mac).
-            # See http://stackoverflow.com/a/1689991
-            # Do not use 1/2*GB, see http://stackoverflow.com/a/2958717
-            # float(1)/2*GB, or 0.5*GB (these 2 result in floats) or GB/2 (results in int)
-            halfGB = int(GB / 2)
-            assert halfGB != 0, 'halfGB should not be zero.'
-            resource.setrlimit(resource.RLIMIT_CORE, (halfGB, halfGB))
-
     try:
         child = subprocess.Popen(
             commandWithArgs,
@@ -125,7 +104,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None):
             stdout = (childStdOut if useLogFiles else subprocess.PIPE),
             close_fds = (os.name == "posix"),  # close_fds should not be changed on Windows
             env = currEnv,
-            preexec_fn = ulimitSet if os.name == 'posix' else None
+            preexec_fn = preexec_fn
         )
     except OSError, e:
         print "Tried to run:"
