@@ -68,14 +68,6 @@ def timed_run(commandWithArgs, timeout, logPrefix, wantStack, input=None, preexe
     commandWithArgs[0] = os.path.expanduser(commandWithArgs[0])
     progname = commandWithArgs[0].split(os.path.sep)[-1]
 
-    if progname == "firefox" and os.name == "posix":
-        # Running the |firefox| shell script makes our time-out kills useless,
-        # prevents us from knowing the correct pid for crashes (needed on Leopard),
-        # and screws with exit codes.
-        # This block will be moot when bug 658850 is fixed, if it isn't already.
-        print "I think you want firefox-bin!"
-        sys.exit(exitBadUsage)
-
     starttime = time.time()
 
     if useLogFiles:
