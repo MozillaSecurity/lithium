@@ -81,6 +81,8 @@ def envWithPath(path, runningEnv=os.environ):
 def findLlvmBinPath():
     '''Returns the path to compiled LLVM binaries, which differs depending on compilation method.'''
     # https://developer.mozilla.org/en-US/docs/Building_Firefox_with_Address_Sanitizer#Manual_Build
+    if isWin:
+        return None  # The harness does not yet support Clang on Windows
 
     if not os.path.isdir(LLVM_ROOT) and not os.path.isdir(os.path.join(LLVM_ROOT, '.git')):
         cloneLLVMGit()
