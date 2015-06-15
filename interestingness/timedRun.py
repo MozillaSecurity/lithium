@@ -56,7 +56,7 @@ def makeEnv(binPath):
     env['ASAN_OPTIONS'] = 'exitcode=' + str(ASAN_EXIT_CODE)
     symbolizer_path = envVars.findLlvmBinPath()
     if symbolizer_path is not None:
-        env['ASAN_SYMBOLIZER_PATH'] = symbolizer_path
+        env['ASAN_SYMBOLIZER_PATH'] = os.path.join(symbolizer_path, 'llvm-symbolizer')
     return env
 
 
