@@ -52,6 +52,13 @@ def xpkill(p):
 
 
 def makeEnv(binPath):
+    shellIsDeterministic = '-dm-' in binPath
+    # Total hack to make this not rely on queryBuildConfiguration in the funfuzz repository.
+    # We need this so releng machines (which work off downloaded shells that are in build/dist/js),
+    # do not compile LLVM.
+    if not shellIsDeterministic:
+        return None
+
     env = envVars.envWithPath(os.path.abspath(os.path.dirname(binPath)))
     env['ASAN_OPTIONS'] = 'exitcode=' + str(ASAN_EXIT_CODE)
     symbolizer_path = envVars.findLlvmBinPath()
