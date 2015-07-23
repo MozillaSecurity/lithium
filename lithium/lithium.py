@@ -31,7 +31,7 @@ Options:
 * --char (-c).
       Don't treat lines as atomic units; treat the file as a sequence
       of characters rather than a sequence of lines.
-* --strategy=[minimize, remove-pair, remove-substring, check-only].
+* --strategy=[minimize, minimize-around, minimize-balanced].
       default: minimize.
 * --testcase=filename.
       default: last thing on the command line, which can double as passing in.
@@ -137,7 +137,8 @@ def main():
 
         strategyFunction = {
             'minimize': minimize,
-            'minimize-around': minimizeSurroundingPairs
+            'minimize-around': minimizeSurroundingPairs,
+            'minimize-balanced': minimizeBalancedPairs,
         }.get(strategy, None)
 
         if not strategyFunction:
@@ -556,6 +557,254 @@ def tryRemovingSurroundingChunks(chunkSize):
     writeTestcaseTemp("did-round-" + str(chunkSize), True);
 
     return (chunksRemoved > 0)
+
+
+#
+# This Strategy attempt at removing balanced chuncks which might be surrounding
+# interesting code, but which cannot be removed independently of the other.
+# This happens frequently with patterns such as:
+#
+#   ...;
+#   if (cond) {        <-- !!!
+#      ...;
+#      interesting();
+#      ...;
+#   }                  <-- !!!
+#   ...;
+#
+# The value of the condition might not be interesting, but in order to reach the
+# interesting code we still have to compute it, and keep extra code alive.
+#
+def minimizeBalancedPairs():
+    origNumParts = len(parts)
+    chunkSize = min(minimizeMax, largestPowerOfTwoSmallerThan(origNumParts))
+    finalChunkSize = max(minimizeMin, 1)
+
+    while 1:
+        anyChunksRemoved = tryRemovingBalancedPairs(chunkSize);
+
+        last = (chunkSize == finalChunkSize)
+
+        if anyChunksRemoved and (minimizeRepeat == "always" or (minimizeRepeat == "last" and last)):
+            # Repeat with the same chunk size
+            pass
+        elif last:
+            # Done
+            break
+        else:
+            # Continue with the next smaller chunk size
+            chunkSize /= 2
+
+    writeTestcase(testcaseFilename)
+
+    print "=== LITHIUM SUMMARY ==="
+    if finalChunkSize == 1 and minimizeRepeat != "never":
+        print "  Removing any single " + atom + " from the final file makes it uninteresting!"
+
+    print "  Initial size: " + quantity(origNumParts, atom)
+    print "  Final size: " + quantity(len(parts), atom)
+    print "  Tests performed: " + str(testCount)
+    print "  Test total: " + quantity(testTotal, atom)
+
+def list_fiveParts(list, step, f, s, t):
+    return (list[:f], list[f:s], list[s:(s+step)], list[(s+step):(t+step)], list[(t+step):])
+
+def tryRemovingBalancedPairs(chunkSize):
+    """Make a single run through the testcase, trying to remove chunks of size chunkSize.
+
+    Returns True iff any chunks were removed."""
+
+    global parts
+
+    chunksSoFar = 0
+    summary = ""
+
+    chunksRemoved = 0
+    chunksSurviving = 0
+    atomsRemoved = 0
+
+    atomsInitial = len(parts)
+    numChunks = divideRoundingUp(len(parts), chunkSize)
+
+    # Not enough chunks to remove surrounding blocks.
+    if numChunks < 2:
+        return False
+
+    print "Starting a round with chunks of " + quantity(chunkSize, atom) + "."
+
+    summary = ['S' for i in range(numChunks)]
+    curly = [(parts[i].count('{') - parts[i].count('}')) for i in range(numChunks)]
+    square = [(parts[i].count('[') - parts[i].count(']')) for i in range(numChunks)]
+    normal = [(parts[i].count('(') - parts[i].count(')')) for i in range(numChunks)]
+    chunkStart = 0
+    lhsChunkIdx = 0
+
+    try:
+        while chunkStart < len(parts):
+
+            description = "chunk #" + str(lhsChunkIdx) + "".join([" " for i in range(len(str(lhsChunkIdx)) + 4)])
+            description += " of " + str(numChunks) + " chunks of size " + str(chunkSize)
+
+            assert summary[:lhsChunkIdx].count('S') * chunkSize == chunkStart, "the chunkStart should correspond to the lhsChunkIdx modulo the removed chunks."
+
+            chunkLhsStart = chunkStart
+            chunkLhsEnd = min(len(parts), chunkLhsStart + chunkSize)
+
+            nCurly = curly[lhsChunkIdx]
+            nSquare = square[lhsChunkIdx]
+            nNormal = normal[lhsChunkIdx]
+
+            # If the chunk is already balanced, try to remove it.
+            if nCurly == 0 and nSquare == 0 and nNormal == 0:
+                if interesting(parts[:chunkLhsStart] + parts[chunkLhsEnd:]):
+                    print "Yay, reduced it by removing " + description + " :)"
+                    chunksRemoved += 1
+                    atomsRemoved += (chunkLhsEnd - chunkLhsStart)
+                    summary[lhsChunkIdx] = '-'
+                else:
+                    print "Removing " + description + " made the file 'uninteresting'."
+                    chunkStart += chunkSize
+                lhsChunkIdx = list_nindex(summary, lhsChunkIdx, 'S')
+                continue
+
+            # Otherwise look for the corresponding chunk.
+            rhsChunkIdx = lhsChunkIdx
+            for item in summary[(lhsChunkIdx + 1):]:
+                rhsChunkIdx += 1
+                if item != 'S':
+                    continue
+                nCurly += curly[rhsChunkIdx]
+                nSquare += square[rhsChunkIdx]
+                nNormal += normal[rhsChunkIdx]
+                if nCurly < 0 or nSquare < 0 or nNormal < 0:
+                    break
+                if nCurly == 0 and nSquare == 0 and nNormal == 0:
+                    break
+
+            # If we have no match, then just skip this pair of chunks.
+            if nCurly != 0 or nSquare != 0 or nNormal != 0:
+                print "Skipping " + description + " because it is 'uninteresting'."
+                chunkStart += chunkSize
+                lhsChunkIdx = list_nindex(summary, lhsChunkIdx, 'S')
+                continue
+
+            # Otherwise we do have a match and we check if this is interesting to remove both.
+            chunkRhsStart = chunkLhsStart + chunkSize * summary[lhsChunkIdx:rhsChunkIdx].count('S')
+            chunkRhsStart = min(len(parts), chunkRhsStart)
+            chunkRhsEnd = min(len(parts), chunkRhsStart + chunkSize)
+
+            description = "chunk #" + str(lhsChunkIdx) + " & #" + str(rhsChunkIdx)
+            description += " of " + str(numChunks) + " chunks of size " + str(chunkSize)
+
+            if interesting(parts[:chunkLhsStart] + parts[chunkLhsEnd:chunkRhsStart] + parts[chunkRhsEnd:]):
+                print "Yay, reduced it by removing " + description + " :)"
+                chunksRemoved += 2
+                atomsRemoved += (chunkLhsEnd - chunkLhsStart)
+                atomsRemoved += (chunkRhsEnd - chunkRhsStart)
+                summary[lhsChunkIdx] = '-'
+                summary[rhsChunkIdx] = '-'
+                lhsChunkIdx = list_nindex(summary, lhsChunkIdx, 'S')
+                continue
+
+            # Removing the braces make the failure disappear.  As we are looking
+            # for removing chunk (braces), we need to make the content within
+            # the braces as minimal as possible, so let us try to see if we can
+            # move the chunks outside the braces.
+            print "Removing " + description + " made the file 'uninteresting'."
+
+            # Moving chunks is still a bit experimental, and it can introduce reducing loops.
+            # If you want to try it, just replace this True by a False.
+            if True:
+                chunkStart += chunkSize
+                lhsChunkIdx = list_nindex(summary, lhsChunkIdx, 'S')
+                continue
+
+            origChunkIdx = lhsChunkIdx
+            stayOnSameChunk = False
+            chunkMidStart = chunkLhsEnd
+            midChunkIdx = list_nindex(summary, lhsChunkIdx, 'S')
+            while chunkMidStart < chunkRhsStart:
+                assert summary[:midChunkIdx].count('S') * chunkSize == chunkMidStart, "the chunkMidStart should correspond to the midChunkIdx modulo the removed chunks."
+                description = "chunk #" + str(midChunkIdx) + "".join([" " for i in range(len(str(lhsChunkIdx)) + 4)])
+                description += " of " + str(numChunks) + " chunks of size " + str(chunkSize)
+
+                chunkMidEnd = chunkMidStart + chunkSize
+                p = list_fiveParts(parts, chunkSize, chunkLhsStart, chunkMidStart, chunkRhsStart)
+
+                nCurly = curly[midChunkIdx]
+                nSquare = square[midChunkIdx]
+                nNormal = normal[midChunkIdx]
+                if nCurly != 0 or nSquare != 0 or nNormal != 0:
+                    print "Keepping " + description + " because it is 'uninteresting'."
+                    chunkMidStart += chunkSize
+                    midChunkIdx = list_nindex(summary, midChunkIdx, 'S')
+                    continue
+
+                # Try moving the chunk after.
+                if interesting(p[0] + p[1] + p[3] + p[2] + p[4]):
+                    print "->Moving " + description + " kept the file 'interesting'."
+                    chunkRhsStart -= chunkSize
+                    chunkRhsEnd -= chunkSize
+                    tS = list_fiveParts(summary, 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
+                    tc = list_fiveParts(curly  , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
+                    ts = list_fiveParts(square , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
+                    tn = list_fiveParts(normal , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
+                    summary = tS[0] + tS[1] + tS[3] + tS[2] + tS[4]
+                    curly =   tc[0] + tc[1] + tc[3] + tc[2] + tc[4]
+                    square =  ts[0] + ts[1] + ts[3] + ts[2] + ts[4]
+                    normal =  tn[0] + tn[1] + tn[3] + tn[2] + tn[4]
+                    rhsChunkIdx -= 1
+                    midChunkIdx = summary[midChunkIdx:].index('S') + midChunkIdx
+                    continue
+
+                # Try moving the chunk before.
+                if interesting(p[0] + p[2] + p[1] + p[3] + p[4]):
+                    print "<-Moving " + description + " kept the file 'interesting'."
+                    chunkLhsStart += chunkSize
+                    chunkLhsEnd += chunkSize
+                    chunkMidStart += chunkSize
+                    tS = list_fiveParts(summary, 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
+                    tc = list_fiveParts(curly  , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
+                    ts = list_fiveParts(square , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
+                    tn = list_fiveParts(normal , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
+                    summary = tS[0] + tS[2] + tS[1] + tS[3] + tS[4]
+                    curly =   tc[0] + tc[2] + tc[1] + tc[3] + tc[4]
+                    square =  ts[0] + ts[2] + ts[1] + ts[3] + ts[4]
+                    normal =  tn[0] + tn[2] + tn[1] + tn[3] + tn[4]
+                    lhsChunkIdx += 1
+                    midChunkIdx = list_nindex(summary, midChunkIdx, 'S')
+                    stayOnSameChunk = True
+                    continue
+
+                print "..Moving " + description + " made the file 'uninteresting'."
+                chunkMidStart += chunkSize
+                midChunkIdx = list_nindex(summary, midChunkIdx, 'S')
+
+            lhsChunkIdx = origChunkIdx
+            if not stayOnSameChunk:
+                chunkStart += chunkSize
+                lhsChunkIdx = list_nindex(summary, lhsChunkIdx, 'S')
+
+
+    except ValueError:
+        # This is a valid loop exit point.
+        chunkStart = len(parts)
+
+    atomsSurviving = atomsInitial - atomsRemoved
+    printableSummary = " ".join(["".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks / 2 + numChunks % 2)])
+    print ""
+    print "Done with a round of chunk size " + str(chunkSize) + "!"
+    print quantity(summary.count('S'), "chunk") + " survived; " + \
+          quantity(summary.count('-'), "chunk") + " removed."
+    print quantity(atomsSurviving, atom) + " survived; " + \
+          quantity(atomsRemoved, atom) + " removed."
+    print "Which chunks survived: " + printableSummary
+    print ""
+
+    writeTestcaseTemp("did-round-" + str(chunkSize), True);
+
+    return (chunksRemoved > 0)
+
 
 
 # Helpers
