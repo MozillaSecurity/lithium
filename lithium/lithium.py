@@ -8,6 +8,7 @@ import subprocess
 import time
 import sys
 import re
+import string
 
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'interestingness'))
@@ -32,7 +33,7 @@ Options:
 * --char (-c).
       Don't treat lines as atomic units; treat the file as a sequence
       of characters rather than a sequence of lines.
-* --strategy=[minimize, minimize-around, minimize-balanced, replace-properties-by-globals].
+* --strategy=[minimize, minimize-around, minimize-balanced, replace-properties-by-globals, replace-arguments-by-globals].
       default: minimize.
 * --testcase=filename.
       default: last thing on the command line, which can double as passing in.
@@ -141,6 +142,7 @@ def main():
             'minimize-around': minimizeSurroundingPairs,
             'minimize-balanced': minimizeBalancedPairs,
             'replace-properties-by-globals': replacePropertiesByGlobals,
+            'replace-arguments-by-globals': replaceArgumentsByGlobals,
         }.get(strategy, None)
 
         if not strategyFunction:
@@ -955,6 +957,236 @@ def tryMakingGlobals(chunkSize, numChars):
     writeTestcaseTemp("did-round-" + str(chunkSize), True);
 
     return numRemovedChars
+
+
+#
+# This Strategy attempt at replacing arguments by globals, for each named
+# argument of a function we add a setter of the global of the same name before
+# the function call.  The goal is to remove functions by making empty arguments
+# lists instead.
+#
+#   function foo(a,b) {
+#     list = a + b;
+#   }
+#   foo(2, 3)
+#
+# becomes:
+#
+#   function foo() {
+#     list = a + b;
+#   }
+#   a = 2;
+#   b = 3;
+#   foo()
+#
+# The next logical step is inlining the body of the function at the call-site.
+#
+def replaceArgumentsByGlobals():
+    roundNum = 0
+    while 1:
+        numRemovedArguments = tryArgumentsAsGlobals(roundNum)
+        roundNum += 1
+
+        if numRemovedArguments and (minimizeRepeat == "always" or minimizeRepeat == "last"):
+            # Repeat with the same chunk size
+            pass
+        else:
+            # Done
+            break
+
+    writeTestcase(testcaseFilename)
+
+    print "=== LITHIUM SUMMARY ==="
+    print "  Tests performed: " + str(testCount)
+    print "  Test total: " + quantity(testTotal, atom)
+
+
+def tryArgumentsAsGlobals(roundNum):
+    """Make a single run through the testcase, trying to remove chunks of size chunkSize.
+    
+    Returns True iff any chunks were removed."""
+
+    global parts
+
+    numMovedArguments = 0
+    numSurvivedArguments = 0
+
+    # Map words to the chunk indexes in which they are present.
+    functions = {}
+    anonymousQueue = []
+    anonymousStack = []
+    for chunk, line in enumerate(parts):
+        # Match function definition with at least one argument.
+        for match in re.finditer(r'(?:function\s+(\w+)|(\w+)\s*=\s*function)\s*\((\s*\w+\s*(?:,\s*\w+\s*)*)\)', line):
+            fun = match.group(1)
+            if fun is None:
+                fun = match.group(2)
+
+            if match.group(3) == "":
+                args = []
+            else:
+                args = match.group(3).split(',')
+
+            if not fun in functions:
+                functions[fun] = { "defs": args, "argsPattern": match.group(3), "chunk": chunk, "uses": [] }
+            else:
+                functions[fun]["defs"] = args
+                functions[fun]["argsPattern"] = match.group(3)
+                functions[fun]["chunk"] = chunk
+
+
+        # Match anonymous function definition, which are surrounded by parentheses.
+        for match in re.finditer(r'\(function\s*\w*\s*\(((?:\s*\w+\s*(?:,\s*\w+\s*)*)?)\)\s*{', line):
+            if match.group(1) == "":
+                args = []
+            else:
+                args = match.group(1).split(',')
+            anonymousStack += [{ "defs": args, "chunk": chunk, "use": None, "useChunk": 0 }]
+
+        # Match calls of anonymous function.
+        for match in re.finditer(r'}\s*\)\s*\(((?:[^()]|\([^,()]*\))*)\)', line):
+            if len(anonymousStack) == 0:
+                continue
+            anon = anonymousStack[-1]
+            anonymousStack = anonymousStack[:-1]
+            if match.group(1) == "" and len(anon["defs"]) == 0:
+                continue
+            if match.group(1) == "":
+                args = []
+            else:
+                args = match.group(1).split(',')
+            anon["use"] = args
+            anon["useChunk"] = chunk
+            anonymousQueue += [anon]
+
+        # match function calls. (and some definitions)
+        for match in re.finditer(r'((\w+)\s*\(((?:[^()]|\([^,()]*\))*)\))', line):
+            pattern = match.group(1)
+            fun = match.group(2)
+            if match.group(3) == "":
+                args = []
+            else:
+                args = match.group(3).split(',')
+            if not fun in functions:
+                functions[fun] = { "uses": [] }
+            functions[fun]["uses"] += [{ "values": args, "chunk": chunk, "pattern": pattern }]
+
+
+    # All patterns have been removed sucessfully.
+    if len(functions) == 0 and len(anonymousQueue) == 0:
+        return 0
+
+    print "Starting removing function arguments."
+
+    for fun, argsMap in functions.items():
+        description = "arguments of '" + fun + "'"
+        if "defs" not in argsMap or len(argsMap["uses"]) == 0:
+            print "Ignoring " + description + " because it is 'uninteresting'."
+            continue
+
+        maybeMovedArguments = 0
+        newParts = parts
+
+        # Remove the function definition arguments
+        argDefs = argsMap["defs"]
+        defChunk = argsMap["chunk"]
+        subst = string.replace(newParts[defChunk], argsMap["argsPattern"], "", 1)
+        newParts = newParts[:defChunk] + [ subst ] + newParts[(defChunk+1):]
+
+        # Copy callers arguments to globals.
+        for argUse in argsMap["uses"]:
+            values = argUse["values"]
+            chunk = argUse["chunk"]
+            if chunk == defChunk and values == argDefs:
+                continue
+            while len(values) < len(argDefs):
+                values = values + ["undefined"]
+            setters = "".join([ a + " = " + v + ";\n" for a, v in zip(argDefs, values) ])
+            subst = setters + newParts[chunk]
+            newParts = newParts[:chunk] + [ subst ] + newParts[(chunk+1):]
+        maybeMovedArguments += len(argDefs);
+
+        if interesting(newParts):
+            print "Yay, reduced it by removing " + description + " :)"
+            numMovedArguments += maybeMovedArguments
+        else:
+            numSurvivedArguments += maybeMovedArguments
+            print "Removing " + description + " made the file 'uninteresting'."
+
+        for argUse in argsMap["uses"]:
+            chunk = argUse["chunk"]
+            values = argUse["values"]
+            if chunk == defChunk and values == argDefs:
+                continue
+
+            newParts = parts
+            subst = string.replace(newParts[chunk], argUse["pattern"], fun + "()", 1)
+            if newParts[chunk] == subst:
+                continue
+            newParts = newParts[:chunk] + [ subst ] + newParts[(chunk+1):]
+            maybeMovedArguments = len(values);
+
+            descriptionChunk = description + " at " + atom + " #" + str(chunk)
+            if interesting(newParts):
+                print "Yay, reduced it by removing " + descriptionChunk + " :)"
+                numMovedArguments += maybeMovedArguments
+            else:
+                numSurvivedArguments += maybeMovedArguments
+                print "Removing " + descriptionChunk + " made the file 'uninteresting'."
+
+    # Remove immediate anonymous function calls.
+    for anon in anonymousQueue:
+        noopChanges = 0
+        maybeMovedArguments = 0
+        newParts = parts
+
+        argDefs = anon["defs"]
+        defChunk = anon["chunk"]
+        values = anon["use"]
+        chunk = anon["useChunk"]
+        description = "arguments of anonymous function at #" + atom + " " + str(defChunk)
+
+        # Remove arguments of the function.
+        subst = string.replace(newParts[defChunk], ",".join(argDefs), "", 1)
+        if newParts[defChunk] == subst:
+            noopChanges += 1
+        newParts = newParts[:defChunk] + [ subst ] + newParts[(defChunk+1):]
+
+        # Replace arguments by their value in the scope of the function.
+        while len(values) < len(argDefs):
+            values = values + ["undefined"]
+        setters = "".join([ "var " + a + " = " + v + ";\n" for a, v in zip(argDefs, values) ])
+        subst = newParts[defChunk] + "\n" + setters
+        if newParts[defChunk] == subst:
+            noopChanges += 1
+        newParts = newParts[:defChunk] + [ subst ] + newParts[(defChunk+1):]
+
+        # Remove arguments of the anonymous function call.
+        subst = string.replace(newParts[chunk], ",".join(anon["use"]), "", 1)
+        if newParts[chunk] == subst:
+            noopChanges += 1
+        newParts = newParts[:chunk] + [ subst ] + newParts[(chunk+1):]
+        maybeMovedArguments += len(values);
+
+        if noopChanges == 3:
+            continue
+
+        if interesting(newParts):
+            print "Yay, reduced it by removing " + description + " :)"
+            numMovedArguments += maybeMovedArguments
+        else:
+            numSurvivedArguments += maybeMovedArguments
+            print "Removing " + description + " made the file 'uninteresting'."
+
+
+    print ""
+    print "Done with this round!"
+    print quantity(numMovedArguments, "argument") + " moved;"
+    print quantity(numSurvivedArguments, "argument") + " survived."
+
+    writeTestcaseTemp("did-round-" + str(roundNum), True);
+
+    return numMovedArguments
 
 
 # Helpers
