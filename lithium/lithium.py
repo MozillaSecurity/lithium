@@ -7,6 +7,7 @@ import os
 import subprocess
 import time
 import sys
+import re
 
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'interestingness'))
@@ -31,7 +32,7 @@ Options:
 * --char (-c).
       Don't treat lines as atomic units; treat the file as a sequence
       of characters rather than a sequence of lines.
-* --strategy=[minimize, minimize-around, minimize-balanced].
+* --strategy=[minimize, minimize-around, minimize-balanced, replace-properties-by-globals].
       default: minimize.
 * --testcase=filename.
       default: last thing on the command line, which can double as passing in.
@@ -139,6 +140,7 @@ def main():
             'minimize': minimize,
             'minimize-around': minimizeSurroundingPairs,
             'minimize-balanced': minimizeBalancedPairs,
+            'replace-properties-by-globals': replacePropertiesByGlobals,
         }.get(strategy, None)
 
         if not strategyFunction:
@@ -805,6 +807,154 @@ def tryRemovingBalancedPairs(chunkSize):
 
     return (chunksRemoved > 0)
 
+
+
+#
+# This Strategy attempt at removing members, such as other strategies can
+# then move the lines out-side the functions.  The goal is to rename
+# variable at the same time, such as the program remains valid, while
+# removing the dependency on the object on which the member is.
+#
+#   function Foo() {
+#     this.list = [];
+#   }
+#   Foo.prototype.push = function(a) {
+#     this.list.push(a);
+#   }
+#   Foo.prototype.last = function() {
+#     return this.list.pop();
+#   }
+#
+# Which might transform the previous example to something like:
+#
+#   function Foo() {
+#     list = [];
+#   }
+#   push = function(a) {
+#     list.push(a);
+#   }
+#   last = function() {
+#     return list.pop();
+#   }
+#
+def replacePropertiesByGlobals():
+    origNumParts = len(parts)
+    chunkSize = min(minimizeMax, 2 * largestPowerOfTwoSmallerThan(origNumParts))
+    finalChunkSize = max(minimizeMin, 1)
+
+    origNumChars = 0
+    for line in parts:
+        origNumChars += len(line)
+
+    numChars = origNumChars
+    while 1:
+        numRemovedChars = tryMakingGlobals(chunkSize, numChars);
+        numChars -= numRemovedChars
+
+        last = (chunkSize == finalChunkSize)
+
+        if numRemovedChars and (minimizeRepeat == "always" or (minimizeRepeat == "last" and last)):
+            # Repeat with the same chunk size
+            pass
+        elif last:
+            # Done
+            break
+        else:
+            # Continue with the next smaller chunk size
+            chunkSize /= 2
+
+    writeTestcase(testcaseFilename)
+
+    print "=== LITHIUM SUMMARY ==="
+    if finalChunkSize == 1 and minimizeRepeat != "never":
+        print "  Removing any single " + atom + " from the final file makes it uninteresting!"
+
+    print "  Initial size: " + quantity(origNumChars, "character")
+    print "  Final size: " + quantity(numChars, "character")
+    print "  Tests performed: " + str(testCount)
+    print "  Test total: " + quantity(testTotal, atom)
+
+
+def tryMakingGlobals(chunkSize, numChars):
+    """Make a single run through the testcase, trying to remove chunks of size chunkSize.
+
+    Returns True iff any chunks were removed."""
+
+    global parts
+
+    summary = ""
+
+    numRemovedChars = 0
+    numChunks = divideRoundingUp(len(parts), chunkSize)
+    finalChunkSize = max(minimizeMin, 1)
+
+    # Map words to the chunk indexes in which they are present.
+    words = {}
+    for chunk, line in enumerate(parts):
+        for match in re.finditer(r'(?<=[\w\d_])\.(\w+)', line):
+            word = match.group(1)
+            if not word in words:
+                words[word] = [chunk]
+            else:
+                words[word] += [chunk]
+
+    # All patterns have been removed sucessfully.
+    if len(words) == 0:
+        return 0
+
+    print "Starting a round with chunks of " + quantity(chunkSize, atom) + "."
+    summary = ['S' for i in range(numChunks)]
+
+    for word, chunks in words.items():
+        chunkIndexes = {}
+        for chunkStart in chunks:
+            chunkIdx = int(chunkStart / chunkSize)
+            if not chunkIdx in chunkIndexes:
+                chunkIndexes[chunkIdx] = [chunkStart]
+            else:
+                chunkIndexes[chunkIdx] += [chunkStart]
+
+        for chunkIdx, chunkStarts in chunkIndexes.items():
+            # Unless this is the final size, let's try to remove couple of
+            # prefixes, otherwise wait for the final size to remove each of them
+            # individually.
+            if len(chunkStarts) == 1 and finalChunkSize != chunkSize:
+                continue
+
+            description = "'" + word + "' in "
+            description += "chunk #" + str(chunkIdx) + " of " + str(numChunks) + " chunks of size " + str(chunkSize)
+
+            maybeRemoved = 0
+            newParts = parts
+            for chunkStart in chunkStarts:
+                subst = re.sub("[\w_.]+\." + word, word, newParts[chunkStart])
+                maybeRemoved += len(newParts[chunkStart]) - len(subst)
+                newParts = newParts[:chunkStart] + [ subst ] + newParts[(chunkStart+1):]
+
+            if interesting(newParts):
+                print "Yay, reduced it by removing prefixes of " + description + " :)"
+                numRemovedChars += maybeRemoved
+                summary[chunkIdx] = 's'
+                words[word] = [ c for c in chunks if c not in chunkIndexes ]
+                if len(words[word]) == 0:
+                    del words[word]
+            else:
+                print "Removing prefixes of " + description + " made the file 'uninteresting'."
+
+    numSurvivingChars = numChars - numRemovedChars
+    printableSummary = " ".join(["".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks / 2 + numChunks % 2)])
+    print ""
+    print "Done with a round of chunk size " + str(chunkSize) + "!"
+    print quantity(summary.count('S'), "chunk") + " survived; " + \
+          quantity(summary.count('s'), "chunk") + " shortened."
+    print quantity(numSurvivingChars, "character") + " survived; " + \
+          quantity(numRemovedChars, "character") + " removed."
+    print "Which chunks survived: " + printableSummary
+    print ""
+
+    writeTestcaseTemp("did-round-" + str(chunkSize), True);
+
+    return numRemovedChars
 
 
 # Helpers
