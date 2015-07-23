@@ -33,6 +33,10 @@ Options:
 * --char (-c).
       Don't treat lines as atomic units; treat the file as a sequence
       of characters rather than a sequence of lines.
+* --symbols
+      Treat the file as a sequence of strings separated by tokens. The
+      characters by which the strings are delimited are defined by the
+      --cutBefore, and --cutAfter options.
 * --strategy=[minimize, minimize-around, minimize-balanced, replace-properties-by-globals, replace-arguments-by-globals].
       default: minimize.
 * --testcase=filename.
@@ -68,6 +72,8 @@ minimizeChunkStart = 0
 minimizeRepeatFirstRound = False
 
 atom = "line"
+cutAfter = "?=;{["
+cutBefore = "]}:"
 
 conditionScript = None
 conditionArgs = None
@@ -95,7 +101,7 @@ def main():
 
     try:
         # XXX Consider using optparse (with disable_interspersed_args) or argparse (with argparse.REMAINDER)
-        opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "strategy=", "repeat=", "min=", "max=", "chunksize=", "chunkstart=", "testcase=", "tempdir=", "repeatfirstround", "maxruntime="])
+        opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "symbols", "cutBefore=", "cutAfter=", "strategy=", "repeat=", "min=", "max=", "chunksize=", "chunkstart=", "testcase=", "tempdir=", "repeatfirstround", "maxruntime="])
     except getopt.GetoptError, exc:
         usageError(exc.msg)
 
@@ -179,6 +185,8 @@ def processOptions(opts):
             tempDir = a
         elif o in ("-c", "--char"):
             atom = "char"
+        elif o in ("-s", "--symbols"):
+            atom = "symbol-delimiter"
         elif o == "--strategy":
             strategy = a
         elif o == "--min":
@@ -283,6 +291,10 @@ def readTestcaseLine(line):
     elif atom == "char":
         for char in line:
             parts.append(char)
+    elif atom == "symbol-delimiter":
+        cutter = '[' + cutBefore + ']?[^' + cutBefore + cutAfter + ']*(?:[' + cutAfter + ']|$|(?=[' + cutBefore + ']))'
+        for statement in re.finditer(cutter, line):
+            parts.append(statement.group(0))
 
 def writeTestcase(filename):
     with open(filename, "w") as file:
