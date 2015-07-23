@@ -338,6 +338,17 @@ def interesting(partsSuggestion, writeIt=True):
 
 # Main reduction algorithm
 
+#
+# This Strategy attempt at removing chuncks which might not be interesting
+# code, but which be removed independently of any other.  This happens
+# frequently with values which are computed, but either after the execution,
+# or never used to influenced the interesting part.
+#
+#   a = compute();
+#   b = compute();   <-- !!!
+#   intereting(a);
+#   c = compute();   <-- !!!
+#
 def minimize():
     global parts, testCount, testTotal
     global minimizeMax, minimizeMin, minimizeChunkStart, minimizeRepeatFirstRound
