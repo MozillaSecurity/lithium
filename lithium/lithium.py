@@ -136,7 +136,8 @@ def main():
             return
 
         strategyFunction = {
-            'minimize': minimize
+            'minimize': minimize,
+            'minimize-around': minimizeSurroundingPairs
         }.get(strategy, None)
 
         if not strategyFunction:
@@ -411,6 +412,150 @@ def minimize():
     print "  Tests performed: " + str(testCount)
     print "  Test total: " + quantity(testTotal, atom)
 
+
+
+#
+# This Strategy attempt at removing pairs of chuncks which might be surrounding
+# interesting code, but which cannot be removed independently of the other.
+# This happens frequently with patterns such as:
+#
+#   a = 42;
+#   while (true) {
+#      b = foo(a);      <-- !!!
+#      interesting();
+#      a = bar(b);      <-- !!!
+#   }
+#
+def minimizeSurroundingPairs():
+    origNumParts = len(parts)
+    chunkSize = min(minimizeMax, largestPowerOfTwoSmallerThan(origNumParts))
+    finalChunkSize = max(minimizeMin, 1)
+
+    while 1:
+        anyChunksRemoved = tryRemovingSurroundingChunks(chunkSize);
+
+        last = (chunkSize == finalChunkSize)
+
+        if anyChunksRemoved and (minimizeRepeat == "always" or (minimizeRepeat == "last" and last)):
+            # Repeat with the same chunk size
+            pass
+        elif last:
+            # Done
+            break
+        else:
+            # Continue with the next smaller chunk size
+            chunkSize /= 2
+
+    writeTestcase(testcaseFilename)
+
+    print "=== LITHIUM SUMMARY ==="
+
+    if finalChunkSize == 1 and minimizeRepeat != "never":
+        print "  Removing any single " + atom + " from the final file makes it uninteresting!"
+
+    print "  Initial size: " + quantity(origNumParts, atom)
+    print "  Final size: " + quantity(len(parts), atom)
+    print "  Tests performed: " + str(testCount)
+    print "  Test total: " + quantity(testTotal, atom)
+
+def list_rindex(l, p, e):
+    if p < 0 or p > len(l):
+        raise ValueError("%s is not in list" % str(e))
+    for index, item in enumerate(reversed(l[:p])):
+        if item == e:
+            return p - index - 1
+    raise ValueError("%s is not in list" % str(e))
+
+def list_nindex(l, p, e):
+    if p + 1 >= len(l):
+        raise ValueError("%s is not in list" % str(e))
+    return l[(p + 1):].index(e) + (p + 1)
+
+def tryRemovingSurroundingChunks(chunkSize):
+    """Make a single run through the testcase, trying to remove chunks of size chunkSize.
+
+    Returns True iff any chunks were removed."""
+
+    global parts
+
+    chunksSoFar = 0
+    summary = ""
+
+    chunksRemoved = 0
+    chunksSurviving = 0
+    atomsRemoved = 0
+
+    atomsInitial = len(parts)
+    numChunks = divideRoundingUp(len(parts), chunkSize)
+
+    # Not enough chunks to remove surrounding blocks.
+    if numChunks < 3:
+        return False
+
+    print "Starting a round with chunks of " + quantity(chunkSize, atom) + "."
+
+    summary = ['S' for i in range(numChunks)]
+    chunkStart = chunkSize
+    beforeChunkIdx = 0
+    keepChunkIdx = 1
+    afterChunkIdx = 2
+
+    try:
+        while chunkStart + chunkSize < len(parts):
+            chunkBefStart = max(0, chunkStart - chunkSize)
+            chunkBefEnd = chunkStart
+            chunkAftStart = min(len(parts), chunkStart + chunkSize)
+            chunkAftEnd = min(len(parts), chunkAftStart + chunkSize)
+            description = "chunk #" + str(beforeChunkIdx) + " & #" + str(afterChunkIdx) + " of " + str(numChunks) + " chunks of size " + str(chunkSize)
+
+            if interesting(parts[:chunkBefStart] + parts[chunkBefEnd:chunkAftStart] + parts[chunkAftEnd:]):
+                print "Yay, reduced it by removing " + description + " :)"
+                chunksRemoved += 2
+                atomsRemoved += (chunkBefEnd - chunkBefStart)
+                atomsRemoved += (chunkAftEnd - chunkAftStart)
+                summary[beforeChunkIdx] = '-'
+                summary[afterChunkIdx] = '-'
+                # The start is now sooner since we remove the chunk which was before this one.
+                chunkStart -= chunkSize
+                try:
+                    # Try to keep removing surrounding chunks of the same part.
+                    beforeChunkIdx = list_rindex(summary, keepChunkIdx, 'S')
+                except ValueError:
+                    # There is no more survinving block on the left-hand-side of
+                    # the current chunk, shift everything by one surviving
+                    # block. Any ValueError from here means that there is no
+                    # longer enough chunk.
+                    beforeChunkIdx = keepChunkIdx
+                    keepChunkIdx = list_nindex(summary, keepChunkIdx, 'S')
+                    chunkStart += chunkSize
+            else:
+                print "Removing " + description + " made the file 'uninteresting'."
+                # Shift chunk indexes, and seek the next surviving chunk. ValueError
+                # from here means that there is no longer enough chunks.
+                beforeChunkIdx = keepChunkIdx
+                keepChunkIdx = afterChunkIdx
+                chunkStart += chunkSize
+
+            afterChunkIdx = list_nindex(summary, keepChunkIdx, 'S')
+
+    except ValueError:
+        # This is a valid loop exit point.
+        chunkStart = len(parts)
+
+    atomsSurviving = atomsInitial - atomsRemoved
+    printableSummary = " ".join(["".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks / 2 + numChunks % 2)])
+    print ""
+    print "Done with a round of chunk size " + str(chunkSize) + "!"
+    print quantity(summary.count('S'), "chunk") + " survived; " + \
+          quantity(summary.count('-'), "chunk") + " removed."
+    print quantity(atomsSurviving, atom) + " survived; " + \
+          quantity(atomsRemoved, atom) + " removed."
+    print "Which chunks survived: " + printableSummary
+    print ""
+
+    writeTestcaseTemp("did-round-" + str(chunkSize), True);
+
+    return (chunksRemoved > 0)
 
 
 # Helpers
