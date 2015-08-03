@@ -37,7 +37,7 @@ Options:
       Treat the file as a sequence of strings separated by tokens. The
       characters by which the strings are delimited are defined by the
       --cutBefore, and --cutAfter options.
-* --strategy=[minimize, minimize-around, minimize-balanced, replace-properties-by-globals, replace-arguments-by-globals].
+* --strategy=[check-only, minimize, minimize-around, minimize-balanced, replace-properties-by-globals, replace-arguments-by-globals].
       default: minimize.
 * --testcase=filename.
       default: last thing on the command line, which can double as passing in.
