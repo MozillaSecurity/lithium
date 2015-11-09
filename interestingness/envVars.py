@@ -49,7 +49,11 @@ def cloneLLVMGit():
 def compileLLVM():
     '''Compiles LLVM using cmake.'''
     print 'Running cmake...'
-    cmakeCmdList = ['cmake', '-DCMAKE_BUILD_TYPE:STRING=Release']
+    cmakeCmdList = []
+    if isLinux and float(platform.linux_distribution()[1]) > 15.04:
+        # The revisions specified above fail to compile with GCC 5.2, which comes with Ubuntu 15.10 by default.
+        cmakeCmdList += ['CC=/usr/bin/gcc-4.9', 'CXX=/usr/bin/g++-4.9']
+    cmakeCmdList += ['cmake', '-DCMAKE_BUILD_TYPE:STRING=Release']
     if isMac:
         cmakeCmdList.append('-DLLVM_ENABLE_LIBCXX=ON')
     cmakeCmdList.append(LLVM_ROOT)
