@@ -50,16 +50,16 @@ def compileLLVM():
     '''Compiles LLVM using cmake.'''
     print 'Running cmake...'
     cmakeCmdList = []
+    osEnv = copy.deepcopy(os.environ)
     if isLinux and float(platform.linux_distribution()[1]) > 15.04:
         # The revisions specified above fail to compile with GCC 5.2, which comes with Ubuntu 15.10 by default.
-        linuxEnv = copy.deepcopy(os.environ)
-        linuxEnv['CC'] = '/usr/bin/gcc-4.9'
-        linuxEnv['CXX'] = '/usr/bin/g++-4.9'
+        osEnv['CC'] = '/usr/bin/gcc-4.9'
+        osEnv['CXX'] = '/usr/bin/g++-4.9'
     cmakeCmdList += ['cmake', '-DCMAKE_BUILD_TYPE:STRING=Release']
     if isMac:
         cmakeCmdList.append('-DLLVM_ENABLE_LIBCXX=ON')
     cmakeCmdList.append(LLVM_ROOT)
-    subprocess.check_call(cmakeCmdList, cwd=LLVM_BUILD_DIR, env=linuxEnv)
+    subprocess.check_call(cmakeCmdList, cwd=LLVM_BUILD_DIR, env=osEnv)
     print 'Running make...'
     subprocess.check_call(['make', '-s', '-j' + str(cpu_count())], cwd=LLVM_BUILD_DIR)
     print 'Finished compiling LLVM.'
