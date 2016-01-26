@@ -86,6 +86,11 @@ def envWithPath(path, runningEnv=os.environ):
 
 def findLlvmBinPath():
     '''Returns the path to compiled LLVM binaries, which differs depending on compilation method.'''
+    if isLinux:
+        # Assumes clang was installed through apt-get. Works with version 3.6.2.
+        # Create a symlink at /usr/bin/llvm-symbolizer for this file: /usr/bin/llvm-symbolizer-3.6
+        return ''
+
     if isMac:
         # Assumes LLVM was installed through Homebrew. Works with at least version 3.6.2.
         brewLLVMPath = '/usr/local/opt/llvm/bin'
