@@ -86,6 +86,16 @@ def envWithPath(path, runningEnv=os.environ):
 
 def findLlvmBinPath():
     '''Returns the path to compiled LLVM binaries, which differs depending on compilation method.'''
+    if isMac:
+        # Assumes LLVM was installed through Homebrew. Works with at least version 3.6.2.
+        brewLLVMPath = '/usr/local/opt/llvm/bin'
+        if os.path.isdir(brewLLVMPath):
+            return brewLLVMPath
+        else:
+            print 'WARNING: Please install llvm from Homebrew via `brew install llvm`.'
+            print 'ASan stacks will not have symbols as Xcode does not install llvm-symbolizer.'
+            return ''
+
     # https://developer.mozilla.org/en-US/docs/Building_Firefox_with_Address_Sanitizer#Manual_Build
     if isWin:
         return None  # The harness does not yet support Clang on Windows
