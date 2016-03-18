@@ -393,7 +393,7 @@ def minimize():
 
         if chunkStart >= len(parts):
             writeTestcaseTemp("did-round-" + str(chunkSize), True);
-            last = (chunkSize == finalChunkSize)
+            last = (chunkSize <= finalChunkSize)
             empty = (len(parts) == 0)
             print ""
             if not empty and anyChunksRemoved and (minimizeRepeat == "always" or (minimizeRepeat == "last" and last)):
@@ -451,7 +451,7 @@ def minimizeSurroundingPairs():
     while 1:
         anyChunksRemoved = tryRemovingSurroundingChunks(chunkSize);
 
-        last = (chunkSize == finalChunkSize)
+        last = (chunkSize <= finalChunkSize)
 
         if anyChunksRemoved and (minimizeRepeat == "always" or (minimizeRepeat == "last" and last)):
             # Repeat with the same chunk size
@@ -599,7 +599,7 @@ def minimizeBalancedPairs():
     while 1:
         anyChunksRemoved = tryRemovingBalancedPairs(chunkSize);
 
-        last = (chunkSize == finalChunkSize)
+        last = (chunkSize <= finalChunkSize)
 
         if anyChunksRemoved and (minimizeRepeat == "always" or (minimizeRepeat == "last" and last)):
             # Repeat with the same chunk size
@@ -865,7 +865,7 @@ def replacePropertiesByGlobals():
         numRemovedChars = tryMakingGlobals(chunkSize, numChars);
         numChars -= numRemovedChars
 
-        last = (chunkSize == finalChunkSize)
+        last = (chunkSize <= finalChunkSize)
 
         if numRemovedChars and (minimizeRepeat == "always" or (minimizeRepeat == "last" and last)):
             # Repeat with the same chunk size
