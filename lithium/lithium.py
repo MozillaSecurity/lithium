@@ -2,9 +2,8 @@
 
 from __future__ import with_statement
 
-import getopt
+import argparse
 import os
-import subprocess
 import time
 import sys
 
@@ -12,48 +11,6 @@ path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'interestingness'))
 sys.path.append(path1)
 import ximport
-
-def usage():
-    print """Lithium, an automated testcase reduction tool by Jesse Ruderman
-
-Usage:
-
-./lithium.py [options] condition [condition options] file-to-reduce
-
-Example:
-
-./lithium.py crashes 120 ~/tracemonkey/js/src/debug/js -j a.js
-     Lithium will reduce a.js subject to the condition that the following
-     crashes in 120 seconds:
-     ~/tracemonkey/js/src/debug/js -j a.js
-
-Options:
-* --char (-c).
-      Don't treat lines as atomic units; treat the file as a sequence
-      of characters rather than a sequence of lines.
-* --strategy=[minimize, remove-pair, remove-substring, check-only].
-      default: minimize.
-* --testcase=filename.
-      default: last thing on the command line, which can double as passing in.
-
-Additional options for the default strategy (--strategy=minimize)
-* --repeat=[always, last, never]. default: last
-     Whether to repeat a chunk size if chunks are removed.
-* --max=n. default: about half of the file.
-* --min=n. default: 1.
-     What chunk sizes to test.  Must be powers of two.
-* --chunksize=n
-     Shortcut for "repeat=never, min=n, max=n"
-* --chunkstart=n
-     For the first round only, start n chars/lines into the file. Best for max to divide n.  [Mostly intended for internal use]
-* --repeatfirstround
-     Treat the first round as if it removed chunks; possibly repeat it.  [Mostly intended for internal use]
-* --maxruntime=n
-     If reduction takes more than n seconds, stop (and print instructions for continuing).
-
-See doc/using.html for more information.
-
-"""
 
 
 # Globals
@@ -81,43 +38,13 @@ tempFileCount = 1
 before = ""
 after = ""
 parts = []
-allPositionalArgs = []
 stopAfterTime = None
 
 
 # Main and friends
 
 def main():
-    global conditionScript, conditionArgs, testcaseFilename, testcaseExtension, strategy, allPositionalArgs
-    global parts
-
-    try:
-        # XXX Consider using optparse (with disable_interspersed_args) or argparse (with argparse.REMAINDER)
-        opts, args = getopt.getopt(sys.argv[1:], "hc", ["help", "char", "strategy=", "repeat=", "min=", "max=", "chunksize=", "chunkstart=", "testcase=", "tempdir=", "repeatfirstround", "maxruntime="])
-    except getopt.GetoptError, exc:
-        usageError(exc.msg)
-
-    allPositionalArgs = args
-
-    if len(args) == 0:
-        # No arguments; not even a condition was specified
-        usage()
-        return
-
-    if len(args) > 1:
-        testcaseFilename = args[-1] # can be overridden by --testcase in processOptions
-
-    processOptions(opts)
-
-    if testcaseFilename == None:
-        usageError("No testcase specified (use --testcase or last condition arg)")
-
-    conditionScript = ximport.importRelativeOrAbsolute(args[0])
-    conditionArgs = args[1:]
-
-    e = testcaseFilename.rsplit(".", 1)
-    if len(e) > 1:
-        testcaseExtension = "." + e[1]
+    global conditionScript, conditionArgs, testcaseFilename, testcaseExtension, strategy, parts
 
     readTestcase()
 
@@ -162,46 +89,108 @@ def main():
             conditionScript.cleanup(conditionArgs)
 
 
-def processOptions(opts):
-    global atom, strategy, testcaseFilename, tempDir
-    global minimizeRepeat, minimizeMin, minimizeMax, minimizeChunkStart, minimizeRepatFirstRound, stopAfterTime
+def processOptions():
+    global atom, conditionArgs, conditionScript, strategy, testcaseExtension, testcaseFilename, tempDir
+    global minimizeRepeat, minimizeMin, minimizeMax, minimizeChunkStart, minimizeRepeatFirstRound, stopAfterTime
 
-    for o, a in opts:
-        if o in ("-h", "--help"):
-            usage()
-            sys.exit(0)
-        elif o == "--testcase":
-            testcaseFilename = a
-        elif o == "--tempdir":
-            tempDir = a
-        elif o in ("-c", "--char"):
-            atom = "char"
-        elif o == "--strategy":
-            strategy = a
-        elif o == "--min":
-            minimizeMin = int(a)
-            if not isPowerOfTwo(minimizeMin):
-                usageError("min must be a power of two.")
-        elif o == "--max":
-            minimizeMax = int(a)
-            if not isPowerOfTwo(minimizeMax):
-                usageError("max must be a power of two.")
-        elif o == "--repeat":
-            minimizeRepeat = a
-            if not (minimizeRepeat in ("always", "last", "never")):
-                usageError("repeat must be 'always', 'last', or 'never'.")
-        elif o == "--chunksize":
-            minimizeMin = int(a)
-            minimizeMax = minimizeMin
-            minimizeRepeat = "never"
-            if not isPowerOfTwo(minimizeMin):
-                usageError("Chunk size must be a power of two.")
-        elif o == "--chunkstart":
-            minimizeChunkStart = int(a)
-        elif o == "--repeatfirstround":
-            minimizeRepatFirstRound = True
-        elif o == "--maxruntime":
-            stopAfterTime = time.time() + int(a)
+    parser = argparse.ArgumentParser(
+        description="Lithium, an automated testcase reduction tool by Jesse Ruderman.",
+        epilog="See doc/using.html for more information.",
+        usage="./lithium.py [options] condition [condition options] file-to-reduce\n\n" \
+              "example: " \
+              "./lithium.py crashes 120 ~/tracemonkey/js/src/debug/js -j a.js\n" \
+              "    Lithium will reduce a.js subject to the condition that the following\n" \
+              "    crashes in 120 seconds:\n" \
+              "    ~/tracemonkey/js/src/debug/js -j a.js")
+    grp_opt = parser.add_argument_group(description="Lithium options")
+    grp_opt.add_argument(
+        "--testcase",
+        help="testcase file. default: last argument is used.")
+    grp_opt.add_argument(
+        "--tempdir",
+        help="specify the directory to use as temporary directory.")
+    grp_opt.add_argument(
+        "-c", "--char",
+        default="line",
+        help="Don't treat lines as atomic units; treat the file as a sequence of characters rather than a sequence of lines.")
+    grp_opt.add_argument(
+        "--strategy",
+        default="minimize",
+        choices=["minimize", "remove-pair", "remove-substring", "check-only"],
+        help="reduction strategy to use. default: minimize")
+    grp_add = parser.add_argument_group(description="Additional options for the default strategy")
+    grp_add.add_argument(
+        "--min", type=int,
+        default=1,
+        help="must be a power of two. default: 1")
+    grp_add.add_argument(
+        "--max", type=int,
+        default=pow(2, 30),
+        help="must be a power of two. default: about half of the file")
+    grp_add.add_argument(
+        "--repeat",
+        default="last",
+        choices=["always", "last", "never"],
+        help="Whether to repeat a chunk size if chunks are removed. default: last")
+    grp_add.add_argument(
+        "--chunksize", type=int,
+        default=None,
+        help="Shortcut for repeat=never, min=n, max=n. chunk size must be a power of two.")
+    grp_add.add_argument(
+        "--chunkstart", type=int,
+        default=0,
+        help="For the first round only, start n chars/lines into the file. Best for max to divide n. [Mostly intended for internal use]")
+    grp_add.add_argument(
+        "--repeatfirstround", default=False, action="store_true",
+        help="Treat the first round as if it removed chunks; possibly repeat it.  [Mostly intended for internal use]")
+    grp_add.add_argument(
+        "--maxruntime", type=int,
+        default=None,
+        help="If reduction takes more than n seconds, stop (and print instructions for continuing).")
+    grp_ext = parser.add_argument_group(description="Condition, condition options and file-to-reduce")
+    grp_ext.add_argument(
+        "extra_args",
+        action="append",
+        nargs=argparse.REMAINDER,
+        help="condition [condition options] file-to-reduce")
+
+    args = parser.parse_args()
+
+    tempDir = args.tempdir
+    atom = args.char
+    strategy = args.strategy
+    if args.chunksize:
+        minimizeMin = args.chunksize
+        minimizeMax = args.chunksize
+        repeat = "last"
+    else:
+        minimizeMin = args.min
+        minimizeMax = args.max
+        repeat = args.repeat
+    minimizeChunkStart = args.chunkstart
+    minimizeRepeatFirstRound = args.repeatfirstround
+    if args.maxruntime:
+        stopAfterTime = time.time() + args.maxruntime
+    extra_args = args.extra_args[0]
+
+    if args.testcase is not None:
+        testcaseFilename = args.testcase
+    elif len(extra_args) > 0:
+        testcaseFilename = extra_args[-1] # can be overridden by --testcase in processOptions
+    else:
+        print "No testcase specified (use --testcase or last condition arg)"
+        return False
+
+    testcaseExtension = os.path.splitext(testcaseFilename)[1]
+
+    if not isPowerOfTwo(minimizeMin) or not isPowerOfTwo(minimizeMax):
+        print "Min/Max must be powers of two."
+        return False
+
+    conditionScript = ximport.importRelativeOrAbsolute(extra_args[0])
+    conditionArgs = extra_args[1:]
+
+    return True
 
 
 def usageError(s):
@@ -354,15 +343,7 @@ def minimize():
         if stopAfterTime != None and time.time() > stopAfterTime:
             # Not all switches will be copied!  Be sure to add --tempdir, --maxruntime if desired.
             # Not using shellify() here because of the strange requirements of bot.py's lithium-command.txt.
-            print "Lithium result: please continue using: " + " ".join(
-                 [
-                 #"--testcase=" + testcaseFilename,
-                 "--max=" + str(chunkSize),
-                 "--chunkstart=" + str(chunkStart)] +
-                (["--repeatfirstround"] if anyChunksRemoved else []) +
-                (["--char"] if atom == "char" else []) +
-                allPositionalArgs
-                )
+            print "Lithium result: please perform another pass using the same arguments"
             break
 
         if chunkStart >= len(parts):
@@ -497,4 +478,5 @@ def quantity(n, s):
 # Run main
 
 if __name__ == "__main__":
-    main()
+    if processOptions():
+        main()
