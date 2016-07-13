@@ -290,7 +290,7 @@ def createTempDir():
         try:
             os.mkdir(tempDir)
             break
-        except OSError, e:
+        except OSError:
             i += 1
 
 
