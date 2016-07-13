@@ -43,8 +43,8 @@
 <dt>--char (-c)<dt>
 <dd>By default, Lithium treats lines as atomic units.  This is great if each line is a JavaScript statement, but sometimes you want to go further.  Use this option to tell Lithium to treat the file as a sequence of characters instead of a sequence of lines.</dd>
 
-<dt>--strategy=[minimize, remove-pair, remove-substring]</dt>
-<dd>"minimize" is the default, the algorithm described above.  "remove-pair" tries to find a pair of lines in the file that can both be removed.  "remove-substring" tries to find a substring of the file that can be removed.  "remove-pair" and "remove-substring" are O(n<sup>2</sup>), so you probably won't want to use them very often, and you'll only want to use them after using "minimize".</dd>
+<dt>--strategy=[minimize, check-only]</dt>
+<dd>"minimize" is the default, the algorithm described above. "check-only" tries to run Lithium to determine interestingness, without reduction.</dd>
 
 <dt>--repeat=[always, last, never].</dt>
 <dd>By default, Lithium only repeats at the same chunk size if it just finished the last round (e.g. chunk size 1).  You can use --repeat=always to tell it to repeat any chunk size if something was removed during the round, which can be useful for non-deterministic testcases or non-monotonic situations.  You can use --repeat=never to tell it to exit immediately after a single round at the last chunk size, which can save a little time at the risk of leaving a little bit extra in the file.</dd>
