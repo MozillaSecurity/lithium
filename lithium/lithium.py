@@ -268,8 +268,7 @@ def readTestcaseLine(line):
 def writeTestcase(filename):
     with open(filename, "w") as file:
         file.write(before)
-        for i in range(len(parts)):
-            file.write(parts[i])
+        file.writelines(parts)
         file.write(after)
 
 def writeTestcaseTemp(partialFilename, useNumber):
