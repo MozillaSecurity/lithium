@@ -25,18 +25,18 @@ def getSignalName(num, default=None):
 
 
 class rundata(object):
-  """Define struct that contains data from a process that has already ended."""
+    """Define struct that contains data from a process that has already ended."""
 
-  def __init__(self, sta, rc, msg, elapsedtime, killed, pid, out, err):
-    """Initialize with given parameters."""
-    self.sta = sta
-    self.rc = rc
-    self.msg = msg
-    self.elapsedtime = elapsedtime
-    self.killed = killed
-    self.pid = pid
-    self.out = out
-    self.err = err
+    def __init__(self, sta, rc, msg, elapsedtime, killed, pid, out, err):
+        """Initialize with given parameters."""
+        self.sta = sta
+        self.rc = rc
+        self.msg = msg
+        self.elapsedtime = elapsedtime
+        self.killed = killed
+        self.pid = pid
+        self.out = out
+        self.err = err
 
 
 def xpkill(p):
@@ -91,12 +91,12 @@ def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):
     try:
         child = subprocess.Popen(
             commandWithArgs,
-            stdin = (None         if (inp is None) else subprocess.PIPE),
-            stderr = (childStdErr if useLogFiles else subprocess.PIPE),
-            stdout = (childStdOut if useLogFiles else subprocess.PIPE),
-            close_fds = (os.name == "posix"),  # close_fds should not be changed on Windows
-            env = makeEnv(commandWithArgs[0]),
-            preexec_fn = preexec_fn
+            stdin=(None if (inp is None) else subprocess.PIPE),
+            stderr=(childStdErr if useLogFiles else subprocess.PIPE),
+            stdout=(childStdOut if useLogFiles else subprocess.PIPE),
+            close_fds=(os.name == "posix"),  # close_fds should not be changed on Windows
+            env=makeEnv(commandWithArgs[0]),
+            preexec_fn=preexec_fn
         )
     except OSError, e:
         print "Tried to run:"

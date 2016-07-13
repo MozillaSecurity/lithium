@@ -12,7 +12,6 @@ import ximport
 
 
 # Globals
-
 strategy = "minimize"
 minimizeRepeat = "last"
 minimizeMin = 1
@@ -169,7 +168,7 @@ def processOptions():
     if args.testcase:
         testcaseFilename = args.testcase
     elif len(extra_args) > 0:
-        testcaseFilename = extra_args[-1] # can be overridden by --testcase in processOptions
+        testcaseFilename = extra_args[-1]  # can be overridden by --testcase in processOptions
     else:
         print "No testcase specified (use --testcase or last condition arg)"
         return False
@@ -193,7 +192,6 @@ def usageError(s):
 
 
 # Functions for manipulating the testcase (aka the 'interesting' file)
-
 def readTestcase():
     hasDDSection = False
 
@@ -252,10 +250,11 @@ def readTestcaseLine(line):
     global parts
 
     if atom == "line":
-       parts.append(line)
+        parts.append(line)
     elif atom == "char":
         for char in line:
             parts.append(char)
+
 
 def writeTestcase(filename):
     with open(filename, "w") as f:
@@ -290,7 +289,7 @@ def interesting(partsSuggestion, writeIt=True):
     global tempFileCount, testcaseFilename, conditionArgs
     global testCount, testTotal
     global parts
-    oldParts = parts # would rather be less side-effecty about this, and be passing partsSuggestion around
+    oldParts = parts  # would rather be less side-effecty about this, and be passing partsSuggestion around
     parts = partsSuggestion
 
     if writeIt:
@@ -315,7 +314,6 @@ def interesting(partsSuggestion, writeIt=True):
 
 
 # Main reduction algorithm
-
 def minimize():
     global parts, testCount, testTotal
     global minimizeMax, minimizeMin, minimizeChunkStart, minimizeRepeatFirstRound
@@ -370,10 +368,11 @@ def minimize():
     print "  Tests performed: " + str(testCount)
     print "  Test total: " + quantity(testTotal, atom)
 
-# Helpers
 
+# Helpers
 def divideRoundingUp(n, d):
     return (n // d) + (1 if n % d != 0 else 0)
+
 
 def isPowerOfTwo(n):
     i = 1
@@ -384,12 +383,14 @@ def isPowerOfTwo(n):
             return False
         i *= 2
 
+
 def largestPowerOfTwoSmallerThan(n):
     i = 1
     while True:
         if i * 2 >= n:
             return i
         i *= 2
+
 
 def quantity(n, s):
     """Convert a quantity to a string, with correct pluralization."""
