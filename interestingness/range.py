@@ -34,12 +34,12 @@ sys.path.append(path1)
 def parseOptions(arguments):
     parser = OptionParser()
     parser.disable_interspersed_args()
-    options, args = parser.parse_args(arguments)
+    _options, args = parser.parse_args(arguments)
 
-    return options, int(args[0]), int(args[1]), args[2:] # args[0] is minLoopNum, args[1] maxLoopNum
+    return int(args[0]), int(args[1]), args[2:] # args[0] is minLoopNum, args[1] maxLoopNum
 
 def interesting(cliArgs, tempPrefix):
-    (options, rangeMin, rangeMax, arguments) = parseOptions(cliArgs)
+    (rangeMin, rangeMax, arguments) = parseOptions(cliArgs)
     conditionScript = ximport.importRelativeOrAbsolute(arguments[0])
     conditionArgs = arguments[1:]
 
