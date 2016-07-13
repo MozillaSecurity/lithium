@@ -154,11 +154,11 @@ def processOptions():
     if args.chunksize:
         minimizeMin = args.chunksize
         minimizeMax = args.chunksize
-        repeat = "last"
+        minimizeRepeat = "never"
     else:
         minimizeMin = args.min
         minimizeMax = args.max
-        repeat = args.repeat
+        minimizeRepeat = args.repeat
     minimizeChunkStart = args.chunkstart
     minimizeRepeatFirstRound = args.repeatfirstround
     if args.maxruntime:
