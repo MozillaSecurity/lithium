@@ -199,33 +199,27 @@ def usageError(s):
 def readTestcase():
     hasDDSection = False
 
-    try:
-        file = open(testcaseFilename, "r")
-    except IOError:
-        usageError("Can't read the original testcase file, " + testcaseFilename + "!")
+    with open(testcaseFilename, "r") as f:
+        # Determine whether the f has a DDBEGIN..DDEND section.
+        for line in f:
+            if line.find("DDEND") != -1:
+                usageError("The testcase (" + testcaseFilename + ") has a line containing 'DDEND' without a line containing 'DDBEGIN' before it.")
+            if line.find("DDBEGIN") != -1:
+                hasDDSection = True
+                break
 
-    # Determine whether the file has a DDBEGIN..DDEND section.
-    for line in file:
-        if line.find("DDEND") != -1:
-            usageError("The testcase (" + testcaseFilename + ") has a line containing 'DDEND' without a line containing 'DDBEGIN' before it.")
-        if line.find("DDBEGIN") != -1:
-            hasDDSection = True
-            break
+        f.seek(0)
 
-    file.seek(0)
-
-    if hasDDSection:
-        # Reduce only the part of the file between 'DDBEGIN' and 'DDEND',
-        # leaving the rest unchanged.
-        #print "Testcase has a DD section"
-        readTestcaseWithDDSection(file)
-    else:
-        # Reduce the entire file.
-        #print "Testcase does not have a DD section"
-        for line in file:
-            readTestcaseLine(line)
-
-    file.close()
+        if hasDDSection:
+            # Reduce only the part of the file between 'DDBEGIN' and 'DDEND',
+            # leaving the rest unchanged.
+            # print "Testcase has a DD section"
+            readTestcaseWithDDSection(f)
+        else:
+            # Reduce the entire file.
+            # print "Testcase does not have a DD section"
+            for line in f:
+                readTestcaseLine(line)
 
 
 def readTestcaseWithDDSection(f):
