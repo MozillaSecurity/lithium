@@ -91,11 +91,11 @@ def processOptions():
     parser = argparse.ArgumentParser(
         description="Lithium, an automated testcase reduction tool by Jesse Ruderman.",
         epilog="See doc/using.html for more information.",
-        usage="./lithium.py [options] condition [condition options] file-to-reduce\n\n" \
-              "example: " \
-              "./lithium.py crashes 120 ~/tracemonkey/js/src/debug/js -j a.js\n" \
-              "    Lithium will reduce a.js subject to the condition that the following\n" \
-              "    crashes in 120 seconds:\n" \
+        usage="./lithium.py [options] condition [condition options] file-to-reduce\n\n"
+              "example: "
+              "./lithium.py crashes 120 ~/tracemonkey/js/src/debug/js -j a.js\n"
+              "    Lithium will reduce a.js subject to the condition that the following\n"
+              "    crashes in 120 seconds:\n"
               "    ~/tracemonkey/js/src/debug/js -j a.js")
     grp_opt = parser.add_argument_group(description="Lithium options")
     grp_opt.add_argument(
