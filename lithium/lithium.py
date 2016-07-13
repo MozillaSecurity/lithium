@@ -51,7 +51,7 @@ def main():
 
     try:
 
-        if tempDir == None:
+        if not tempDir:
             createTempDir()
             print "Intermediate files will be stored in " + tempDir + os.sep + "."
 
@@ -168,7 +168,7 @@ def processOptions():
         stopAfterTime = time.time() + args.maxruntime
     extra_args = args.extra_args[0]
 
-    if args.testcase is not None:
+    if args.testcase:
         testcaseFilename = args.testcase
     elif len(extra_args) > 0:
         testcaseFilename = extra_args[-1] # can be overridden by --testcase in processOptions
@@ -313,7 +313,7 @@ def interesting(partsSuggestion, writeIt=True):
     # Save an extra copy of the file inside the temp directory.
     # This is useful if you're reducing an assertion and encounter a crash:
     # it gives you a way to try to reproduce the crash.
-    if tempDir != None:
+    if tempDir:
         tempFileTag = "interesting" if inter else "boring"
         writeTestcaseTemp(tempFileTag, True)
 
@@ -334,7 +334,7 @@ def minimize():
     anyChunksRemoved = minimizeRepeatFirstRound
 
     while True:
-        if stopAfterTime != None and time.time() > stopAfterTime:
+        if stopAfterTime and time.time() > stopAfterTime:
             # Not all switches will be copied!  Be sure to add --tempdir, --maxruntime if desired.
             # Not using shellify() here because of the strange requirements of bot.py's lithium-command.txt.
             print "Lithium result: please perform another pass using the same arguments"
