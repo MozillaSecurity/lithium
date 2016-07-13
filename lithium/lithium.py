@@ -342,7 +342,7 @@ def minimize():
             break
 
         if chunkStart >= len(parts):
-            writeTestcaseTemp("did-round-" + str(chunkSize), True);
+            writeTestcaseTemp("did-round-" + str(chunkSize), True)
             last = (chunkSize == finalChunkSize)
             empty = (len(parts) == 0)
             print ""
