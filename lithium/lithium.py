@@ -39,8 +39,6 @@ parts = []
 stopAfterTime = None
 
 
-# Main and friends
-
 def main():
     global conditionScript, conditionArgs, testcaseFilename, testcaseExtension, strategy, parts
 
@@ -400,7 +398,6 @@ def quantity(n, s):
         r += "s"
     return r
 
-# Run main
 
 if __name__ == "__main__":
     if processOptions():
