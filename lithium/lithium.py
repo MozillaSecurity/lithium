@@ -266,10 +266,10 @@ def readTestcaseLine(line):
             parts.append(char)
 
 def writeTestcase(filename):
-    with open(filename, "w") as file:
-        file.write(before)
-        file.writelines(parts)
-        file.write(after)
+    with open(filename, "w") as f:
+        f.write(before)
+        f.writelines(parts)
+        f.write(after)
 
 def writeTestcaseTemp(partialFilename, useNumber):
     global tempFileCount
