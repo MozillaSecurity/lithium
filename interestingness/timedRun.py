@@ -25,7 +25,10 @@ def getSignalName(num, default=None):
 
 
 class rundata(object):
+  """Define struct that contains data from a process that has already ended."""
+
   def __init__(self, sta, rc, msg, elapsedtime, killed, pid, out, err):
+    """Initialize with given parameters."""
     self.sta = sta
     self.rc = rc
     self.msg = msg
