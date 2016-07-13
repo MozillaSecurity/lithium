@@ -228,16 +228,16 @@ def readTestcase():
     file.close()
 
 
-def readTestcaseWithDDSection(file):
+def readTestcaseWithDDSection(f):
     global before, after
     global parts
 
-    for line in file:
+    for line in f:
         before += line
         if line.find("DDBEGIN") != -1:
             break
 
-    for line in file:
+    for line in f:
         if line.find("DDEND") != -1:
             after += line
             break
@@ -245,7 +245,7 @@ def readTestcaseWithDDSection(file):
     else:
         usageError("The testcase (" + testcaseFilename + ") has a line containing 'DDBEGIN' but no line containing 'DDEND'.")
 
-    for line in file:
+    for line in f:
         after += line
 
     if atom == "char" and len(parts) > 0:
