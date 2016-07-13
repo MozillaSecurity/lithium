@@ -37,7 +37,7 @@ class rundata(object):
 
 
 def xpkill(p):
-    '''Based on mozilla-central/source/build/automation.py.in'''
+    """Based on mozilla-central/source/build/automation.py.in ."""
     try:
         p.kill()
     except WindowsError:
@@ -68,7 +68,7 @@ def makeEnv(binPath):
 
 
 def timed_run(commandWithArgs, timeout, logPrefix, input=None, preexec_fn=None):
-    '''If logPrefix is None, uses pipes instead of files for all output.'''
+    """If logPrefix is None, uses pipes instead of files for all output."""
 
     if not isinstance(commandWithArgs, list):
         raise TypeError("commandWithArgs should be a list (of strings).")
