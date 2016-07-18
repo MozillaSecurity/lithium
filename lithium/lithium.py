@@ -111,7 +111,7 @@ def processOptions():
         help="specify the directory to use as temporary directory.")
     grp_opt.add_argument(
         "-c", "--char",
-        default="line",
+        action="store_true",
         help="Don't treat lines as atomic units; treat the file as a sequence of characters rather than a sequence of lines.")
     grp_opt.add_argument(
         "--strategy",
@@ -157,7 +157,7 @@ def processOptions():
     args = parser.parse_args()
 
     tempDir = args.tempdir
-    atom = args.char
+    atom = "char" if args.char else "line"
     strategy = args.strategy
     if args.chunksize:
         minimizeMin = args.chunksize
