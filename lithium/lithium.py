@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import with_statement
-
 import argparse
 import os
 import time
@@ -14,7 +12,6 @@ import ximport
 
 
 # Globals
-
 strategy = "minimize"
 minimizeRepeat = "last"
 minimizeMin = 1
@@ -41,8 +38,6 @@ parts = []
 stopAfterTime = None
 
 
-# Main and friends
-
 def main():
     global conditionScript, conditionArgs, testcaseFilename, testcaseExtension, strategy, parts
 
@@ -53,7 +48,7 @@ def main():
 
     try:
 
-        if tempDir == None:
+        if not tempDir:
             createTempDir()
             print "Intermediate files will be stored in " + tempDir + os.sep + "."
 
@@ -63,10 +58,7 @@ def main():
             return
 
         strategyFunction = {
-            'minimize': minimize,
-            'remove-pair': tryRemovingPair,
-            'remove-adjacent-pairs': tryRemovingAdjacentPairs,
-            'remove-substring': tryRemovingSubstring
+            'minimize': minimize
         }.get(strategy, None)
 
         if not strategyFunction:
@@ -96,11 +88,11 @@ def processOptions():
     parser = argparse.ArgumentParser(
         description="Lithium, an automated testcase reduction tool by Jesse Ruderman.",
         epilog="See doc/using.html for more information.",
-        usage="./lithium.py [options] condition [condition options] file-to-reduce\n\n" \
-              "example: " \
-              "./lithium.py crashes 120 ~/tracemonkey/js/src/debug/js -j a.js\n" \
-              "    Lithium will reduce a.js subject to the condition that the following\n" \
-              "    crashes in 120 seconds:\n" \
+        usage="./lithium.py [options] condition [condition options] file-to-reduce\n\n"
+              "example: "
+              "./lithium.py crashes 120 ~/tracemonkey/js/src/debug/js -j a.js\n"
+              "    Lithium will reduce a.js subject to the condition that the following\n"
+              "    crashes in 120 seconds:\n"
               "    ~/tracemonkey/js/src/debug/js -j a.js")
     grp_opt = parser.add_argument_group(description="Lithium options")
     grp_opt.add_argument(
@@ -116,7 +108,7 @@ def processOptions():
     grp_opt.add_argument(
         "--strategy",
         default="minimize",
-        choices=["minimize", "remove-pair", "remove-substring", "check-only"],
+        choices=["minimize", "check-only"],
         help="reduction strategy to use. default: minimize")
     grp_add = parser.add_argument_group(description="Additional options for the default strategy")
     grp_add.add_argument(
@@ -162,21 +154,21 @@ def processOptions():
     if args.chunksize:
         minimizeMin = args.chunksize
         minimizeMax = args.chunksize
-        repeat = "last"
+        minimizeRepeat = "never"
     else:
         minimizeMin = args.min
         minimizeMax = args.max
-        repeat = args.repeat
+        minimizeRepeat = args.repeat
     minimizeChunkStart = args.chunkstart
     minimizeRepeatFirstRound = args.repeatfirstround
     if args.maxruntime:
         stopAfterTime = time.time() + args.maxruntime
     extra_args = args.extra_args[0]
 
-    if args.testcase is not None:
+    if args.testcase:
         testcaseFilename = args.testcase
     elif len(extra_args) > 0:
-        testcaseFilename = extra_args[-1] # can be overridden by --testcase in processOptions
+        testcaseFilename = extra_args[-1]  # can be overridden by --testcase in processOptions
     else:
         print "No testcase specified (use --testcase or last condition arg)"
         return False
@@ -200,49 +192,42 @@ def usageError(s):
 
 
 # Functions for manipulating the testcase (aka the 'interesting' file)
-
 def readTestcase():
     hasDDSection = False
 
-    try:
-        file = open(testcaseFilename, "r")
-    except IOError:
-        usageError("Can't read the original testcase file, " + testcaseFilename + "!")
+    with open(testcaseFilename, "r") as f:
+        # Determine whether the f has a DDBEGIN..DDEND section.
+        for line in f:
+            if line.find("DDEND") != -1:
+                usageError("The testcase (" + testcaseFilename + ") has a line containing 'DDEND' without a line containing 'DDBEGIN' before it.")
+            if line.find("DDBEGIN") != -1:
+                hasDDSection = True
+                break
 
-    # Determine whether the file has a DDBEGIN..DDEND section.
-    for line in file:
-        if line.find("DDEND") != -1:
-            usageError("The testcase (" + testcaseFilename + ") has a line containing 'DDEND' without a line containing 'DDBEGIN' before it.")
-        if line.find("DDBEGIN") != -1:
-            hasDDSection = True
-            break
+        f.seek(0)
 
-    file.seek(0)
-
-    if hasDDSection:
-        # Reduce only the part of the file between 'DDBEGIN' and 'DDEND',
-        # leaving the rest unchanged.
-        #print "Testcase has a DD section"
-        readTestcaseWithDDSection(file)
-    else:
-        # Reduce the entire file.
-        #print "Testcase does not have a DD section"
-        for line in file:
-            readTestcaseLine(line)
-
-    file.close()
+        if hasDDSection:
+            # Reduce only the part of the file between 'DDBEGIN' and 'DDEND',
+            # leaving the rest unchanged.
+            # print "Testcase has a DD section"
+            readTestcaseWithDDSection(f)
+        else:
+            # Reduce the entire file.
+            # print "Testcase does not have a DD section"
+            for line in f:
+                readTestcaseLine(line)
 
 
-def readTestcaseWithDDSection(file):
+def readTestcaseWithDDSection(f):
     global before, after
     global parts
 
-    for line in file:
+    for line in f:
         before += line
         if line.find("DDBEGIN") != -1:
             break
 
-    for line in file:
+    for line in f:
         if line.find("DDEND") != -1:
             after += line
             break
@@ -250,7 +235,7 @@ def readTestcaseWithDDSection(file):
     else:
         usageError("The testcase (" + testcaseFilename + ") has a line containing 'DDBEGIN' but no line containing 'DDEND'.")
 
-    for line in file:
+    for line in f:
         after += line
 
     if atom == "char" and len(parts) > 0:
@@ -265,17 +250,17 @@ def readTestcaseLine(line):
     global parts
 
     if atom == "line":
-       parts.append(line)
+        parts.append(line)
     elif atom == "char":
         for char in line:
             parts.append(char)
 
+
 def writeTestcase(filename):
-    with open(filename, "w") as file:
-        file.write(before)
-        for i in range(len(parts)):
-            file.write(parts[i])
-        file.write(after)
+    with open(filename, "w") as f:
+        f.write(before)
+        f.writelines(parts)
+        f.write(after)
 
 def writeTestcaseTemp(partialFilename, useNumber):
     global tempFileCount
@@ -295,7 +280,7 @@ def createTempDir():
         try:
             os.mkdir(tempDir)
             break
-        except OSError, e:
+        except OSError:
             i += 1
 
 
@@ -304,7 +289,7 @@ def interesting(partsSuggestion, writeIt=True):
     global tempFileCount, testcaseFilename, conditionArgs
     global testCount, testTotal
     global parts
-    oldParts = parts # would rather be less side-effecty about this, and be passing partsSuggestion around
+    oldParts = parts  # would rather be less side-effecty about this, and be passing partsSuggestion around
     parts = partsSuggestion
 
     if writeIt:
@@ -319,7 +304,7 @@ def interesting(partsSuggestion, writeIt=True):
     # Save an extra copy of the file inside the temp directory.
     # This is useful if you're reducing an assertion and encounter a crash:
     # it gives you a way to try to reproduce the crash.
-    if tempDir != None:
+    if tempDir:
         tempFileTag = "interesting" if inter else "boring"
         writeTestcaseTemp(tempFileTag, True)
 
@@ -329,7 +314,6 @@ def interesting(partsSuggestion, writeIt=True):
 
 
 # Main reduction algorithm
-
 def minimize():
     global parts, testCount, testTotal
     global minimizeMax, minimizeMin, minimizeChunkStart, minimizeRepeatFirstRound
@@ -340,14 +324,14 @@ def minimize():
     anyChunksRemoved = minimizeRepeatFirstRound
 
     while True:
-        if stopAfterTime != None and time.time() > stopAfterTime:
+        if stopAfterTime and time.time() > stopAfterTime:
             # Not all switches will be copied!  Be sure to add --tempdir, --maxruntime if desired.
             # Not using shellify() here because of the strange requirements of bot.py's lithium-command.txt.
             print "Lithium result: please perform another pass using the same arguments"
             break
 
         if chunkStart >= len(parts):
-            writeTestcaseTemp("did-round-" + str(chunkSize), True);
+            writeTestcaseTemp("did-round-" + str(chunkSize), True)
             last = (chunkSize == finalChunkSize)
             empty = (len(parts) == 0)
             print ""
@@ -385,72 +369,10 @@ def minimize():
     print "  Test total: " + quantity(testTotal, atom)
 
 
-def tryRemovingChunks(chunkSize):
-
-    print "Done with a round of chunk size " + str(chunkSize) + "!"
-    return anyChunksRemoved
-
-
-
-# Other reduction algorithms
-# (Use these if you're really frustrated with something you know is 1-minimal.)
-
-def tryRemovingAdjacentPairs():
-    # XXX capture the idea that after removing (4,5) it might be sensible to remove (3,6)
-    # but also that after removing (2,3) and (4,5) it might be sensible to remove (1,6)
-    # XXX also want to remove three at a time, and two at a time that are one line apart
-    for i in range(0, numParts - 2):
-        if enabled[i]:
-            enabled[i] = False
-            enabled[i + 1] = False
-            if interesting():
-                print "Removed an adjacent pair based at " + str(i)
-            else:
-                enabled[i] = True
-                enabled[i + 1] = True
-    # Restore the original testcase
-    writeTestcase(testcaseFilename)
-    print "Done with one pass of removing adjacent pairs"
-
-
-
-def tryRemovingPair():
-    for i in range(0, numParts):
-        enabled[i] = False
-        for j in range(i + 1, numParts):
-            enabled[j] = False
-            print "Trying removing the pair " + str(i) + ", " + str(j)
-            if interesting():
-                print "Success!  Removed a pair!  Exiting."
-                sys.exit(0) # XXX not nice
-            enabled[j] = True
-        enabled[i] = True
-
-    # Restore the original testcase
-    writeTestcase(testcaseFilename)
-    print "Failure!  No pair can be removed."
-
-
-def tryRemovingSubstring():
-    for i in range(0, numParts):
-        for j in range(i, numParts):
-            enabled[j] = False
-            print "Trying removing the substring " + str(i) + ".." + str(j)
-            if interesting():
-                print "Success!  Removed a substring!  Exiting."
-                sys.exit(0) # XXX not nice
-        for j in range(i, numParts):
-            enabled[j] = True
-
-    # Restore the original testcase
-    writeTestcase(testcaseFilename)
-    print "Failure!  No substring can be removed."
-
-
 # Helpers
-
 def divideRoundingUp(n, d):
     return (n // d) + (1 if n % d != 0 else 0)
+
 
 def isPowerOfTwo(n):
     i = 1
@@ -461,12 +383,14 @@ def isPowerOfTwo(n):
             return False
         i *= 2
 
+
 def largestPowerOfTwoSmallerThan(n):
     i = 1
     while True:
         if i * 2 >= n:
             return i
         i *= 2
+
 
 def quantity(n, s):
     """Convert a quantity to a string, with correct pluralization."""
@@ -475,7 +399,6 @@ def quantity(n, s):
         r += "s"
     return r
 
-# Run main
 
 if __name__ == "__main__":
     if processOptions():

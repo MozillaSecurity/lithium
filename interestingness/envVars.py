@@ -16,7 +16,7 @@ ENV_PATH_SEPARATOR = ';' if os.name == 'nt' else ':'
 
 
 def envWithPath(path, runningEnv=os.environ):
-    '''Appends the path to the appropriate library path on various platforms.'''
+    """Append the path to the appropriate library path on various platforms."""
     if isLinux:
         libPath = 'LD_LIBRARY_PATH'
     elif isMac:
@@ -35,7 +35,7 @@ def envWithPath(path, runningEnv=os.environ):
 
 
 def findLlvmBinPath():
-    '''Returns the path to compiled LLVM binaries, which differs depending on compilation method.'''
+    """Return the path to compiled LLVM binaries, which differs depending on compilation method."""
     if isLinux:
         # Assumes clang was installed through apt-get. Works with version 3.6.2.
         # Create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.6

@@ -25,19 +25,22 @@ def getSignalName(num, default=None):
 
 
 class rundata(object):
-  def __init__(self, sta, rc, msg, elapsedtime, killed, pid, out, err):
-    self.sta = sta
-    self.rc = rc
-    self.msg = msg
-    self.elapsedtime = elapsedtime
-    self.killed = killed
-    self.pid = pid
-    self.out = out
-    self.err = err
+    """Define struct that contains data from a process that has already ended."""
+
+    def __init__(self, sta, rc, msg, elapsedtime, killed, pid, out, err):
+        """Initialize with given parameters."""
+        self.sta = sta
+        self.rc = rc
+        self.msg = msg
+        self.elapsedtime = elapsedtime
+        self.killed = killed
+        self.pid = pid
+        self.out = out
+        self.err = err
 
 
 def xpkill(p):
-    '''Based on mozilla-central/source/build/automation.py.in'''
+    """Based on mozilla-central/source/build/automation.py.in ."""
     try:
         p.kill()
     except WindowsError:
@@ -67,9 +70,8 @@ def makeEnv(binPath):
     return env
 
 
-def timed_run(commandWithArgs, timeout, logPrefix, input=None, preexec_fn=None):
-    '''If logPrefix is None, uses pipes instead of files for all output.'''
-
+def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):
+    """If logPrefix is None, uses pipes instead of files for all output."""
     if not isinstance(commandWithArgs, list):
         raise TypeError("commandWithArgs should be a list (of strings).")
     if not isinstance(timeout, int):
@@ -89,12 +91,12 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None, preexec_fn=None):
     try:
         child = subprocess.Popen(
             commandWithArgs,
-            stdin = (None         if (input == None) else subprocess.PIPE),
-            stderr = (childStdErr if useLogFiles else subprocess.PIPE),
-            stdout = (childStdOut if useLogFiles else subprocess.PIPE),
-            close_fds = (os.name == "posix"),  # close_fds should not be changed on Windows
-            env = makeEnv(commandWithArgs[0]),
-            preexec_fn = preexec_fn
+            stdin=(None if (inp is None) else subprocess.PIPE),
+            stderr=(childStdErr if useLogFiles else subprocess.PIPE),
+            stdout=(childStdOut if useLogFiles else subprocess.PIPE),
+            close_fds=(os.name == "posix"),  # close_fds should not be changed on Windows
+            env=makeEnv(commandWithArgs[0]),
+            preexec_fn=preexec_fn
         )
     except OSError, e:
         print "Tried to run:"
@@ -103,8 +105,8 @@ def timed_run(commandWithArgs, timeout, logPrefix, input=None, preexec_fn=None):
         print "  " + str(e)
         sys.exit(2)
 
-    if input is not None:
-        child.stdin.write(input)
+    if inp is not None:
+        child.stdin.write(inp)
         child.stdin.close()
 
     sta = NONE
