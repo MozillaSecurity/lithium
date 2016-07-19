@@ -262,6 +262,7 @@ def writeTestcase(filename):
         f.writelines(parts)
         f.write(after)
 
+
 def writeTestcaseTemp(partialFilename, useNumber):
     global tempFileCount
     if useNumber:
