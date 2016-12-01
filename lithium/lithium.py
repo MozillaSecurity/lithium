@@ -35,11 +35,12 @@ tempFileCount = 1
 before = ""
 after = ""
 parts = []
+interestingParts = None
 stopAfterTime = None
 
 
 def main():
-    global conditionScript, conditionArgs, testcaseFilename, testcaseExtension, strategy, parts
+    global conditionScript, conditionArgs, testcaseFilename, testcaseExtension, strategy, parts, interestingParts
 
     readTestcase()
 
@@ -79,6 +80,11 @@ def main():
     finally:
         if hasattr(conditionScript, "cleanup"):
             conditionScript.cleanup(conditionArgs)
+        # Make sure we exit with an interesting testcase
+        if interestingParts is not None:
+            parts = interestingParts
+            writeTestcase(testcaseFilename)
+
 
 
 def processOptions():
@@ -217,6 +223,8 @@ def readTestcase():
             for line in f:
                 readTestcaseLine(line)
 
+    global parts, interestingParts
+    interestingParts = parts
 
 def readTestcaseWithDDSection(f):
     global before, after
@@ -289,7 +297,7 @@ def createTempDir():
 def interesting(partsSuggestion, writeIt=True):
     global tempFileCount, testcaseFilename, conditionArgs
     global testCount, testTotal
-    global parts
+    global parts, interestingParts
     oldParts = parts  # would rather be less side-effecty about this, and be passing partsSuggestion around
     parts = partsSuggestion
 
@@ -309,7 +317,9 @@ def interesting(partsSuggestion, writeIt=True):
         tempFileTag = "interesting" if inter else "boring"
         writeTestcaseTemp(tempFileTag, True)
 
-    if not inter:
+    if inter:
+        interestingParts = parts
+    else:
         parts = oldParts
     return inter
 
