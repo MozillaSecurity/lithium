@@ -37,14 +37,15 @@ def envWithPath(path, runningEnv=os.environ):
 def findLlvmBinPath():
     """Return the path to compiled LLVM binaries, which differs depending on compilation method."""
     if isLinux:
-        # Assumes clang was installed through apt-get. Works with version 3.6.2.
-        # Create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.6
+        # Assumes clang was installed through apt-get. Works with version 3.6.2,
+        # assumed to work with clang 3.8.0.
+        # Create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8
         if os.path.isfile('/usr/bin/llvm-symbolizer'):
             return ''
         else:
             print 'WARNING: Please install clang via `apt-get install clang` if using Ubuntu.'
-            print 'then create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.6.'
-            print 'Try: `ln -s /usr/bin/llvm-symbolizer-3.6 /usr/bin/llvm-symbolizer`'
+            print 'then create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8.'
+            print 'Try: `ln -s /usr/bin/llvm-symbolizer-3.8 /usr/bin/llvm-symbolizer`'
             return ''
 
     if isMac:
