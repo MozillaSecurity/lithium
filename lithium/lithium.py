@@ -59,7 +59,10 @@ def main():
             return
 
         strategyFunction = {
-            'minimize': minimize
+            'minimize': minimize,
+            'remove-pair': tryRemovingPair,
+            'remove-adjacent-pairs': tryRemovingAdjacentPairs,
+            'remove-substring': tryRemovingSubstring
         }.get(strategy, None)
 
         if not strategyFunction:
@@ -378,6 +381,61 @@ def minimize():
     print "  Final size: " + quantity(len(parts), atom)
     print "  Tests performed: " + str(testCount)
     print "  Test total: " + quantity(testTotal, atom)
+
+# Other reduction algorithms
+# (Use these if you're really frustrated with something you know is 1-minimal.)
+
+def tryRemovingAdjacentPairs():
+    # XXX capture the idea that after removing (4,5) it might be sensible to
+    # remove (3,6) but also that after removing (2,3) and (4,5) it might be
+    # sensible to remove (1,6)
+    # XXX also want to remove three at a time, and two at a time that are one
+    # line apart
+    for i in range(0, numParts - 2):
+        if enabled[i]:
+            enabled[i] = False
+            enabled[i + 1] = False
+            if interesting():
+                print "Removed an adjacent pair based at " + str(i)
+            else:
+                enabled[i] = True
+                enabled[i + 1] = True
+    # Restore the original testcase
+    writeTestcase(testcaseFilename)
+    print "Done with one pass of removing adjacent pairs"
+
+
+def tryRemovingPair():
+    for i in range(0, numParts):
+        enabled[i] = False
+        for j in range(i + 1, numParts):
+            enabled[j] = False
+            print "Trying removing the pair " + str(i) + ", " + str(j)
+            if interesting():
+                print "Success!  Removed a pair!  Exiting."
+                sys.exit(0)
+            enabled[j] = True
+        enabled[i] = True
+
+    # Restore the original testcase
+    writeTestcase(testcaseFilename)
+    print "Failure!  No pair can be removed."
+
+
+def tryRemovingSubstring():
+    for i in range(0, numParts):
+        for j in range(i, numParts):
+            enabled[j] = False
+            print "Trying removing the substring " + str(i) + ".." + str(j)
+            if interesting():
+                print "Success!  Removed a substring!  Exiting."
+                sys.exit(0)
+        for j in range(i, numParts):
+            enabled[j] = True
+
+    # Restore the original testcase
+    writeTestcase(testcaseFilename)
+    print "Failure!  No substring can be removed."
 
 
 # Helpers
