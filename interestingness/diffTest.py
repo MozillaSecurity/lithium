@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
 '''
-This file came from nbp's GitHub PR #2 for adding new Lithium reduction strategies.
-  https://github.com/MozillaSecurity/lithium/pull/2
+This test minimizes a test case by comparing a single binary with different command line arguments.
+This can be used to isolate and minimize differential behaviour test cases.
 '''
+
+# This file came from nbp's GitHub PR #2 for adding new Lithium reduction strategies.
+#   https://github.com/MozillaSecurity/lithium/pull/2
 
 from optparse import OptionParser
 
