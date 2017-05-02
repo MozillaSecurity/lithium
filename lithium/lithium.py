@@ -50,7 +50,7 @@ class Testcase(object):
             # Determine whether the f has a DDBEGIN..DDEND section.
             for line in f:
                 if line.find(b"DDEND") != -1:
-                    raise LithiumError("The testcase (%s) has a line containing 'DDEND' without a line containing 'DDBEGIN' before it.", self.filename)
+                    raise LithiumError("The testcase (%s) has a line containing 'DDEND' without a line containing 'DDBEGIN' before it." % self.filename)
                 if line.find(b"DDBEGIN") != -1:
                     hasDDSection = True
                     break
@@ -81,7 +81,7 @@ class Testcase(object):
                 break
             self.readTestcaseLine(line)
         else:
-            raise LithiumError("The testcase (%s) has a line containing 'DDBEGIN' but no line containing 'DDEND'.", self.filename)
+            raise LithiumError("The testcase (%s) has a line containing 'DDBEGIN' but no line containing 'DDEND'." % self.filename)
 
         for line in f:
             self.after += line
@@ -121,12 +121,12 @@ class TestcaseChar(TestcaseLine):
             # Move the line break at the end of the last line out of the reducible
             # part so the "DDEND" line doesn't get combined with another line.
             self.parts.pop()
-            self.after = "\n" + self.after
+            self.after = b"\n" + self.after
 
 
     def readTestcaseLine(self, line):
-        for char in line:
-            self.parts.append(char)
+        for i in range(len(line)):
+            self.parts.append(line[i:i+1])
 
 
 class TestcaseSymbol(TestcaseLine):
@@ -135,16 +135,17 @@ class TestcaseSymbol(TestcaseLine):
     DEFAULT_CUT_BEFORE = b"]}:"
 
     def __init__(self):
-        TestcaseSymbol.__init__(self)
+        TestcaseLine.__init__(self)
 
         self.cutAfter = self.DEFAULT_CUT_AFTER
         self.cutBefore = self.DEFAULT_CUT_BEFORE
 
 
     def readTestcaseLine(self, line):
-        cutter = b'[%(before)s]?[^%(before)s%(after)s]*(?:[%(after)s]|$|(?=[%(before)s]))' % {'before': self.cutBefore, 'after': self.cutAfter}
+        cutter = b'[%(before)s]?[^%(before)s%(after)s]*(?:[%(after)s]|$|(?=[%(before)s]))' % {b'before': self.cutBefore, b'after': self.cutAfter}
         for statement in re.finditer(cutter, line):
-            self.parts.append(statement.group(0))
+            if statement.group(0):
+                self.parts.append(statement.group(0))
 
 
 class Strategy(object):
@@ -1072,9 +1073,9 @@ class Lithium(object):
         self.tempFileCount = 1
 
 
-    def main(self):
+    def main(self, args=None):
         logging.basicConfig(format="%(message)s", level=logging.INFO)
-        self.processArgs()
+        self.processArgs(args)
 
         try:
             return self.run()
@@ -1110,7 +1111,7 @@ class Lithium(object):
                 self.lastInteresting.writeTestcase()
 
 
-    def processArgs(self):
+    def processArgs(self, argv=None):
         # Build list of strategies and testcase types
         strategies = {}
         testcaseTypes = {}
@@ -1137,7 +1138,7 @@ class Lithium(object):
             "--strategy",
             default=defaultStrategy,
             choices=strategies.keys())
-        args = parser.parse_known_args()
+        args = parser.parse_known_args(argv)
         self.strategy = strategies.get(args[0].strategy if args else None, strategies[defaultStrategy])()
 
         parser = argparse.ArgumentParser(
@@ -1187,7 +1188,7 @@ class Lithium(object):
             nargs=argparse.REMAINDER,
             help="condition [condition options] file-to-reduce")
 
-        args = parser.parse_args()
+        args = parser.parse_args(argv)
         self.strategy.processArgs(parser, args)
 
         self.tempDir = args.tempdir
@@ -1272,11 +1273,11 @@ def divideRoundingUp(n, d):
 
 
 def isPowerOfTwo(n):
-    return (1<<(n.bit_length() - 1)) == n
+    return (1<<max(n.bit_length() - 1, 0)) == n
 
 
 def largestPowerOfTwoSmallerThan(n):
-    return 1<<(n.bit_length() - 2)
+    return 1<<max(n.bit_length() - 2, 0)
 
 
 def quantity(n, unit):
