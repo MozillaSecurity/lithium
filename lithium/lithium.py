@@ -131,12 +131,14 @@ class TestcaseChar(TestcaseLine):
 
 class TestcaseSymbol(TestcaseLine):
     atom = "symbol-delimiter"
+    DEFAULT_CUT_AFTER = b"?=;{["
+    DEFAULT_CUT_BEFORE = b"]}:"
 
     def __init__(self):
         TestcaseSymbol.__init__(self)
 
-        self.cutAfter = "?=;{["
-        self.cutBefore = "]}:"
+        self.cutAfter = self.DEFAULT_CUT_AFTER
+        self.cutBefore = self.DEFAULT_CUT_BEFORE
 
 
     def readTestcaseLine(self, line):
@@ -1165,6 +1167,14 @@ class Lithium(object):
             help="Treat the file as a sequence of strings separated by tokens. " + \
                  "The characters by which the strings are delimited are defined by the --cutBefore, and --cutAfter options.")
         grp_opt.add_argument(
+            "--cutBefore",
+            default=TestcaseSymbol.DEFAULT_CUT_BEFORE,
+            help="See --symbol. default: %s" % TestcaseSymbol.DEFAULT_CUT_BEFORE.decode("utf-8"))
+        grp_opt.add_argument(
+            "--cutAfter",
+            default=TestcaseSymbol.DEFAULT_CUT_AFTER,
+            help="See --symbol. default: %s" % TestcaseSymbol.DEFAULT_CUT_AFTER.decode("utf-8"))
+        grp_opt.add_argument(
             "--strategy",
             default=self.strategy.name, # this has already been parsed above, it's only here for the help message
             choices=strategies.keys(),
@@ -1183,6 +1193,7 @@ class Lithium(object):
         self.tempDir = args.tempdir
         atom = TestcaseChar.atom if args.char else TestcaseLine.atom
         atom = TestcaseSymbol.atom if args.symbol else atom
+
         extra_args = args.extra_args[0]
 
         if args.testcase:
@@ -1192,6 +1203,9 @@ class Lithium(object):
         else:
             parser.error("No testcase specified (use --testcase or last condition arg)")
         self.testcase = testcaseTypes[atom]()
+        if args.symbol:
+            self.testcase.cutBefore = args.cutBefore
+            self.testcase.cutAfter = args.cutAfter
         self.testcase.readTestcase(testcaseFilename)
 
         sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "interestingness")))
