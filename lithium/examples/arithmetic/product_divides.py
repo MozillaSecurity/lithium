@@ -9,17 +9,17 @@ import sys
 def interesting(args, tempPrefix):
     mod = int(args[0])
     filename = args[1]
-    
-    file = open(filename, "r")
+
     prod = 1
-    for line in file:
-        line = line.strip()
-        if line.isdigit():
-            prod *= int(line)
-                
+    with open(filename, "r") as input_fp:
+        for line in input_fp:
+            line = line.strip()
+            if line.isdigit():
+                prod *= int(line)
+
     if prod % mod == 0:
-        print str(prod) + " is divisible by " + str(mod)
+        sys.stdout.write("%d is divisible by %d\n" % (prod, mod))
         return True
     else:
-        print str(prod) + " is not divisible by " + str(mod)
+        sys.stdout.write("%d is not divisible by %d\n" % (prod, mod))
         return False
