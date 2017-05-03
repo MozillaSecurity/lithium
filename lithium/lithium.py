@@ -510,9 +510,9 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
         log.info("Starting a round with chunks of %s.", quantity(chunkSize, testcase.atom))
 
         summary = ['S' for i in range(numChunks)]
-        curly = [(testcase.parts[i].count('{') - testcase.parts[i].count('}')) for i in range(numChunks)]
-        square = [(testcase.parts[i].count('[') - testcase.parts[i].count(']')) for i in range(numChunks)]
-        normal = [(testcase.parts[i].count('(') - testcase.parts[i].count(')')) for i in range(numChunks)]
+        curly = [(testcase.parts[i].count(b'{') - testcase.parts[i].count(b'}')) for i in range(numChunks)]
+        square = [(testcase.parts[i].count(b'[') - testcase.parts[i].count(b']')) for i in range(numChunks)]
+        normal = [(testcase.parts[i].count(b'(') - testcase.parts[i].count(b')')) for i in range(numChunks)]
         chunkStart = 0
         lhsChunkIdx = 0
 
@@ -779,7 +779,7 @@ class ReplacePropertiesByGlobals(Minimize):
         log.info("Starting a round with chunks of %s.", quantity(chunkSize, testcase.atom))
         summary = ['S' for i in range(numChunks)]
 
-        for word, chunks in words.items():
+        for word, chunks in list(words.items()):
             chunkIndexes = {}
             for chunkStart in chunks:
                 chunkIdx = chunkStart // chunkSize
@@ -888,10 +888,10 @@ class ReplaceArgumentsByGlobals(Minimize):
                 if fun is None:
                     fun = match.group(2)
 
-                if match.group(3) == "":
+                if match.group(3) == b"":
                     args = []
                 else:
-                    args = match.group(3).split(',')
+                    args = match.group(3).split(b',')
 
                 if not fun in functions:
                     functions[fun] = { "defs": args, "argsPattern": match.group(3), "chunk": chunk, "uses": [] }
@@ -899,7 +899,6 @@ class ReplaceArgumentsByGlobals(Minimize):
                     functions[fun]["defs"] = args
                     functions[fun]["argsPattern"] = match.group(3)
                     functions[fun]["chunk"] = chunk
-
 
             # Match anonymous function definition, which are surrounded by parentheses.
             for match in re.finditer(br'\(function\s*\w*\s*\(((?:\s*\w+\s*(?:,\s*\w+\s*)*)?)\)\s*{', line):
@@ -915,12 +914,12 @@ class ReplaceArgumentsByGlobals(Minimize):
                     continue
                 anon = anonymousStack[-1]
                 anonymousStack = anonymousStack[:-1]
-                if match.group(1) == "" and len(anon["defs"]) == 0:
+                if match.group(1) == b"" and len(anon["defs"]) == 0:
                     continue
-                if match.group(1) == "":
+                if match.group(1) == b"":
                     args = []
                 else:
-                    args = match.group(1).split(',')
+                    args = match.group(1).split(b',')
                 anon["use"] = args
                 anon["useChunk"] = chunk
                 anonymousQueue += [anon]
@@ -929,14 +928,13 @@ class ReplaceArgumentsByGlobals(Minimize):
             for match in re.finditer(br'((\w+)\s*\(((?:[^()]|\([^,()]*\))*)\))', line):
                 pattern = match.group(1)
                 fun = match.group(2)
-                if match.group(3) == "":
+                if match.group(3) == b"":
                     args = []
                 else:
-                    args = match.group(3).split(',')
+                    args = match.group(3).split(b',')
                 if not fun in functions:
                     functions[fun] = { "uses": [] }
                 functions[fun]["uses"] += [{ "values": args, "chunk": chunk, "pattern": pattern }]
-
 
         # All patterns have been removed sucessfully.
         if len(functions) == 0 and len(anonymousQueue) == 0:
@@ -945,7 +943,7 @@ class ReplaceArgumentsByGlobals(Minimize):
         log.info("Starting removing function arguments.")
 
         for fun, argsMap in functions.items():
-            description = "arguments of '" + fun + "'"
+            description = "arguments of '%s'" % fun.decode("utf-8", "replace")
             if "defs" not in argsMap or len(argsMap["uses"]) == 0:
                 log.info("Ignoring %s because it is 'uninteresting'.", description)
                 continue
@@ -966,8 +964,8 @@ class ReplaceArgumentsByGlobals(Minimize):
                 if chunk == defChunk and values == argDefs:
                     continue
                 while len(values) < len(argDefs):
-                    values = values + ["undefined"]
-                setters = "".join([ a + " = " + v + ";\n" for a, v in zip(argDefs, values) ])
+                    values = values + [b"undefined"]
+                setters = b"".join([ a + b" = " + v + b";\n" for a, v in zip(argDefs, values) ])
                 subst = setters + newTC.parts[chunk]
                 newTC.parts = newTC.parts[:chunk] + [ subst ] + newTC.parts[(chunk+1):]
             maybeMovedArguments += len(argDefs)
@@ -1022,9 +1020,9 @@ class ReplaceArgumentsByGlobals(Minimize):
 
             # Replace arguments by their value in the scope of the function.
             while len(values) < len(argDefs):
-                values = values + ["undefined"]
-            setters = "".join([ "var " + a + " = " + v + ";\n" for a, v in zip(argDefs, values) ])
-            subst = newTC.parts[defChunk] + "\n" + setters
+                values = values + [b"undefined"]
+            setters = "".join([ b"var " + a + b" = " + v + b";\n" for a, v in zip(argDefs, values) ])
+            subst = newTC.parts[defChunk] + b"\n" + setters
             if newTC.parts[defChunk] == subst:
                 noopChanges += 1
             newTC.parts = newTC.parts[:defChunk] + [ subst ] + newTC.parts[(defChunk+1):]
@@ -1046,7 +1044,6 @@ class ReplaceArgumentsByGlobals(Minimize):
             else:
                 numSurvivedArguments += maybeMovedArguments
                 log.info("Removing %s made the file 'uninteresting'.", description)
-
 
         log.info("")
         log.info("Done with this round!")

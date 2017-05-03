@@ -1,3 +1,4 @@
+import collections
 import logging
 import math
 import os
@@ -38,6 +39,74 @@ class TestCase(unittest.TestCase):
 
         def assertRaisesRegex(self, *args, **kwds):
             return self.assertRaisesRegexp(*args, **kwds)
+
+    if sys.version_info[:2] < (3, 4):
+        #
+        # polyfill adapted from https://github.com/python/cpython/blob/3.6/Lib/unittest/case.py
+        #
+        # This method is licensed as follows:
+        #
+        # Copyright (c) 1999-2003 Steve Purcell
+        # Copyright (c) 2003-2010 Python Software Foundation
+        # This module is free software, and you may redistribute it and/or modify
+        # it under the same terms as Python itself, so long as this copyright message
+        # and disclaimer are retained in their original form.
+        #
+        # IN NO EVENT SHALL THE AUTHOR BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT,
+        # SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF
+        # THIS CODE, EVEN IF THE AUTHOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+        # DAMAGE.
+        #
+        # THE AUTHOR SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT
+        # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+        # PARTICULAR PURPOSE.  THE CODE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS,
+        # AND THERE IS NO OBLIGATION WHATSOEVER TO PROVIDE MAINTENANCE,
+        # SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+        def assertLogs(self, logger=None, level=None):
+
+            _LoggingWatcher = collections.namedtuple("_LoggingWatcher", ["records", "output"])
+
+            class _CapturingHandler(logging.Handler):
+                def __init__(self):
+                    logging.Handler.__init__(self)
+                    self.watcher = _LoggingWatcher([], [])
+                def emit(self, record):
+                    self.watcher.records.append(record)
+                    self.watcher.output.append(self.format(record))
+
+            class _AssertLogsContext(object):
+                LOGGING_FORMAT = "%(levelname)s:%(name)s:%(message)s"
+
+                def __init__(self, test_case, logger_name, level):
+                    self.test_case = test_case
+                    self.logger_name = logger_name
+                    self.level = getattr(logging, level) if level else logging.INFO
+                    self.msg = None
+
+                def __enter__(self):
+                    if isinstance(self.logger_name, logging.Logger):
+                        self.logger = self.logger_name
+                    else:
+                        self.logger = logging.getLogger(self.logger_name)
+                    handler = _CapturingHandler()
+                    handler.setFormatter(logging.Formatter(self.LOGGING_FORMAT))
+                    self.watcher = handler.watcher
+                    self.old = (self.logger.handlers[:], self.logger.propagate, self.logger.level)
+                    self.logger.handlers = [handler]
+                    self.logger.setLevel(self.level)
+                    self.logger.propagate = False
+                    return handler.watcher
+
+                def __exit__(self, exc_type, exc_value, tb):
+                    self.logger.handlers, self.logger.propagate = self.old[:2]
+                    self.logger.setLevel(self.old[2])
+                    if exc_type is not None:
+                        return False
+                    self.test_case.assertGreater(len(self.watcher.records), 0,
+                        "no logs of level %s or higher triggered on %s" % (logging.getLevelName(self.level), self.logger.name))
+
+            return _AssertLogsContext(self, logger, level)
 
 
 class DummyInteresting(object):
@@ -177,6 +246,26 @@ class LithiumTests(TestCase):
         self.assertTrue(inter.interesting_called)
         self.assertTrue(inter.cleanup_called)
 
+    def test_empty(self):
+        l = lithium.Lithium()
+        with open("empty.txt", "w"):
+            pass
+        class Interesting(DummyInteresting):
+            inter = False
+            def interesting(sub, conditionArgs, tempPrefix):
+                return sub.inter
+        l.conditionScript = Interesting()
+        l.strategy = lithium.Minimize()
+        l.testcase = lithium.TestcaseLine()
+        l.testcase.readTestcase("empty.txt")
+        with self.assertLogs("lithium") as logs:
+            self.assertEqual(l.run(), 1)
+        self.assertIn("INFO:lithium:Lithium result: the original testcase is not 'interesting'!", logs.output)
+        Interesting.inter = True
+        with self.assertLogs("lithium") as logs:
+            self.assertEqual(l.run(), 0)
+        self.assertIn("INFO:lithium:The file has 0 lines so there's nothing for Lithium to try to remove!", logs.output)
+
     def test_arithmetic(self):
         path = os.path.join(os.path.dirname(lithium.__file__), "examples", "arithmetic")
         shutil.copyfile(os.path.join(path, "11.txt"), "11.txt")
@@ -189,6 +278,138 @@ class LithiumTests(TestCase):
         self.assertEqual(result, 0)
         with open("11.txt") as f:
             self.assertEqual(f.read(), "2\n\n# DDBEGIN\n5\n7\n# DDEND\n\n2\n")
+
+
+class StrategyTests(TestCase):
+
+    def test_minimize_line(self):
+        l = lithium.Lithium()
+        with open("a.txt", "wb") as f:
+            f.write(b"x\n\nx\nx\no\nx\nx\nx\n")
+        class Interesting(DummyInteresting):
+            def interesting(sub, conditionArgs, tempPrefix):
+                with open("a.txt", "rb") as f:
+                    return b"o\n" in f.read()
+        l.conditionScript = Interesting()
+        l.strategy = lithium.Minimize()
+        l.testcase = lithium.TestcaseLine()
+        l.testcase.readTestcase("a.txt")
+        self.assertEqual(l.run(), 0)
+        with open("a.txt", "rb") as f:
+            self.assertEqual(f.read(), b"o\n")
+
+    def test_minimize_char(self):
+        l = lithium.Lithium()
+        with open("a.txt", "wb") as f:
+            f.write(b"x\n\nx\nx\no\nx\nx\nx\n")
+        class Interesting(DummyInteresting):
+            def interesting(sub, conditionArgs, tempPrefix):
+                with open("a.txt", "rb") as f:
+                    return b"o" in f.read()
+        l.conditionScript = Interesting()
+        l.strategy = lithium.Minimize()
+        l.testcase = lithium.TestcaseChar()
+        l.testcase.readTestcase("a.txt")
+        self.assertEqual(l.run(), 0)
+        with open("a.txt", "rb") as f:
+            self.assertEqual(f.read(), b"o")
+
+    def test_minimize_around(self):
+        l = lithium.Lithium()
+        with open("a.txt", "wb") as f:
+            f.write(b"x\nx\nx\no\nx\nx\nx\n")
+        class Interesting(DummyInteresting):
+            def interesting(sub, conditionArgs, tempPrefix):
+                with open("a.txt", "rb") as f:
+                    data = f.read()
+                    return b"o\n" in data and len(set(data.split(b"o\n"))) == 1
+        l.conditionScript = Interesting()
+        l.strategy = lithium.MinimizeSurroundingPairs()
+        l.testcase = lithium.TestcaseLine()
+        l.testcase.readTestcase("a.txt")
+        self.assertEqual(l.run(), 0)
+        with open("a.txt", "rb") as f:
+            self.assertEqual(f.read(), b"o\n")
+
+    def test_minimize_balanced(self):
+        l = lithium.Lithium()
+        with open("a.txt", "wb") as f:
+            f.write(b"[\n[\nxxx{\no\n}\n]\n]\n")
+        class Interesting(DummyInteresting):
+            def interesting(sub, conditionArgs, tempPrefix):
+                with open("a.txt", "rb") as f:
+                    data = f.read()
+                    if b"o\n" in data:
+                        a, b = data.split(b"o\n")
+                        return (a.count(b"{") == b.count(b"}")) and \
+                               (a.count(b"(") == b.count(b")")) and \
+                               (a.count(b"[") == b.count(b"]"))
+                    return False
+        l.conditionScript = Interesting()
+        l.strategy = lithium.MinimizeBalancedPairs()
+        l.testcase = lithium.TestcaseLine()
+        l.testcase.readTestcase("a.txt")
+        self.assertEqual(l.run(), 0)
+        with open("a.txt", "rb") as f:
+            self.assertEqual(f.read(), b"o\n")
+
+    def test_replace_properties(self):
+        l = lithium.Lithium()
+        valid_reductions = (
+            # original: this.list, prototype.push, prototype.last
+            b"function Foo() {\n  this.list = [];\n}\nFoo.prototype.push = function(a) {\n  this.list.push(a);\n}\nFoo.prototype.last = function() {\n  return this.list.pop();\n}\n",
+            #           this.list, prototype.push,           last
+            b"function Foo() {\n  this.list = [];\n}\nFoo.prototype.push = function(a) {\n  this.list.push(a);\n}\nlast = function() {\n  return this.list.pop();\n}\n",
+            #           this.list,           push, prototype.last
+            b"function Foo() {\n  this.list = [];\n}\npush = function(a) {\n  this.list.push(a);\n}\nFoo.prototype.last = function() {\n  return this.list.pop();\n}\n",
+            #           this.list,           push,           last
+            b"function Foo() {\n  this.list = [];\n}\npush = function(a) {\n  this.list.push(a);\n}\nlast = function() {\n  return this.list.pop();\n}\n",
+            #                list, prototype.push, prototype.last
+            b"function Foo() {\n  list = [];\n}\nFoo.prototype.push = function(a) {\n  list.push(a);\n}\nFoo.prototype.last = function() {\n  return list.pop();\n}\n",
+            #                list, prototype.push,           last
+            b"function Foo() {\n  list = [];\n}\nFoo.prototype.push = function(a) {\n  list.push(a);\n}\nlast = function() {\n  return list.pop();\n}\n",
+            #                list,           push, prototype.last
+            b"function Foo() {\n  list = [];\n}\npush = function(a) {\n  list.push(a);\n}\nFoo.prototype.last = function() {\n  return list.pop();\n}\n",
+            # reduced:       list,           push,           last
+            b"function Foo() {\n  list = [];\n}\npush = function(a) {\n  list.push(a);\n}\nlast = function() {\n  return list.pop();\n}\n"
+        )
+        with open("a.txt", "wb") as f:
+            f.write(valid_reductions[0])
+        class Interesting(DummyInteresting):
+            def interesting(sub, conditionArgs, tempPrefix):
+                with open("a.txt", "rb") as f:
+                    return f.read() in valid_reductions
+        l.conditionScript = Interesting()
+        l.strategy = lithium.ReplacePropertiesByGlobals()
+        l.testcase = lithium.TestcaseLine()
+        l.testcase.readTestcase("a.txt")
+        self.assertEqual(l.run(), 0)
+        with open("a.txt", "rb") as f:
+            self.assertEqual(f.read(), valid_reductions[-1])
+
+    def test_replace_arguments(self):
+        l = lithium.Lithium()
+        valid_reductions = (
+            b"function foo(a,b) {\n  list = a + b;\n}\nfoo(2,3)\n",
+            b"function foo(a) {\n  list = a + b;\n}\nb = 3;\nfoo(2)\n",
+            b"function foo(a) {\n  list = a + b;\n}\nb = 3;\nfoo(2,3)\n",
+            b"function foo(b) {\n  list = a + b;\n}\na = 2;\nfoo(3)\n",
+            b"function foo() {\n  list = a + b;\n}\na = 2;\nb = 3;\nfoo(2,3)\n",
+            b"function foo() {\n  list = a + b;\n}\na = 2;\nb = 3;\nfoo()\n"
+        )
+        with open("a.txt", "wb") as f:
+            f.write(valid_reductions[0])
+        class Interesting(DummyInteresting):
+            def interesting(sub, conditionArgs, tempPrefix):
+                with open("a.txt", "rb") as f:
+                    return f.read() in valid_reductions
+        l.conditionScript = Interesting()
+        l.strategy = lithium.ReplaceArgumentsByGlobals()
+        l.testcase = lithium.TestcaseLine()
+        l.testcase.readTestcase("a.txt")
+        self.assertEqual(l.run(), 0)
+        with open("a.txt", "rb") as f:
+            self.assertEqual(f.read(), valid_reductions[-1])
 
 
 class TestcaseTests(TestCase):
