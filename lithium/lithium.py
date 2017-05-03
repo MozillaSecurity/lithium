@@ -147,7 +147,7 @@ class TestcaseSymbol(TestcaseLine):
 
 
     def readTestcaseLine(self, line):
-        cutter = b'[%(before)s]?[^%(before)s%(after)s]*(?:[%(after)s]|$|(?=[%(before)s]))' % {b'before': self.cutBefore, b'after': self.cutAfter}
+        cutter = b"[%(before)s]?[^%(before)s%(after)s]*(?:[%(after)s]|$|(?=[%(before)s]))" % {b"before": self.cutBefore, b"after": self.cutAfter}
         for statement in re.finditer(cutter, line):
             if statement.group(0):
                 self.parts.append(statement.group(0))
@@ -399,7 +399,7 @@ class MinimizeSurroundingPairs(Minimize):
 
         log.info("Starting a round with chunks of %s.", quantity(chunkSize, testcase.atom))
 
-        summary = ['S' for i in range(numChunks)]
+        summary = ["S" for i in range(numChunks)]
         chunkStart = chunkSize
         beforeChunkIdx = 0
         keepChunkIdx = 1
@@ -421,20 +421,20 @@ class MinimizeSurroundingPairs(Minimize):
                     chunksRemoved += 2
                     atomsRemoved += (chunkBefEnd - chunkBefStart)
                     atomsRemoved += (chunkAftEnd - chunkAftStart)
-                    summary[beforeChunkIdx] = '-'
-                    summary[afterChunkIdx] = '-'
+                    summary[beforeChunkIdx] = "-"
+                    summary[afterChunkIdx] = "-"
                     # The start is now sooner since we remove the chunk which was before this one.
                     chunkStart -= chunkSize
                     try:
                         # Try to keep removing surrounding chunks of the same part.
-                        beforeChunkIdx = self.list_rindex(summary, keepChunkIdx, 'S')
+                        beforeChunkIdx = self.list_rindex(summary, keepChunkIdx, "S")
                     except ValueError:
                         # There is no more survinving block on the left-hand-side of
                         # the current chunk, shift everything by one surviving
                         # block. Any ValueError from here means that there is no
                         # longer enough chunk.
                         beforeChunkIdx = keepChunkIdx
-                        keepChunkIdx = self.list_nindex(summary, keepChunkIdx, 'S')
+                        keepChunkIdx = self.list_nindex(summary, keepChunkIdx, "S")
                         chunkStart += chunkSize
                 else:
                     log.info("Removing %s made the file 'uninteresting'.", description)
@@ -444,7 +444,7 @@ class MinimizeSurroundingPairs(Minimize):
                     keepChunkIdx = afterChunkIdx
                     chunkStart += chunkSize
 
-                afterChunkIdx = self.list_nindex(summary, keepChunkIdx, 'S')
+                afterChunkIdx = self.list_nindex(summary, keepChunkIdx, "S")
 
         except ValueError:
             # This is a valid loop exit point.
@@ -454,7 +454,7 @@ class MinimizeSurroundingPairs(Minimize):
         printableSummary = " ".join(["".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2)])
         log.info("")
         log.info("Done with a round of chunk size %d!", chunkSize)
-        log.info("%s survived; %s removed.", quantity(summary.count('S'), "chunk"), quantity(summary.count('-'), "chunk"))
+        log.info("%s survived; %s removed.", quantity(summary.count("S"), "chunk"), quantity(summary.count("-"), "chunk"))
         log.info("%s survived; %s removed.", quantity(atomsSurviving, testcase.atom), quantity(atomsRemoved, testcase.atom))
         log.info("Which chunks survived: %s", printableSummary)
         log.info("")
@@ -509,10 +509,10 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
         log.info("Starting a round with chunks of %s.", quantity(chunkSize, testcase.atom))
 
-        summary = ['S' for i in range(numChunks)]
-        curly = [(testcase.parts[i].count(b'{') - testcase.parts[i].count(b'}')) for i in range(numChunks)]
-        square = [(testcase.parts[i].count(b'[') - testcase.parts[i].count(b']')) for i in range(numChunks)]
-        normal = [(testcase.parts[i].count(b'(') - testcase.parts[i].count(b')')) for i in range(numChunks)]
+        summary = ["S" for i in range(numChunks)]
+        curly = [(testcase.parts[i].count(b"{") - testcase.parts[i].count(b"}")) for i in range(numChunks)]
+        square = [(testcase.parts[i].count(b"[") - testcase.parts[i].count(b"]")) for i in range(numChunks)]
+        normal = [(testcase.parts[i].count(b"(") - testcase.parts[i].count(b")")) for i in range(numChunks)]
         chunkStart = 0
         lhsChunkIdx = 0
 
@@ -521,7 +521,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
                 description = "chunk #%d%s of %d chunks of size %d" % (lhsChunkIdx, "".join(" " for i in range(len(str(lhsChunkIdx)) + 4)), numChunks, chunkSize)
 
-                assert summary[:lhsChunkIdx].count('S') * chunkSize == chunkStart, "the chunkStart should correspond to the lhsChunkIdx modulo the removed chunks."
+                assert summary[:lhsChunkIdx].count("S") * chunkSize == chunkStart, "the chunkStart should correspond to the lhsChunkIdx modulo the removed chunks."
 
                 chunkLhsStart = chunkStart
                 chunkLhsEnd = min(len(testcase.parts), chunkLhsStart + chunkSize)
@@ -539,18 +539,18 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         log.info("Yay, reduced it by removing %s :)", description)
                         chunksRemoved += 1
                         atomsRemoved += (chunkLhsEnd - chunkLhsStart)
-                        summary[lhsChunkIdx] = '-'
+                        summary[lhsChunkIdx] = "-"
                     else:
                         log.info("Removing %s made the file 'uninteresting'.", description)
                         chunkStart += chunkSize
-                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, 'S')
+                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
                     continue
 
                 # Otherwise look for the corresponding chunk.
                 rhsChunkIdx = lhsChunkIdx
                 for item in summary[(lhsChunkIdx + 1):]:
                     rhsChunkIdx += 1
-                    if item != 'S':
+                    if item != "S":
                         continue
                     nCurly += curly[rhsChunkIdx]
                     nSquare += square[rhsChunkIdx]
@@ -564,11 +564,11 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 if nCurly != 0 or nSquare != 0 or nNormal != 0:
                     log.info("Skipping %s because it is 'uninteresting'.", description)
                     chunkStart += chunkSize
-                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, 'S')
+                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
                     continue
 
                 # Otherwise we do have a match and we check if this is interesting to remove both.
-                chunkRhsStart = chunkLhsStart + chunkSize * summary[lhsChunkIdx:rhsChunkIdx].count('S')
+                chunkRhsStart = chunkLhsStart + chunkSize * summary[lhsChunkIdx:rhsChunkIdx].count("S")
                 chunkRhsStart = min(len(testcase.parts), chunkRhsStart)
                 chunkRhsEnd = min(len(testcase.parts), chunkRhsStart + chunkSize)
 
@@ -582,9 +582,9 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     chunksRemoved += 2
                     atomsRemoved += (chunkLhsEnd - chunkLhsStart)
                     atomsRemoved += (chunkRhsEnd - chunkRhsStart)
-                    summary[lhsChunkIdx] = '-'
-                    summary[rhsChunkIdx] = '-'
-                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, 'S')
+                    summary[lhsChunkIdx] = "-"
+                    summary[rhsChunkIdx] = "-"
+                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
                     continue
 
                 # Removing the braces make the failure disappear.  As we are looking
@@ -597,15 +597,15 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 # If you want to try it, just replace this True by a False.
                 if True:
                     chunkStart += chunkSize
-                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, 'S')
+                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
                     continue
 
                 origChunkIdx = lhsChunkIdx
                 stayOnSameChunk = False
                 chunkMidStart = chunkLhsEnd
-                midChunkIdx = self.list_nindex(summary, lhsChunkIdx, 'S')
+                midChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
                 while chunkMidStart < chunkRhsStart:
-                    assert summary[:midChunkIdx].count('S') * chunkSize == chunkMidStart, "the chunkMidStart should correspond to the midChunkIdx modulo the removed chunks."
+                    assert summary[:midChunkIdx].count("S") * chunkSize == chunkMidStart, "the chunkMidStart should correspond to the midChunkIdx modulo the removed chunks."
                     description = "chunk #%d%s of %d chunks of size %d" % (midChunkIdx, "".join(" " for i in range(len(str(lhsChunkIdx)) + 4)), numChunks, chunkSize)
 
                     chunkMidEnd = chunkMidStart + chunkSize
@@ -617,7 +617,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     if nCurly != 0 or nSquare != 0 or nNormal != 0:
                         log.info("Keepping %s because it is 'uninteresting'.", description)
                         chunkMidStart += chunkSize
-                        midChunkIdx = self.list_nindex(summary, midChunkIdx, 'S')
+                        midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
                         continue
 
                     # Try moving the chunk after.
@@ -638,7 +638,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         square =  ts[0] + ts[1] + ts[3] + ts[2] + ts[4]
                         normal =  tn[0] + tn[1] + tn[3] + tn[2] + tn[4]
                         rhsChunkIdx -= 1
-                        midChunkIdx = summary[midChunkIdx:].index('S') + midChunkIdx
+                        midChunkIdx = summary[midChunkIdx:].index("S") + midChunkIdx
                         continue
 
                     # Try moving the chunk before.
@@ -658,18 +658,18 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         square =  ts[0] + ts[2] + ts[1] + ts[3] + ts[4]
                         normal =  tn[0] + tn[2] + tn[1] + tn[3] + tn[4]
                         lhsChunkIdx += 1
-                        midChunkIdx = self.list_nindex(summary, midChunkIdx, 'S')
+                        midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
                         stayOnSameChunk = True
                         continue
 
                     log.info("..Moving %s made the file 'uninteresting'.", description)
                     chunkMidStart += chunkSize
-                    midChunkIdx = self.list_nindex(summary, midChunkIdx, 'S')
+                    midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
 
                 lhsChunkIdx = origChunkIdx
                 if not stayOnSameChunk:
                     chunkStart += chunkSize
-                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, 'S')
+                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
 
 
         except ValueError:
@@ -680,7 +680,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
         printableSummary = " ".join("".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2))
         log.info("")
         log.info("Done with a round of chunk size %d!", chunkSize)
-        log.info("%s survived; %s removed.", quantity(summary.count('S'), "chunk"), quantity(summary.count('-'), "chunk"))
+        log.info("%s survived; %s removed.", quantity(summary.count("S"), "chunk"), quantity(summary.count("-"), "chunk"))
         log.info("%s survived; %s removed.", quantity(atomsSurviving, testcase.atom), quantity(atomsRemoved, testcase.atom))
         log.info("Which chunks survived: %s", printableSummary)
         log.info("")
@@ -765,7 +765,7 @@ class ReplacePropertiesByGlobals(Minimize):
         # Map words to the chunk indexes in which they are present.
         words = {}
         for chunk, line in enumerate(testcase.parts):
-            for match in re.finditer(br'(?<=[\w\d_])\.(\w+)', line):
+            for match in re.finditer(br"(?<=[\w\d_])\.(\w+)", line):
                 word = match.group(1)
                 if not word in words:
                     words[word] = [chunk]
@@ -777,7 +777,7 @@ class ReplacePropertiesByGlobals(Minimize):
             return 0, testcase
 
         log.info("Starting a round with chunks of %s.", quantity(chunkSize, testcase.atom))
-        summary = ['S' for i in range(numChunks)]
+        summary = ["S" for i in range(numChunks)]
 
         for word, chunks in list(words.items()):
             chunkIndexes = {}
@@ -808,7 +808,7 @@ class ReplacePropertiesByGlobals(Minimize):
                     testcase = newTC
                     log.info("Yay, reduced it by removing prefixes of %s :)", description)
                     numRemovedChars += maybeRemoved
-                    summary[chunkIdx] = 's'
+                    summary[chunkIdx] = "s"
                     words[word] = [c for c in chunks if c not in chunkIndexes]
                     if len(words[word]) == 0:
                         del words[word]
@@ -819,7 +819,7 @@ class ReplacePropertiesByGlobals(Minimize):
         printableSummary = " ".join("".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2))
         log.info("")
         log.info("Done with a round of chunk size %d!", chunkSize)
-        log.info("%s survived; %s shortened.", quantity(summary.count('S'), "chunk"), quantity(summary.count('s'), "chunk"))
+        log.info("%s survived; %s shortened.", quantity(summary.count("S"), "chunk"), quantity(summary.count("s"), "chunk"))
         log.info("%s survived; %s removed.", quantity(numSurvivingChars, "character"), quantity(numRemovedChars, "character"))
         log.info("Which chunks survived: %s", printableSummary)
         log.info("")
@@ -883,7 +883,7 @@ class ReplaceArgumentsByGlobals(Minimize):
         anonymousStack = []
         for chunk, line in enumerate(testcase.parts):
             # Match function definition with at least one argument.
-            for match in re.finditer(br'(?:function\s+(\w+)|(\w+)\s*=\s*function)\s*\((\s*\w+\s*(?:,\s*\w+\s*)*)\)', line):
+            for match in re.finditer(br"(?:function\s+(\w+)|(\w+)\s*=\s*function)\s*\((\s*\w+\s*(?:,\s*\w+\s*)*)\)", line):
                 fun = match.group(1)
                 if fun is None:
                     fun = match.group(2)
@@ -891,7 +891,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 if match.group(3) == b"":
                     args = []
                 else:
-                    args = match.group(3).split(b',')
+                    args = match.group(3).split(b",")
 
                 if not fun in functions:
                     functions[fun] = {"defs": args, "argsPattern": match.group(3), "chunk": chunk, "uses": []}
@@ -901,15 +901,15 @@ class ReplaceArgumentsByGlobals(Minimize):
                     functions[fun]["chunk"] = chunk
 
             # Match anonymous function definition, which are surrounded by parentheses.
-            for match in re.finditer(br'\(function\s*\w*\s*\(((?:\s*\w+\s*(?:,\s*\w+\s*)*)?)\)\s*{', line):
+            for match in re.finditer(br"\(function\s*\w*\s*\(((?:\s*\w+\s*(?:,\s*\w+\s*)*)?)\)\s*{", line):
                 if match.group(1) == "":
                     args = []
                 else:
-                    args = match.group(1).split(',')
+                    args = match.group(1).split(",")
                 anonymousStack += [{"defs": args, "chunk": chunk, "use": None, "useChunk": 0}]
 
             # Match calls of anonymous function.
-            for match in re.finditer(br'}\s*\)\s*\(((?:[^()]|\([^,()]*\))*)\)', line):
+            for match in re.finditer(br"}\s*\)\s*\(((?:[^()]|\([^,()]*\))*)\)", line):
                 if len(anonymousStack) == 0:
                     continue
                 anon = anonymousStack[-1]
@@ -919,19 +919,19 @@ class ReplaceArgumentsByGlobals(Minimize):
                 if match.group(1) == b"":
                     args = []
                 else:
-                    args = match.group(1).split(b',')
+                    args = match.group(1).split(b",")
                 anon["use"] = args
                 anon["useChunk"] = chunk
                 anonymousQueue += [anon]
 
             # match function calls. (and some definitions)
-            for match in re.finditer(br'((\w+)\s*\(((?:[^()]|\([^,()]*\))*)\))', line):
+            for match in re.finditer(br"((\w+)\s*\(((?:[^()]|\([^,()]*\))*)\))", line):
                 pattern = match.group(1)
                 fun = match.group(2)
                 if match.group(3) == b"":
                     args = []
                 else:
-                    args = match.group(3).split(b',')
+                    args = match.group(3).split(b",")
                 if not fun in functions:
                     functions[fun] = {"uses": []}
                 functions[fun]["uses"] += [{"values": args, "chunk": chunk, "pattern": pattern}]
