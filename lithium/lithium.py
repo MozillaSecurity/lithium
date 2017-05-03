@@ -364,17 +364,17 @@ class MinimizeSurroundingPairs(Minimize):
     @staticmethod
     def list_rindex(l, p, e):
         if p < 0 or p > len(l):
-            raise ValueError("%s is not in list" % str(e))
+            raise ValueError("%s is not in list" % e)
         for index, item in enumerate(reversed(l[:p])):
             if item == e:
                 return p - index - 1
-        raise ValueError("%s is not in list" % str(e))
+        raise ValueError("%s is not in list" % e)
 
 
     @staticmethod
     def list_nindex(l, p, e):
         if p + 1 >= len(l):
-            raise ValueError("%s is not in list" % str(e))
+            raise ValueError("%s is not in list" % e)
         return l[(p + 1):].index(e) + (p + 1)
 
 
@@ -459,7 +459,7 @@ class MinimizeSurroundingPairs(Minimize):
         log.info("Which chunks survived: %s", printableSummary)
         log.info("")
 
-        testcase.writeTestcase(tempFilename("did-round-" + str(chunkSize)))
+        testcase.writeTestcase(tempFilename("did-round-%d" % chunkSize))
 
         return (chunksRemoved > 0), testcase
 
@@ -802,14 +802,14 @@ class ReplacePropertiesByGlobals(Minimize):
                 for chunkStart in chunkStarts:
                     subst = re.sub(br"[\w_.]+\." + word, word, newTC.parts[chunkStart])
                     maybeRemoved += len(newTC.parts[chunkStart]) - len(subst)
-                    newTC.parts = newTC.parts[:chunkStart] + [ subst ] + newTC.parts[(chunkStart+1):]
+                    newTC.parts = newTC.parts[:chunkStart] + [subst] + newTC.parts[(chunkStart+1):]
 
                 if interesting(newTC):
                     testcase = newTC
                     log.info("Yay, reduced it by removing prefixes of %s :)", description)
                     numRemovedChars += maybeRemoved
                     summary[chunkIdx] = 's'
-                    words[word] = [ c for c in chunks if c not in chunkIndexes ]
+                    words[word] = [c for c in chunks if c not in chunkIndexes]
                     if len(words[word]) == 0:
                         del words[word]
                 else:
@@ -819,9 +819,9 @@ class ReplacePropertiesByGlobals(Minimize):
         printableSummary = " ".join("".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2))
         log.info("")
         log.info("Done with a round of chunk size %d!", chunkSize)
-        log.info(quantity(summary.count('S'), "chunk") + " survived; " + quantity(summary.count('s'), "chunk") + " shortened.")
-        log.info(quantity(numSurvivingChars, "character") + " survived; " + quantity(numRemovedChars, "character") + " removed.")
-        log.info("Which chunks survived: " + printableSummary)
+        log.info("%s survived; %s shortened.", quantity(summary.count('S'), "chunk"), quantity(summary.count('s'), "chunk"))
+        log.info("%s survived; %s removed.", quantity(numSurvivingChars, "character"), quantity(numRemovedChars, "character"))
+        log.info("Which chunks survived: %s", printableSummary)
         log.info("")
 
         testcase.writeTestcase(tempFilename("did-round-%d" % chunkSize))
@@ -894,7 +894,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                     args = match.group(3).split(b',')
 
                 if not fun in functions:
-                    functions[fun] = { "defs": args, "argsPattern": match.group(3), "chunk": chunk, "uses": [] }
+                    functions[fun] = {"defs": args, "argsPattern": match.group(3), "chunk": chunk, "uses": []}
                 else:
                     functions[fun]["defs"] = args
                     functions[fun]["argsPattern"] = match.group(3)
@@ -906,7 +906,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                     args = []
                 else:
                     args = match.group(1).split(',')
-                anonymousStack += [{ "defs": args, "chunk": chunk, "use": None, "useChunk": 0 }]
+                anonymousStack += [{"defs": args, "chunk": chunk, "use": None, "useChunk": 0}]
 
             # Match calls of anonymous function.
             for match in re.finditer(br'}\s*\)\s*\(((?:[^()]|\([^,()]*\))*)\)', line):
@@ -933,8 +933,8 @@ class ReplaceArgumentsByGlobals(Minimize):
                 else:
                     args = match.group(3).split(b',')
                 if not fun in functions:
-                    functions[fun] = { "uses": [] }
-                functions[fun]["uses"] += [{ "values": args, "chunk": chunk, "pattern": pattern }]
+                    functions[fun] = {"uses": []}
+                functions[fun]["uses"] += [{"values": args, "chunk": chunk, "pattern": pattern}]
 
         # All patterns have been removed sucessfully.
         if len(functions) == 0 and len(anonymousQueue) == 0:
@@ -955,7 +955,7 @@ class ReplaceArgumentsByGlobals(Minimize):
             argDefs = argsMap["defs"]
             defChunk = argsMap["chunk"]
             subst = newTC.parts[defChunk].replace(argsMap["argsPattern"], b"", 1)
-            newTC.parts = newTC.parts[:defChunk] + [ subst ] + newTC.parts[(defChunk+1):]
+            newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk+1):]
 
             # Copy callers arguments to globals.
             for argUse in argsMap["uses"]:
@@ -965,9 +965,9 @@ class ReplaceArgumentsByGlobals(Minimize):
                     continue
                 while len(values) < len(argDefs):
                     values = values + [b"undefined"]
-                setters = b"".join([ a + b" = " + v + b";\n" for a, v in zip(argDefs, values) ])
+                setters = b"".join(b"%s = %s;\n" % (a, v) for a, v in zip(argDefs, values))
                 subst = setters + newTC.parts[chunk]
-                newTC.parts = newTC.parts[:chunk] + [ subst ] + newTC.parts[(chunk+1):]
+                newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk+1):]
             maybeMovedArguments += len(argDefs)
 
             if interesting(newTC):
@@ -988,10 +988,10 @@ class ReplaceArgumentsByGlobals(Minimize):
                 subst = newTC.parts[chunk].replace(argUse["pattern"], fun + b"()", 1)
                 if newTC.parts[chunk] == subst:
                     continue
-                newTC.parts = newTC.parts[:chunk] + [ subst ] + newTC.parts[(chunk+1):]
+                newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk+1):]
                 maybeMovedArguments = len(values)
 
-                descriptionChunk = description + " at " + testcase.atom + " #" + str(chunk)
+                descriptionChunk = "%s at %s #%d" % (description, testcase.atom, chunk)
                 if interesting(newTC):
                     testcase = newTC
                     log.info("Yay, reduced it by removing %s :)", descriptionChunk)
@@ -1010,28 +1010,28 @@ class ReplaceArgumentsByGlobals(Minimize):
             defChunk = anon["chunk"]
             values = anon["use"]
             chunk = anon["useChunk"]
-            description = "arguments of anonymous function at #" + testcase.atom + " " + str(defChunk)
+            description = "arguments of anonymous function at #%s %d" % (testcase.atom, defChunk)
 
             # Remove arguments of the function.
             subst = newTC.parts[defChunk].replace(b",".join(argDefs), b"", 1)
             if newTC.parts[defChunk] == subst:
                 noopChanges += 1
-            newTC.parts = newTC.parts[:defChunk] + [ subst ] + newTC.parts[(defChunk+1):]
+            newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk+1):]
 
             # Replace arguments by their value in the scope of the function.
             while len(values) < len(argDefs):
                 values = values + [b"undefined"]
-            setters = "".join([ b"var " + a + b" = " + v + b";\n" for a, v in zip(argDefs, values) ])
+            setters = "".join(b"var %s = %s;\n" % (a, v) for a, v in zip(argDefs, values))
             subst = newTC.parts[defChunk] + b"\n" + setters
             if newTC.parts[defChunk] == subst:
                 noopChanges += 1
-            newTC.parts = newTC.parts[:defChunk] + [ subst ] + newTC.parts[(defChunk+1):]
+            newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk+1):]
 
             # Remove arguments of the anonymous function call.
             subst = newTC.parts[chunk].replace(b",".join(anon["use"]), b"", 1)
             if newTC.parts[chunk] == subst:
                 noopChanges += 1
-            newTC.parts = newTC.parts[:chunk] + [ subst ] + newTC.parts[(chunk+1):]
+            newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk+1):]
             maybeMovedArguments += len(values)
 
             if noopChanges == 3:
@@ -1167,7 +1167,7 @@ class Lithium(object):
         grp_atoms.add_argument(
             "-s", "--symbol",
             action="store_true",
-            help="Treat the file as a sequence of strings separated by tokens. " + \
+            help="Treat the file as a sequence of strings separated by tokens. "
                  "The characters by which the strings are delimited are defined by the --cutBefore, and --cutAfter options.")
         grp_opt.add_argument(
             "--cutBefore",
