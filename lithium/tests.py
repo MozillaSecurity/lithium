@@ -1,10 +1,23 @@
+import logging
+import math
 import os
+import random
 import shutil
 import sys
 import tempfile
 import unittest
 
 import lithium
+
+
+log = logging.getLogger("lithium_test")
+logging.basicConfig(level=logging.DEBUG)
+
+
+# python 3 has unlimited precision integers
+# restrict tests to 64-bit
+if not hasattr(sys, "maxint"):
+    sys.maxint = (1<<64)-1
 
 
 class TestCase(unittest.TestCase):
@@ -34,6 +47,103 @@ class DummyInteresting(object):
         pass
     def cleanup(self, conditionArgs):
         pass
+
+
+def ispow2(n):
+    """
+    simple version for testing
+    """
+    assert isinstance(n, int) or n.is_integer(), "ispow2() only works for integers, %r is not an integer" % n
+    assert n >= 1, "domain error"
+    orig = n
+    result = True
+    while n > 1:
+        if n % 2:
+            result = False
+            break
+        n //= 2
+    # if the input is representable as a float, compare the result to math library
+    if orig <= sys.float_info.max:
+        math_result = math.log(orig) / math.log(2)
+        diff = abs(math_result - round(math_result)) # diff to the next closest integer
+        math_result = diff < 10**-(sys.float_info.dig - 1) # float_info.dig is the # of decimal digits representable
+        assert result == math_result, "ispow2(n) did not match math.log(n)/math.log(2) for n = %d" % orig
+    return result
+
+
+def divceil(n, d):
+    """
+    simple version for testing
+    """
+    q = n // d
+    r = n % d
+    result = q + (1 if r else 0)
+    # if the inputs are representable as a float, compare the result to math library
+    if n <= sys.float_info.max and d <= sys.float_info.max:
+        math_result = math.ceil(1.0 * n / d)
+        assert result == math_result, "divceil(n,d) did not match math.ceil(n/d) for n = %d, d = %d" % (n, d)
+    return result
+
+
+class HelperTests(TestCase):
+
+    def test_divideRoundingUp(self):
+        for _ in range(10000):
+            n = random.randint(1, sys.maxint)
+            d = random.randint(1, n)
+            try:
+                self.assertEqual(divceil(n, d), lithium.divideRoundingUp(n, d))
+                self.assertEqual(1, lithium.divideRoundingUp(n, n))
+                self.assertEqual(0, lithium.divideRoundingUp(0, n))
+                self.assertEqual(2, lithium.divideRoundingUp(n+1, n))
+            except Exception:
+                log.debug("n = %d, d = %d", n, d)
+                raise
+
+    def test_isPowerOfTwo(self):
+        self.assertFalse(lithium.isPowerOfTwo(0))
+        # try all integers [1,10000)
+        for i in range(1, 10000):
+            try:
+                self.assertEqual(ispow2(i), lithium.isPowerOfTwo(i))
+            except Exception:
+                log.debug("i = %d", i)
+                raise
+        # try 10000 random integers >= 10000
+        for _ in range(10000):
+            r = random.randint(10000, sys.maxint)
+            try:
+                self.assertEqual(ispow2(r), lithium.isPowerOfTwo(r))
+            except Exception:
+                log.debug("r = %d", r)
+                raise
+
+    def test_largestPowerOfTwoSmallerThan(self):
+        self.assertEqual(1, lithium.largestPowerOfTwoSmallerThan(0))
+        def check_result(r, i):
+            # check that it is a power of two
+            self.assertTrue(ispow2(r))
+            # check that it is < i
+            if i != 1:
+                self.assertLess(r, i)
+            # check that the next power of 2 is >= i
+            self.assertGreaterEqual(r * 2, i)
+        # try all integers [1,10000)
+        for i in range(1, 10000):
+            try:
+                check_result(lithium.largestPowerOfTwoSmallerThan(i), i)
+            except Exception:
+                log.debug("i = %d", i)
+                raise
+        # try 10000 random integers >= 10000
+        for _ in range(10000):
+            r = random.randint(10000, sys.maxint)
+            try:
+                check_result(lithium.largestPowerOfTwoSmallerThan(r), r)
+            except Exception:
+                log.debug("r = %d", r)
+                raise
+
 
 class LithiumTests(TestCase):
 

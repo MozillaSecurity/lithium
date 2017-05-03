@@ -4,9 +4,9 @@
 import argparse
 import logging
 import os
-import time
-import sys
 import re
+import sys
+import time
 
 
 log = logging.getLogger("lithium") # pylint: disable=invalid-name
@@ -17,6 +17,11 @@ class LithiumError(Exception):
 
 
 class Testcase(object):
+    """
+    Abstract testcase class.
+
+    Implementers should define readTestcaseLine() and writeTestcase() methods.
+    """
 
     def __init__(self):
         self.before = b""
@@ -150,9 +155,9 @@ class TestcaseSymbol(TestcaseLine):
 
 class Strategy(object):
     """
-    Minimization strategy
+    Abstract minimization strategy class
 
-    This should implement a main() method which takes a testcase and calls the interesting callback repeatedly to minimize the testcase.
+    Implementers should define a main() method which takes a testcase and calls the interesting callback repeatedly to minimize the testcase.
     """
 
     def addArgs(self, parser):
@@ -1115,14 +1120,14 @@ class Lithium(object):
         # Build list of strategies and testcase types
         strategies = {}
         testcaseTypes = {}
-        for cls in globals().values():
-            if isinstance(cls, type):
-                if cls is not Strategy and issubclass(cls, Strategy):
-                    assert cls.name not in strategies
-                    strategies[cls.name] = cls
-                elif cls is not Testcase and issubclass(cls, Testcase):
-                    assert cls.atom not in testcaseTypes
-                    testcaseTypes[cls.atom] = cls
+        for globalValue in globals().values():
+            if isinstance(globalValue, type):
+                if globalValue is not Strategy and issubclass(globalValue, Strategy):
+                    assert globalValue.name not in strategies
+                    strategies[globalValue.name] = globalValue
+                elif globalValue is not Testcase and issubclass(globalValue, Testcase):
+                    assert globalValue.atom not in testcaseTypes
+                    testcaseTypes[globalValue.atom] = globalValue
 
         # Try to parse --conflict before anything else
         class ArgParseTry(argparse.ArgumentParser):
@@ -1209,7 +1214,7 @@ class Lithium(object):
             self.testcase.cutAfter = args.cutAfter
         self.testcase.readTestcase(testcaseFilename)
 
-        sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "interestingness")))
+        sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, "interestingness"))
         import ximport # pylint: disable=import-error
 
         self.conditionScript = ximport.importRelativeOrAbsolute(extra_args[0])
@@ -1268,8 +1273,7 @@ def summaryHeader():
 
 
 def divideRoundingUp(n, d):
-    q, r = divmod(n, d)
-    return q + (1 if r else 0)
+    return (n // d) + (1 if n % d != 0 else 0)
 
 
 def isPowerOfTwo(n):
@@ -1277,7 +1281,10 @@ def isPowerOfTwo(n):
 
 
 def largestPowerOfTwoSmallerThan(n):
-    return 1<<max(n.bit_length() - 2, 0)
+    result = 1<<max(n.bit_length() - 1, 0)
+    if result == n and n > 1:
+        result >>= 1
+    return result
 
 
 def quantity(n, unit):
