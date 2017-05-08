@@ -621,12 +621,11 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         continue
 
                     # Try moving the chunk after.
-
                     testcaseSuggestion = testcase.copy()
                     testcaseSuggestion.parts = p[0] + p[1] + p[3] + p[2] + p[4]
                     if interesting(testcaseSuggestion):
                         testcase = testcaseSuggestion
-                        log.info("->Moving %s kept the file 'interesting'.")
+                        log.info("->Moving %s kept the file 'interesting'.", description)
                         chunkRhsStart -= chunkSize
                         chunkRhsEnd -= chunkSize
                         tS = self.list_fiveParts(summary, 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
@@ -795,7 +794,7 @@ class ReplacePropertiesByGlobals(Minimize):
                 if len(chunkStarts) == 1 and finalChunkSize != chunkSize:
                     continue
 
-                description = "'%s' in chunk #%d of %d chunks of size %d" % (word, chunkIdx, numChunks, chunkSize)
+                description = "'%s' in chunk #%d of %d chunks of size %d" % (word.decode("utf-8", "replace"), chunkIdx, numChunks, chunkSize)
 
                 maybeRemoved = 0
                 newTC = testcase.copy()
