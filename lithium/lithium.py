@@ -615,7 +615,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     nSquare = square[midChunkIdx]
                     nNormal = normal[midChunkIdx]
                     if nCurly != 0 or nSquare != 0 or nNormal != 0:
-                        log.info("Keepping %s because it is 'uninteresting'.", description)
+                        log.info("Keeping %s because it is 'uninteresting'.", description)
                         chunkMidStart += chunkSize
                         midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
                         continue
