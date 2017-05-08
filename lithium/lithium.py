@@ -799,7 +799,7 @@ class ReplacePropertiesByGlobals(Minimize):
                 maybeRemoved = 0
                 newTC = testcase.copy()
                 for chunkStart in chunkStarts:
-                    subst = re.sub(br"[\w_.]+\." + word, word, newTC.parts[chunkStart])
+                    subst = re.sub(br"[\w_.]+\.%s" % word, word, newTC.parts[chunkStart])
                     maybeRemoved += len(newTC.parts[chunkStart]) - len(subst)
                     newTC.parts = newTC.parts[:chunkStart] + [subst] + newTC.parts[(chunkStart+1):]
 

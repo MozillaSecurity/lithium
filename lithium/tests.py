@@ -282,59 +282,44 @@ class LithiumTests(TestCase):
 
 class StrategyTests(TestCase):
 
-    def test_minimize_line(self):
-        l = lithium.Lithium()
-        with open("a.txt", "wb") as f:
-            f.write(b"x\n\nx\nx\no\nx\nx\nx\n")
+    def test_minimize(self):
         class Interesting(DummyInteresting):
             def interesting(sub, conditionArgs, tempPrefix):
                 with open("a.txt", "rb") as f:
                     return b"o\n" in f.read()
-        l.conditionScript = Interesting()
-        l.strategy = lithium.Minimize()
-        l.testcase = lithium.TestcaseLine()
-        l.testcase.readTestcase("a.txt")
-        self.assertEqual(l.run(), 0)
-        with open("a.txt", "rb") as f:
-            self.assertEqual(f.read(), b"o\n")
-
-    def test_minimize_char(self):
         l = lithium.Lithium()
-        with open("a.txt", "wb") as f:
-            f.write(b"x\n\nx\nx\no\nx\nx\nx\n")
-        class Interesting(DummyInteresting):
-            def interesting(sub, conditionArgs, tempPrefix):
-                with open("a.txt", "rb") as f:
-                    return b"o" in f.read()
         l.conditionScript = Interesting()
         l.strategy = lithium.Minimize()
-        l.testcase = lithium.TestcaseChar()
-        l.testcase.readTestcase("a.txt")
-        self.assertEqual(l.run(), 0)
-        with open("a.txt", "rb") as f:
-            self.assertEqual(f.read(), b"o")
+        for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
+            log.info("Trying with testcase type %s:", testcaseType.__name__)
+            with open("a.txt", "wb") as f:
+                f.write(b"x\n\nx\nx\no\nx\nx\nx\n")
+            l.testcase = testcaseType()
+            l.testcase.readTestcase("a.txt")
+            self.assertEqual(l.run(), 0)
+            with open("a.txt", "rb") as f:
+                self.assertEqual(f.read(), b"o\n")
 
     def test_minimize_around(self):
-        l = lithium.Lithium()
-        with open("a.txt", "wb") as f:
-            f.write(b"x\nx\nx\no\nx\nx\nx\n")
         class Interesting(DummyInteresting):
             def interesting(sub, conditionArgs, tempPrefix):
                 with open("a.txt", "rb") as f:
                     data = f.read()
                     return b"o\n" in data and len(set(data.split(b"o\n"))) == 1
+        l = lithium.Lithium()
         l.conditionScript = Interesting()
         l.strategy = lithium.MinimizeSurroundingPairs()
-        l.testcase = lithium.TestcaseLine()
-        l.testcase.readTestcase("a.txt")
-        self.assertEqual(l.run(), 0)
-        with open("a.txt", "rb") as f:
-            self.assertEqual(f.read(), b"o\n")
+        for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
+            log.info("Trying with testcase type %s:", testcaseType.__name__)
+            with open("a.txt", "wb") as f:
+                f.write(b"x\nx\nx\no\nx\nx\nx\n")
+            l.testcase = testcaseType()
+            l.testcase.readTestcase("a.txt")
+            self.assertEqual(l.run(), 0)
+            with open("a.txt", "rb") as f:
+                self.assertEqual(f.read(), b"o\n")
 
     def test_minimize_balanced(self):
-        l = lithium.Lithium()
-        with open("a.txt", "wb") as f:
-            f.write(b"[\n[\nxxx{\no\n}\n]\n]\n")
         class Interesting(DummyInteresting):
             def interesting(sub, conditionArgs, tempPrefix):
                 with open("a.txt", "rb") as f:
@@ -345,16 +330,20 @@ class StrategyTests(TestCase):
                                (a.count(b"(") == b.count(b")")) and \
                                (a.count(b"[") == b.count(b"]"))
                     return False
+        l = lithium.Lithium()
         l.conditionScript = Interesting()
         l.strategy = lithium.MinimizeBalancedPairs()
-        l.testcase = lithium.TestcaseLine()
-        l.testcase.readTestcase("a.txt")
-        self.assertEqual(l.run(), 0)
-        with open("a.txt", "rb") as f:
-            self.assertEqual(f.read(), b"o\n")
+        for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
+            log.info("Trying with testcase type %s:", testcaseType.__name__)
+            with open("a.txt", "wb") as f:
+                f.write(b"[\n[\nxxx{\no\n}\n]\n]\n")
+            l.testcase = testcaseType()
+            l.testcase.readTestcase("a.txt")
+            self.assertEqual(l.run(), 0)
+            with open("a.txt", "rb") as f:
+                self.assertEqual(f.read(), b"o\n")
 
     def test_replace_properties(self):
-        l = lithium.Lithium()
         valid_reductions = (
             # original: this.list, prototype.push, prototype.last
             b"function Foo() {\n  this.list = [];\n}\nFoo.prototype.push = function(a) {\n  this.list.push(a);\n}\nFoo.prototype.last = function() {\n  return this.list.pop();\n}\n",
@@ -373,22 +362,27 @@ class StrategyTests(TestCase):
             # reduced:       list,           push,           last
             b"function Foo() {\n  list = [];\n}\npush = function(a) {\n  list.push(a);\n}\nlast = function() {\n  return list.pop();\n}\n"
         )
-        with open("a.txt", "wb") as f:
-            f.write(valid_reductions[0])
         class Interesting(DummyInteresting):
             def interesting(sub, conditionArgs, tempPrefix):
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
-        l.conditionScript = Interesting()
-        l.strategy = lithium.ReplacePropertiesByGlobals()
-        l.testcase = lithium.TestcaseLine()
-        l.testcase.readTestcase("a.txt")
-        self.assertEqual(l.run(), 0)
-        with open("a.txt", "rb") as f:
-            self.assertEqual(f.read(), valid_reductions[-1])
+        l = lithium.Lithium()
+        for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
+            log.info("Trying with testcase type %s:", testcaseType.__name__)
+            with open("a.txt", "wb") as f:
+                f.write(valid_reductions[0])
+            l.conditionScript = Interesting()
+            l.strategy = lithium.ReplacePropertiesByGlobals()
+            l.testcase = testcaseType()
+            l.testcase.readTestcase("a.txt")
+            self.assertEqual(l.run(), 0)
+            with open("a.txt", "rb") as f:
+                if testcaseType is lithium.TestcaseChar:
+                    self.assertEqual(f.read(), valid_reductions[0]) # Char doesn't give this strategy enough to work with
+                else:
+                    self.assertEqual(f.read(), valid_reductions[-1])
 
     def test_replace_arguments(self):
-        l = lithium.Lithium()
         valid_reductions = (
             b"function foo(a,b) {\n  list = a + b;\n}\nfoo(2,3)\n",
             b"function foo(a) {\n  list = a + b;\n}\nb = 3;\nfoo(2)\n",
@@ -397,19 +391,25 @@ class StrategyTests(TestCase):
             b"function foo() {\n  list = a + b;\n}\na = 2;\nb = 3;\nfoo(2,3)\n",
             b"function foo() {\n  list = a + b;\n}\na = 2;\nb = 3;\nfoo()\n"
         )
-        with open("a.txt", "wb") as f:
-            f.write(valid_reductions[0])
         class Interesting(DummyInteresting):
             def interesting(sub, conditionArgs, tempPrefix):
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
+        l = lithium.Lithium()
         l.conditionScript = Interesting()
         l.strategy = lithium.ReplaceArgumentsByGlobals()
-        l.testcase = lithium.TestcaseLine()
-        l.testcase.readTestcase("a.txt")
-        self.assertEqual(l.run(), 0)
-        with open("a.txt", "rb") as f:
-            self.assertEqual(f.read(), valid_reductions[-1])
+        for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
+            log.info("Trying with testcase type %s:", testcaseType.__name__)
+            with open("a.txt", "wb") as f:
+                f.write(valid_reductions[0])
+            l.testcase = testcaseType()
+            l.testcase.readTestcase("a.txt")
+            self.assertEqual(l.run(), 0)
+            with open("a.txt", "rb") as f:
+                if testcaseType is lithium.TestcaseChar:
+                    self.assertEqual(f.read(), valid_reductions[0]) # Char doesn't give this strategy enough to work with
+                else:
+                    self.assertEqual(f.read(), valid_reductions[-1])
 
 
 class TestcaseTests(TestCase):
