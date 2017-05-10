@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
+# pylint: disable=invalid-name,missing-docstring,line-too-long,too-many-locals,too-many-statements,too-many-branches,too-many-lines,too-many-instance-attributes,too-many-arguments
 
 import argparse
 import logging
@@ -591,7 +592,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
                 # Moving chunks is still a bit experimental, and it can introduce reducing loops.
                 # If you want to try it, just replace this True by a False.
-                if True:
+                if True: # pylint: disable=using-constant-test
                     chunkStart += chunkSize
                     lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
                     continue
@@ -623,6 +624,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         log.info("->Moving %s kept the file 'interesting'.", description)
                         chunkRhsStart -= chunkSize
                         chunkRhsEnd -= chunkSize
+                        # pylint: disable=bad-whitespace
                         tS = self.list_fiveParts(summary, 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
                         tc = self.list_fiveParts(curly  , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
                         ts = self.list_fiveParts(square , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
@@ -643,6 +645,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         chunkLhsStart += chunkSize
                         chunkLhsEnd += chunkSize
                         chunkMidStart += chunkSize
+                        # pylint: disable=bad-whitespace
                         tS = self.list_fiveParts(summary, 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
                         tc = self.list_fiveParts(curly  , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
                         ts = self.list_fiveParts(square , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
@@ -749,8 +752,6 @@ class ReplacePropertiesByGlobals(Minimize):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
-
-        summary = ""
 
         numRemovedChars = 0
         numChunks = divideRoundingUp(len(testcase.parts), chunkSize)
@@ -863,7 +864,8 @@ class ReplaceArgumentsByGlobals(Minimize):
         return 0, False, testcase
 
 
-    def tryArgumentsAsGlobals(self, roundNum, testcase, interesting, tempFilename):
+    @staticmethod
+    def tryArgumentsAsGlobals(roundNum, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
@@ -1015,7 +1017,7 @@ class ReplaceArgumentsByGlobals(Minimize):
             # Replace arguments by their value in the scope of the function.
             while len(values) < len(argDefs):
                 values = values + [b"undefined"]
-            setters = "".join(b"var %s = %s;\n" % (a, v) for a, v in zip(argDefs, values))
+            setters = b"".join(b"var %s = %s;\n" % (a, v) for a, v in zip(argDefs, values))
             subst = newTC.parts[defChunk] + b"\n" + setters
             if newTC.parts[defChunk] == subst:
                 noopChanges += 1
@@ -1137,7 +1139,7 @@ class Lithium(object):
         args = parser.parse_known_args(argv)
         self.strategy = strategies.get(args[0].strategy if args else None, strategies[defaultStrategy])()
 
-        parser = argparse.ArgumentParser(
+        parser = argparse.ArgumentParser( # pylint: disable=redefined-variable-type
             description="Lithium, an automated testcase reduction tool by Jesse Ruderman.",
             epilog="See doc/using.html for more information.",
             usage="./lithium.py [options] condition [condition options] file-to-reduce\n\n"
