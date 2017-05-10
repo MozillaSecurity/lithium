@@ -383,11 +383,9 @@ class MinimizeSurroundingPairs(Minimize):
 
         Returns True iff any chunks were removed."""
 
-        chunksSoFar = 0
         summary = ""
 
         chunksRemoved = 0
-        chunksSurviving = 0
         atomsRemoved = 0
 
         atomsInitial = len(testcase.parts)
@@ -484,8 +482,8 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
     #
 
     @staticmethod
-    def list_fiveParts(list, step, f, s, t):
-        return (list[:f], list[f:s], list[s:(s+step)], list[(s+step):(t+step)], list[(t+step):])
+    def list_fiveParts(lst, step, f, s, t):
+        return (lst[:f], lst[f:s], lst[s:(s+step)], lst[(s+step):(t+step)], lst[(t+step):])
 
 
     def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):
@@ -493,11 +491,9 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
         Returns True iff any chunks were removed."""
 
-        chunksSoFar = 0
         summary = ""
 
         chunksRemoved = 0
-        chunksSurviving = 0
         atomsRemoved = 0
 
         atomsInitial = len(testcase.parts)
@@ -608,7 +604,6 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     assert summary[:midChunkIdx].count("S") * chunkSize == chunkMidStart, "the chunkMidStart should correspond to the midChunkIdx modulo the removed chunks."
                     description = "chunk #%d%s of %d chunks of size %d" % (midChunkIdx, "".join(" " for i in range(len(str(lhsChunkIdx)) + 4)), numChunks, chunkSize)
 
-                    chunkMidEnd = chunkMidStart + chunkSize
                     p = self.list_fiveParts(testcase.parts, chunkSize, chunkLhsStart, chunkMidStart, chunkRhsStart)
 
                     nCurly = curly[midChunkIdx]
@@ -776,7 +771,7 @@ class ReplacePropertiesByGlobals(Minimize):
             return 0, testcase
 
         log.info("Starting a round with chunks of %s.", quantity(chunkSize, testcase.atom))
-        summary = ["S" for i in range(numChunks)]
+        summary = list("S" * numChunks)
 
         for word, chunks in list(words.items()):
             chunkIndexes = {}
