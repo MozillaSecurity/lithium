@@ -148,7 +148,7 @@ class TestcaseSymbol(TestcaseLine):
 
 
     def readTestcaseLine(self, line):
-        cutter = b"[%(before)s]?[^%(before)s%(after)s]*(?:[%(after)s]|$|(?=[%(before)s]))" % {b"before": self.cutBefore, b"after": self.cutAfter}
+        cutter = b"[" + self.cutBefore + b"]?[^" + self.cutBefore + self.cutAfter + b"]*(?:[" + self.cutAfter + b"]|$|(?=[" + self.cutBefore + b"]))"
         for statement in re.finditer(cutter, line):
             if statement.group(0):
                 self.parts.append(statement.group(0))
@@ -795,7 +795,7 @@ class ReplacePropertiesByGlobals(Minimize):
                 maybeRemoved = 0
                 newTC = testcase.copy()
                 for chunkStart in chunkStarts:
-                    subst = re.sub(br"[\w_.]+\.%s" % word, word, newTC.parts[chunkStart])
+                    subst = re.sub(br"[\w_.]+\." + word, word, newTC.parts[chunkStart])
                     maybeRemoved += len(newTC.parts[chunkStart]) - len(subst)
                     newTC.parts = newTC.parts[:chunkStart] + [subst] + newTC.parts[(chunkStart+1):]
 
@@ -961,7 +961,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                     continue
                 while len(values) < len(argDefs):
                     values = values + [b"undefined"]
-                setters = b"".join(b"%s = %s;\n" % (a, v) for a, v in zip(argDefs, values))
+                setters = b"".join((a + b" = " + v + b";\n") for (a, v) in zip(argDefs, values))
                 subst = setters + newTC.parts[chunk]
                 newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk+1):]
             maybeMovedArguments += len(argDefs)

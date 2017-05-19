@@ -1,0 +1,14 @@
+language: python
+python:
+    - 2.7
+    - 3.3
+    - 3.4
+    - 3.5
+    - 3.6
+    - nightly
+before_script:
+    - pip install pytest-cov codecov
+script:
+    - py.test lithium/tests.py -v --cov . --cov-report term-missing
+after_success:
+    - codecov
