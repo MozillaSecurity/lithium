@@ -8,6 +8,7 @@ This can be used to isolate and minimize differential behaviour test cases.
 # This file came from nbp's GitHub PR #2 for adding new Lithium reduction strategies.
 #   https://github.com/MozillaSecurity/lithium/pull/2
 
+from __future__ import print_function
 from optparse import OptionParser
 
 import timedRun
@@ -40,17 +41,17 @@ def interesting(cliArgs, tempPrefix):
 
     if aRuninfo.sta != timedRun.TIMED_OUT and bRuninfo.sta != timedRun.TIMED_OUT:
         if aRuninfo.rc != bRuninfo.rc:
-            print ("[Interesting] Different return code. (%d, %d) " % (aRuninfo.rc, bRuninfo.rc)) + timeString
+            print("[Interesting] Different return code. (%d, %d)%s" % (aRuninfo.rc, bRuninfo.rc, timeString))
             return True
         if not filecmp.cmp(aRuninfo.out, bRuninfo.out):
-            print "[Interesting] Different output. " + timeString
+            print("[Interesting] Different output.%s" % timeString)
             return True
         if not filecmp.cmp(aRuninfo.err, bRuninfo.err):
-            print "[Interesting] Different error output. " + timeString
+            print("[Interesting] Different error output.%s" % timeString)
             return True
     else:
-        print "[Uninteresting] At least one test timed out." + timeString
+        print("[Uninteresting] At least one test timed out.%s" % timeString)
         return False
 
-    print "[Uninteresting] Identical behaviour." + timeString
+    print("[Uninteresting] Identical behaviour.%s" % timeString)
     return False

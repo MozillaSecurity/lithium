@@ -4,6 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import print_function
 import re
 
 
@@ -20,7 +21,7 @@ def fileContainsStr(f, s, verbose=True):
         for line in gContents:
             if line.find(s) != -1:
                 if verbose and s != '':
-                    print '[Found string in: "' + line.rstrip() + '"]',
+                    print('[Found string in: "' + line.rstrip() + '"]', end=' ')
                 return True
     return False
 
@@ -36,6 +37,6 @@ def fileContainsRegex(f, regex, verbose=True):
         if foundRegex:
             matchedStr = foundRegex.group()
             if verbose and matchedStr != '':
-                print '[Found string in: "' + matchedStr + '"]',
+                print('[Found string in: "' + matchedStr + '"]', end=' ')
             found = True
     return found, matchedStr

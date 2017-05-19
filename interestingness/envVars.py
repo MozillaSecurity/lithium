@@ -4,6 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from __future__ import print_function
 import copy
 import os
 import platform
@@ -43,9 +44,9 @@ def findLlvmBinPath():
         if os.path.isfile('/usr/bin/llvm-symbolizer'):
             return ''
         else:
-            print 'WARNING: Please install clang via `apt-get install clang` if using Ubuntu.'
-            print 'then create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8.'
-            print 'Try: `ln -s /usr/bin/llvm-symbolizer-3.8 /usr/bin/llvm-symbolizer`'
+            print('WARNING: Please install clang via `apt-get install clang` if using Ubuntu.')
+            print('then create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8.')
+            print('Try: `ln -s /usr/bin/llvm-symbolizer-3.8 /usr/bin/llvm-symbolizer`')
             return ''
 
     if isMac:
@@ -54,8 +55,8 @@ def findLlvmBinPath():
         if os.path.isdir(brewLLVMPath):
             return brewLLVMPath
         else:
-            print 'WARNING: Please install llvm from Homebrew via `brew install llvm`.'
-            print 'ASan stacks will not have symbols as Xcode does not install llvm-symbolizer.'
+            print('WARNING: Please install llvm from Homebrew via `brew install llvm`.')
+            print('ASan stacks will not have symbols as Xcode does not install llvm-symbolizer.')
             return ''
 
     # https://developer.mozilla.org/en-US/docs/Building_Firefox_with_Address_Sanitizer#Manual_Build

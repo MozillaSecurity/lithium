@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 import timedRun
 
@@ -11,5 +12,5 @@ def interesting(args, tempPrefix):
     if runinfo.sta == timedRun.TIMED_OUT:
         return True
     else:
-        print "Exited in %.3f seconds" % runinfo.elapsedtime
+        print("Exited in %.3f seconds" % runinfo.elapsedtime)
         return False

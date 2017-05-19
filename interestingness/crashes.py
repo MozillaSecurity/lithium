@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from optparse import OptionParser
 
 import timedRun
@@ -23,8 +24,8 @@ def interesting(cliArgs, tempPrefix):
     runinfo = timedRun.timed_run(args, timeout, tempPrefix)
     timeString = " (%.3f seconds)" % runinfo.elapsedtime
     if runinfo.sta == timedRun.CRASHED:
-        print 'Exit status: ' + runinfo.msg + timeString
+        print('Exit status: ' + runinfo.msg + timeString)
         return True
     else:
-        print "[Uninteresting] It didn't crash." + timeString
+        print("[Uninteresting] It didn't crash." + timeString)
         return False

@@ -267,7 +267,7 @@ class LithiumTests(TestCase):
         self.assertIn("INFO:lithium:The file has 0 lines so there's nothing for Lithium to try to remove!", logs.output)
 
     def test_arithmetic(self):
-        path = os.path.join(os.path.dirname(lithium.__file__), "examples", "arithmetic")
+        path = os.path.join(os.path.dirname(__file__), "examples", "arithmetic")
         shutil.copyfile(os.path.join(path, "11.txt"), "11.txt")
         result = lithium.Lithium().main([os.path.join(path, "product_divides.py"), "35", "11.txt"])
         self.assertEqual(result, 0)
