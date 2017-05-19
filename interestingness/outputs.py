@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 from optparse import OptionParser
 
@@ -32,6 +33,6 @@ def interesting(cliArgs, tempPrefix):
         fileIngredients.fileContains(tempPrefix + "-err.txt", searchFor, regexEnabled)[0]
     )
 
-    print 'Exit status: ' + runinfo.msg + " (%.3f seconds)" % runinfo.elapsedtime
+    print("Exit status: %s (%.3f seconds)" % (runinfo.msg, runinfo.elapsedtime))
 
     return result

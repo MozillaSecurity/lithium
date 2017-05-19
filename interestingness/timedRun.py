@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 import os
 import signal
@@ -46,11 +47,11 @@ def xpkill(p):
     except WindowsError:
         if p.poll() == 0:
             try:
-                print 'Trying to kill the process the first time...'
+                print('Trying to kill the process the first time...')
                 p.kill()  # Verify that the process is really killed.
             except WindowsError:
                 if p.poll() == 0:
-                    print 'Trying to kill the process the second time...'
+                    print('Trying to kill the process the second time...')
                     p.kill()  # Re-verify that the process is really killed.
 
 
@@ -98,11 +99,11 @@ def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):
             env=makeEnv(commandWithArgs[0]),
             preexec_fn=preexec_fn
         )
-    except OSError, e:
-        print "Tried to run:"
-        print "  " + repr(commandWithArgs)
-        print "but got this error:"
-        print "  " + str(e)
+    except OSError as e:
+        print("Tried to run:")
+        print("  %r" % commandWithArgs)
+        print("but got this error:")
+        print("  %s" % e)
         sys.exit(2)
 
     if inp is not None:

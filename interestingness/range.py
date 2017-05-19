@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 # Repeats an interestingness test a given number of times.
 # If "RANGENUM" is present, it is replaced in turn with each number in the range.
@@ -52,7 +53,7 @@ def interesting(cliArgs, tempPrefix):
     for i in xrange(rangeMin, rangeMax + 1):
         # This doesn't do anything if RANGENUM is not found.
         replacedConditionArgs = [s.replace('RANGENUM', str(i)) for s in conditionArgs]
-        print 'Range number ' + str(i) + ':',
+        sys.stdout.write('Range number %d:' % i)
         if conditionScript.interesting(replacedConditionArgs, tempPrefix):
             return True
 

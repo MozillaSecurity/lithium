@@ -5,6 +5,7 @@
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import re
+import sys
 
 
 def fileContains(f, s, isRegex, vb=True):
@@ -20,7 +21,7 @@ def fileContainsStr(f, s, verbose=True):
         for line in gContents:
             if line.find(s) != -1:
                 if verbose and s != '':
-                    print '[Found string in: "' + line.rstrip() + '"]',
+                    sys.stdout.write('[Found string in: "' + line.rstrip() + '"]')
                 return True
     return False
 
@@ -36,6 +37,6 @@ def fileContainsRegex(f, regex, verbose=True):
         if foundRegex:
             matchedStr = foundRegex.group()
             if verbose and matchedStr != '':
-                print '[Found string in: "' + matchedStr + '"]',
+                sys.stdout.write('[Found string in: "' + matchedStr + '"]')
             found = True
     return found, matchedStr

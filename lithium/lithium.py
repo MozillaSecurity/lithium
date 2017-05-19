@@ -1288,5 +1288,9 @@ def quantity(n, unit):
     return r
 
 
-if __name__ == "__main__":
+def main():
     exit(Lithium().main())
+
+
+if __name__ == "__main__":
+    main()
