@@ -1,8 +1,11 @@
 # This lets you import an interestingness test given a full path, or given just a filename
 # (assuming it's in the current directory OR in the same directory as ximport)
 
+import logging
 import os
 import sys
+
+log = logging.getLogger("lithium")
 
 def importRelativeOrAbsolute(f):
     # maybe there's a way to do this more sanely with the |imp| module...
@@ -19,10 +22,10 @@ def importRelativeOrAbsolute(f):
         sys.path.append(".")
     try:
         module = __import__(f)
-    except ImportError, e:
-        print "Failed to import: " + f
-        print "From: " + __file__
-        print str(e)
+    except ImportError as e:
+        log.error("Failed to import: " + f)
+        log.error("From: " + __file__)
+        log.error(e)
         raise
     sys.path.pop()
     return module
