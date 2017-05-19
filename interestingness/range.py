@@ -53,7 +53,7 @@ def interesting(cliArgs, tempPrefix):
     for i in xrange(rangeMin, rangeMax + 1):
         # This doesn't do anything if RANGENUM is not found.
         replacedConditionArgs = [s.replace('RANGENUM', str(i)) for s in conditionArgs]
-        sys.stdout.write('Range number %d:' % i)
+        print('Range number %d:' % i, end=' ')
         if conditionScript.interesting(replacedConditionArgs, tempPrefix):
             return True
 
