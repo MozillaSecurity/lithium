@@ -11,7 +11,7 @@ if __name__ == "__main__":
           package_data={"": [
               "interestingness/*",
               "lithium/doc/*",
-              "lithium/examples/*",
+              "lithium/examples/*.*",
               "lithium/examples/arithmetic/*"
           ]},
           package_dir = {"lithium": ""},
