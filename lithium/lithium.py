@@ -1155,6 +1155,10 @@ class Lithium(object):
         grp_opt.add_argument(
             "--tempdir",
             help="specify the directory to use as temporary directory.")
+        grp_opt.add_argument(
+            "-v", "--verbose",
+            action="store_true",
+            help="enable verbose debug logging")
         grp_atoms = grp_opt.add_mutually_exclusive_group()
         grp_atoms.add_argument(
             "-c", "--char",
@@ -1187,6 +1191,8 @@ class Lithium(object):
             help="condition [condition options] file-to-reduce")
 
         args = parser.parse_args(argv)
+        if args.verbose:
+            logging.getLogger().setLevel(logging.DEBUG)
         self.strategy.processArgs(parser, args)
 
         self.tempDir = args.tempdir
