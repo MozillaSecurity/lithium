@@ -10,7 +10,7 @@ import sys
 import time
 
 
-log = logging.getLogger("lithium") # pylint: disable=invalid-name
+log = logging.getLogger("lithium")  # pylint: disable=invalid-name
 
 
 class LithiumError(Exception):
@@ -44,7 +44,6 @@ class Testcase(object):
 
         return new
 
-
     def readTestcase(self, filename):
         hasDDSection = False
 
@@ -74,7 +73,6 @@ class Testcase(object):
                 for line in f:
                     self.readTestcaseLine(line)
 
-
     def readTestcaseWithDDSection(self, f):
         for line in f:
             self.before += line
@@ -92,10 +90,8 @@ class Testcase(object):
         for line in f:
             self.after += line
 
-
     def readTestcaseLine(self, line):
         raise NotImplementedError()
-
 
     def writeTestcase(self, filename=None):
         raise NotImplementedError()
@@ -106,7 +102,6 @@ class TestcaseLine(Testcase):
 
     def readTestcaseLine(self, line):
         self.parts.append(line)
-
 
     def writeTestcase(self, filename=None):
         if filename is None:
@@ -129,10 +124,9 @@ class TestcaseChar(TestcaseLine):
             self.parts.pop()
             self.after = b"\n" + self.after
 
-
     def readTestcaseLine(self, line):
         for i in range(len(line)):
-            self.parts.append(line[i:i+1])
+            self.parts.append(line[i:i + 1])
 
 
 class TestcaseSymbol(TestcaseLine):
@@ -145,7 +139,6 @@ class TestcaseSymbol(TestcaseLine):
 
         self.cutAfter = self.DEFAULT_CUT_AFTER
         self.cutBefore = self.DEFAULT_CUT_BEFORE
-
 
     def readTestcaseLine(self, line):
         cutter = b"[" + self.cutBefore + b"]?[^" + self.cutBefore + self.cutAfter + b"]*(?:[" + self.cutAfter + b"]|$|(?=[" + self.cutBefore + b"]))"
@@ -239,7 +232,6 @@ class Minimize(Strategy):
         if not isPowerOfTwo(self.minimizeMin) or not isPowerOfTwo(self.minimizeMax):
             parser.error("Min/Max must be powers of two.")
 
-
     def main(self, testcase, interesting, tempFilename):
         log.info("The original testcase has %s.", quantity(len(testcase.parts), testcase.atom))
         log.info("Checking that the original testcase is 'interesting'...")
@@ -266,7 +258,6 @@ class Minimize(Strategy):
         log.info("  Final size: %s", quantity(len(testcase.parts), testcase.atom))
 
         return result
-
 
     # Main reduction algorithm
     #
@@ -361,7 +352,6 @@ class MinimizeSurroundingPairs(Minimize):
 
         return 0, (finalChunkSize == 1 and self.minimizeRepeat != "never"), testcase
 
-
     @staticmethod
     def list_rindex(l, p, e):
         if p < 0 or p > len(l):
@@ -371,13 +361,11 @@ class MinimizeSurroundingPairs(Minimize):
                 return p - index - 1
         raise ValueError("%s is not in list" % e)
 
-
     @staticmethod
     def list_nindex(l, p, e):
         if p + 1 >= len(l):
             raise ValueError("%s is not in list" % e)
         return l[(p + 1):].index(e) + (p + 1)
-
 
     def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
@@ -484,8 +472,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
     @staticmethod
     def list_fiveParts(lst, step, f, s, t):
-        return (lst[:f], lst[f:s], lst[s:(s+step)], lst[(s+step):(t+step)], lst[(t+step):])
-
+        return (lst[:f], lst[f:s], lst[s:(s + step)], lst[(s + step):(t + step)], lst[(t + step):])
 
     def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
@@ -592,7 +579,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
                 # Moving chunks is still a bit experimental, and it can introduce reducing loops.
                 # If you want to try it, just replace this True by a False.
-                if True: # pylint: disable=using-constant-test
+                if True:  # pylint: disable=using-constant-test
                     chunkStart += chunkSize
                     lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
                     continue
@@ -667,7 +654,6 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 if not stayOnSameChunk:
                     chunkStart += chunkSize
                     lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
-
 
         except ValueError:
             # This is a valid loop exit point.
@@ -747,7 +733,6 @@ class ReplacePropertiesByGlobals(Minimize):
 
         return 0, (finalChunkSize == 1 and self.minimizeRepeat != "never"), testcase
 
-
     def tryMakingGlobals(self, chunkSize, numChars, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
@@ -797,7 +782,7 @@ class ReplacePropertiesByGlobals(Minimize):
                 for chunkStart in chunkStarts:
                     subst = re.sub(br"[\w_.]+\." + word, word, newTC.parts[chunkStart])
                     maybeRemoved += len(newTC.parts[chunkStart]) - len(subst)
-                    newTC.parts = newTC.parts[:chunkStart] + [subst] + newTC.parts[(chunkStart+1):]
+                    newTC.parts = newTC.parts[:chunkStart] + [subst] + newTC.parts[(chunkStart + 1):]
 
                 if interesting(newTC):
                     testcase = newTC
@@ -862,7 +847,6 @@ class ReplaceArgumentsByGlobals(Minimize):
                 break
 
         return 0, False, testcase
-
 
     @staticmethod
     def tryArgumentsAsGlobals(roundNum, testcase, interesting, tempFilename):
@@ -951,7 +935,7 @@ class ReplaceArgumentsByGlobals(Minimize):
             argDefs = argsMap["defs"]
             defChunk = argsMap["chunk"]
             subst = newTC.parts[defChunk].replace(argsMap["argsPattern"], b"", 1)
-            newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk+1):]
+            newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk + 1):]
 
             # Copy callers arguments to globals.
             for argUse in argsMap["uses"]:
@@ -963,7 +947,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                     values = values + [b"undefined"]
                 setters = b"".join((a + b" = " + v + b";\n") for (a, v) in zip(argDefs, values))
                 subst = setters + newTC.parts[chunk]
-                newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk+1):]
+                newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk + 1):]
             maybeMovedArguments += len(argDefs)
 
             if interesting(newTC):
@@ -984,7 +968,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 subst = newTC.parts[chunk].replace(argUse["pattern"], fun + b"()", 1)
                 if newTC.parts[chunk] == subst:
                     continue
-                newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk+1):]
+                newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk + 1):]
                 maybeMovedArguments = len(values)
 
                 descriptionChunk = "%s at %s #%d" % (description, testcase.atom, chunk)
@@ -1012,7 +996,7 @@ class ReplaceArgumentsByGlobals(Minimize):
             subst = newTC.parts[defChunk].replace(b",".join(argDefs), b"", 1)
             if newTC.parts[defChunk] == subst:
                 noopChanges += 1
-            newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk+1):]
+            newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk + 1):]
 
             # Replace arguments by their value in the scope of the function.
             while len(values) < len(argDefs):
@@ -1021,13 +1005,13 @@ class ReplaceArgumentsByGlobals(Minimize):
             subst = newTC.parts[defChunk] + b"\n" + setters
             if newTC.parts[defChunk] == subst:
                 noopChanges += 1
-            newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk+1):]
+            newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk + 1):]
 
             # Remove arguments of the anonymous function call.
             subst = newTC.parts[chunk].replace(b",".join(anon["use"]), b"", 1)
             if newTC.parts[chunk] == subst:
                 noopChanges += 1
-            newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk+1):]
+            newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk + 1):]
             maybeMovedArguments += len(values)
 
             if noopChanges == 3:
@@ -1070,7 +1054,6 @@ class Lithium(object):
 
         self.tempFileCount = 1
 
-
     def main(self, args=None):
         logging.basicConfig(format="%(message)s", level=logging.INFO)
         self.processArgs(args)
@@ -1082,7 +1065,6 @@ class Lithium(object):
             summaryHeader()
             log.error(e)
             return 1
-
 
     def run(self):
         if hasattr(self.conditionScript, "init"):
@@ -1108,7 +1090,6 @@ class Lithium(object):
             if self.lastInteresting is not None:
                 self.lastInteresting.writeTestcase()
 
-
     def processArgs(self, argv=None):
         # Build list of strategies and testcase types
         strategies = {}
@@ -1124,9 +1105,10 @@ class Lithium(object):
 
         # Try to parse --conflict before anything else
         class ArgParseTry(argparse.ArgumentParser):
-            def exit(subself, **kwds): # pylint: disable=no-self-argument
+            def exit(subself, **kwds):  # pylint: disable=no-self-argument
                 pass
-            def error(subself, message): # pylint: disable=no-self-argument
+
+            def error(subself, message):  # pylint: disable=no-self-argument
                 pass
 
         defaultStrategy = "minimize"
@@ -1139,7 +1121,7 @@ class Lithium(object):
         args = parser.parse_known_args(argv)
         self.strategy = strategies.get(args[0].strategy if args else None, strategies[defaultStrategy])()
 
-        parser = argparse.ArgumentParser( # pylint: disable=redefined-variable-type
+        parser = argparse.ArgumentParser(  # pylint: disable=redefined-variable-type
             description="Lithium, an automated testcase reduction tool by Jesse Ruderman.",
             epilog="See doc/using.html for more information.",
             usage="./lithium.py [options] condition [condition options] file-to-reduce\n\n"
@@ -1179,7 +1161,7 @@ class Lithium(object):
             help="See --symbol. default: %s" % TestcaseSymbol.DEFAULT_CUT_AFTER.decode("utf-8"))
         grp_opt.add_argument(
             "--strategy",
-            default=self.strategy.name, # this has already been parsed above, it's only here for the help message
+            default=self.strategy.name,  # this has already been parsed above, it's only here for the help message
             choices=strategies.keys(),
             help="reduction strategy to use. default: %s" % defaultStrategy)
         self.strategy.addArgs(parser)
@@ -1214,18 +1196,16 @@ class Lithium(object):
         self.testcase.readTestcase(testcaseFilename)
 
         sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, "interestingness"))
-        import ximport # pylint: disable=import-error
+        import ximport  # pylint: disable=import-error
 
         self.conditionScript = ximport.importRelativeOrAbsolute(extra_args[0])
         self.conditionArgs = extra_args[1:]
-
 
     def testcaseTempFilename(self, partialFilename, useNumber=True):
         if useNumber:
             partialFilename = "%d-%s" % (self.tempFileCount, partialFilename)
             self.tempFileCount += 1
         return os.path.join(self.tempDir, partialFilename + self.testcase.extension)
-
 
     def createTempDir(self):
         i = 1
@@ -1238,7 +1218,6 @@ class Lithium(object):
                 break
             except OSError:
                 i += 1
-
 
     # If the file is still interesting after the change, changes "parts" and returns True.
     def interesting(self, testcaseSuggestion, writeIt=True):
@@ -1276,11 +1255,11 @@ def divideRoundingUp(n, d):
 
 
 def isPowerOfTwo(n):
-    return (1<<max(n.bit_length() - 1, 0)) == n
+    return (1 << max(n.bit_length() - 1, 0)) == n
 
 
 def largestPowerOfTwoSmallerThan(n):
-    result = 1<<max(n.bit_length() - 1, 0)
+    result = 1 << max(n.bit_length() - 1, 0)
     if result == n and n > 1:
         result >>= 1
     return result
