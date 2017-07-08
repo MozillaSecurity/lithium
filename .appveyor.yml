@@ -15,12 +15,17 @@ environment:
 install:
     - "%PYTHON%\\python.exe -m pip install --upgrade setuptools pip"
     - "%PYTHON%\\python.exe -m pip install --upgrade virtualenv"
+    - "%PYTHON%\\python.exe -m pip install --upgrade flake8 pylint"
     - "%PYTHON%\\python.exe -m pip --version"
     - "%PYTHON%\\python.exe -m virtualenv --version"
+    - "%PYTHON%\\python.exe -m flake8 --version"
+    - "%PYTHON%\\python.exe -m pylint --version"
     - "git --version"
     - "%PYTHON%\\python.exe -m pip install pytest pytest-cov codecov"
 build: off
 test_script:
+    - If NOT "%PYTHON%"=="%PYTHON:Python27=%" ( %PYTHON%\\python.exe -m flake8 --count %APPVEYOR_BUILD_FOLDER% )
+    # - If NOT "%PYTHON%"=="%PYTHON:Python27=%" ( %PYTHON%\\python.exe -m pylint %APPVEYOR_BUILD_FOLDER% )
     - "%PYTHON%\\python.exe -m pytest lithium\\tests.py -v --cov . --cov-report term-missing"
 on_success:
     - "%PYTHON%\\python.exe -m codecov"
