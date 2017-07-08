@@ -104,7 +104,8 @@ class TestCase(unittest.TestCase):
                     self.logger.setLevel(self.old[2])
                     if exc_type is not None:
                         return False
-                    self.test_case.assertGreater(len(self.watcher.records), 0,
+                    self.test_case.assertGreater(
+                        len(self.watcher.records), 0,
                         "no logs of level %s or higher triggered on %s" % (logging.getLevelName(self.level), self.logger.name))
 
             return _AssertLogsContext(self, logger, level)
