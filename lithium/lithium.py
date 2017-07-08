@@ -747,7 +747,7 @@ class ReplacePropertiesByGlobals(Minimize):
         for chunk, line in enumerate(testcase.parts):
             for match in re.finditer(br"(?<=[\w\d_])\.(\w+)", line):
                 word = match.group(1)
-                if not word in words:
+                if word not in words:
                     words[word] = [chunk]
                 else:
                     words[word] += [chunk]
@@ -763,7 +763,7 @@ class ReplacePropertiesByGlobals(Minimize):
             chunkIndexes = {}
             for chunkStart in chunks:
                 chunkIdx = chunkStart // chunkSize
-                if not chunkIdx in chunkIndexes:
+                if chunkIdx not in chunkIndexes:
                     chunkIndexes[chunkIdx] = [chunkStart]
                 else:
                     chunkIndexes[chunkIdx] += [chunkStart]
@@ -873,7 +873,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 else:
                     args = match.group(3).split(b",")
 
-                if not fun in functions:
+                if fun not in functions:
                     functions[fun] = {"defs": args, "argsPattern": match.group(3), "chunk": chunk, "uses": []}
                 else:
                     functions[fun]["defs"] = args
@@ -912,7 +912,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                     args = []
                 else:
                     args = match.group(3).split(b",")
-                if not fun in functions:
+                if fun not in functions:
                     functions[fun] = {"uses": []}
                 functions[fun]["uses"] += [{"values": args, "chunk": chunk, "pattern": pattern}]
 
