@@ -8,6 +8,8 @@ python:
     - 3.5
     - 3.6
     - nightly
+install:
+    - git --version
 before_script:
     - pip install pytest-cov codecov
 script:
