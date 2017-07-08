@@ -13,6 +13,10 @@ environment:
         - PYTHON: "C:\\Python35-x64"
         - PYTHON: "C:\\Python36-x64"
 install:
+    - "%PYTHON%\\python.exe -m pip install --upgrade setuptools pip"
+    - "%PYTHON%\\python.exe -m pip install --upgrade virtualenv"
+    - "%PYTHON%\\python.exe -m pip --version"
+    - "%PYTHON%\\python.exe -m virtualenv --version"
     - "git --version"
     - "%PYTHON%\\python.exe -m pip install pytest pytest-cov codecov"
 build: off

@@ -8,7 +8,12 @@ python:
     - 3.5
     - 3.6
     - nightly
+before_install:
+    - pip install --upgrade setuptools pip
+    - pip install --upgrade virtualenv
 install:
+    - pip --version
+    - virtualenv --version
     - git --version
 before_script:
     - pip install pytest-cov codecov
