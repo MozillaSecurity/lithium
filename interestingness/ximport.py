@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# coding=utf-8
+
 # This lets you import an interestingness test given a full path, or given just a filename
 # (assuming it's in the current directory OR in the same directory as ximport)
 

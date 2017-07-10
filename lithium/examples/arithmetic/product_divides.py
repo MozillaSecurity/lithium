@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding=utf-8
 
 # Interesting if the product of the numbers in the file divides the argument.
 
