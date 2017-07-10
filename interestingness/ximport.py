@@ -7,6 +7,7 @@ import sys
 
 log = logging.getLogger("lithium")
 
+
 def importRelativeOrAbsolute(f):
     # maybe there's a way to do this more sanely with the |imp| module...
     if f.endswith(".py"):

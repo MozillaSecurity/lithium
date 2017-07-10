@@ -10,7 +10,7 @@ import time
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'interestingness'))
 sys.path.append(path1)
-import envVars
+import envVars  # noqa
 
 ASAN_EXIT_CODE = 77
 

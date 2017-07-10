@@ -1,3 +1,5 @@
+dist: trusty
+sudo: false
 language: python
 python:
     - 2.7
@@ -6,7 +8,25 @@ python:
     - 3.5
     - 3.6
     - nightly
+before_install:
+    - pip install --upgrade setuptools pip
+    - pip install --upgrade virtualenv
+install:
+    - pip install --upgrade flake8 pylint
+    - pip --version
+    - virtualenv --version
+    - flake8 --version
+    - pylint --version
+    - git --version
 before_script:
+    - |
+        if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then
+            flake8 --count ${TRAVIS_BUILD_DIR}
+        fi
+    # - |
+    #     if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then
+    #         pylint ${TRAVIS_BUILD_DIR}
+    #     fi
     - pip install pytest-cov codecov
 script:
     - py.test lithium/tests.py -v --cov . --cov-report term-missing

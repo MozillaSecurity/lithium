@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.DEBUG)
 # python 3 has unlimited precision integers
 # restrict tests to 64-bit
 if not hasattr(sys, "maxint"):
-    sys.maxint = (1<<64)-1
+    sys.maxint = (1 << 64) - 1
 
 
 class TestCase(unittest.TestCase):
@@ -71,6 +71,7 @@ class TestCase(unittest.TestCase):
                 def __init__(self):
                     logging.Handler.__init__(self)
                     self.watcher = _LoggingWatcher([], [])
+
                 def emit(self, record):
                     self.watcher.records.append(record)
                     self.watcher.output.append(self.format(record))
@@ -103,7 +104,8 @@ class TestCase(unittest.TestCase):
                     self.logger.setLevel(self.old[2])
                     if exc_type is not None:
                         return False
-                    self.test_case.assertGreater(len(self.watcher.records), 0,
+                    self.test_case.assertGreater(
+                        len(self.watcher.records), 0,
                         "no logs of level %s or higher triggered on %s" % (logging.getLevelName(self.level), self.logger.name))
 
             return _AssertLogsContext(self, logger, level)
@@ -112,8 +114,10 @@ class TestCase(unittest.TestCase):
 class DummyInteresting(object):
     def init(self, conditionArgs):
         pass
+
     def interesting(self, conditionArgs, tempPrefix):
         pass
+
     def cleanup(self, conditionArgs):
         pass
 
@@ -134,8 +138,8 @@ def ispow2(n):
     # if the input is representable as a float, compare the result to math library
     if orig <= sys.float_info.max:
         math_result = math.log(orig) / math.log(2)
-        diff = abs(math_result - round(math_result)) # diff to the next closest integer
-        math_result = diff < 10**-(sys.float_info.dig - 1) # float_info.dig is the # of decimal digits representable
+        diff = abs(math_result - round(math_result))  # diff to the next closest integer
+        math_result = diff < 10**-(sys.float_info.dig - 1)  # float_info.dig is the # of decimal digits representable
         assert result == math_result, "ispow2(n) did not match math.log(n)/math.log(2) for n = %d" % orig
     return result
 
@@ -164,7 +168,7 @@ class HelperTests(TestCase):
                 self.assertEqual(divceil(n, d), lithium.divideRoundingUp(n, d))
                 self.assertEqual(1, lithium.divideRoundingUp(n, n))
                 self.assertEqual(0, lithium.divideRoundingUp(0, n))
-                self.assertEqual(2, lithium.divideRoundingUp(n+1, n))
+                self.assertEqual(2, lithium.divideRoundingUp(n + 1, n))
             except Exception:
                 log.debug("n = %d, d = %d", n, d)
                 raise
@@ -189,6 +193,7 @@ class HelperTests(TestCase):
 
     def test_largestPowerOfTwoSmallerThan(self):
         self.assertEqual(1, lithium.largestPowerOfTwoSmallerThan(0))
+
         def check_result(r, i):
             # check that it is a power of two
             self.assertTrue(ispow2(r))
@@ -224,15 +229,19 @@ class LithiumTests(TestCase):
         l = lithium.Lithium()
         with open("empty.txt", "w"):
             pass
+
         class Interesting(DummyInteresting):
             init_called = False
             interesting_called = False
             cleanup_called = False
+
             def init(sub, conditionArgs):
                 sub.init_called = True
+
             def interesting(sub, conditionArgs, tempPrefix):
                 sub.interesting_called = True
                 return True
+
             def cleanup(sub, conditionArgs):
                 sub.cleanup_called = True
         inter = Interesting()
@@ -250,8 +259,10 @@ class LithiumTests(TestCase):
         l = lithium.Lithium()
         with open("empty.txt", "w"):
             pass
+
         class Interesting(DummyInteresting):
             inter = False
+
             def interesting(sub, conditionArgs, tempPrefix):
                 return sub.inter
         l.conditionScript = Interesting()
@@ -284,6 +295,7 @@ class StrategyTests(TestCase):
 
     def test_minimize(self):
         class Interesting(DummyInteresting):
+
             def interesting(sub, conditionArgs, tempPrefix):
                 with open("a.txt", "rb") as f:
                     return b"o\n" in f.read()
@@ -302,6 +314,7 @@ class StrategyTests(TestCase):
 
     def test_minimize_around(self):
         class Interesting(DummyInteresting):
+
             def interesting(sub, conditionArgs, tempPrefix):
                 with open("a.txt", "rb") as f:
                     data = f.read()
@@ -321,6 +334,7 @@ class StrategyTests(TestCase):
 
     def test_minimize_balanced(self):
         class Interesting(DummyInteresting):
+
             def interesting(sub, conditionArgs, tempPrefix):
                 with open("a.txt", "rb") as f:
                     data = f.read()
@@ -362,7 +376,9 @@ class StrategyTests(TestCase):
             # reduced:       list,           push,           last
             b"function Foo() {\n  list = [];\n}\npush = function(a) {\n  list.push(a);\n}\nlast = function() {\n  return list.pop();\n}\n"
         )
+
         class Interesting(DummyInteresting):
+
             def interesting(sub, conditionArgs, tempPrefix):
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
@@ -378,7 +394,7 @@ class StrategyTests(TestCase):
             self.assertEqual(l.run(), 0)
             with open("a.txt", "rb") as f:
                 if testcaseType is lithium.TestcaseChar:
-                    self.assertEqual(f.read(), valid_reductions[0]) # Char doesn't give this strategy enough to work with
+                    self.assertEqual(f.read(), valid_reductions[0])  # Char doesn't give this strategy enough to work with
                 else:
                     self.assertEqual(f.read(), valid_reductions[-1])
 
@@ -391,7 +407,9 @@ class StrategyTests(TestCase):
             b"function foo() {\n  list = a + b;\n}\na = 2;\nb = 3;\nfoo(2,3)\n",
             b"function foo() {\n  list = a + b;\n}\na = 2;\nb = 3;\nfoo()\n"
         )
+
         class Interesting(DummyInteresting):
+
             def interesting(sub, conditionArgs, tempPrefix):
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
@@ -407,7 +425,7 @@ class StrategyTests(TestCase):
             self.assertEqual(l.run(), 0)
             with open("a.txt", "rb") as f:
                 if testcaseType is lithium.TestcaseChar:
-                    self.assertEqual(f.read(), valid_reductions[0]) # Char doesn't give this strategy enough to work with
+                    self.assertEqual(f.read(), valid_reductions[0])  # Char doesn't give this strategy enough to work with
                 else:
                     self.assertEqual(f.read(), valid_reductions[-1])
 
@@ -504,4 +522,3 @@ class TestcaseTests(TestCase):
             f.write("DDBEGIN\n")
         with self.assertRaisesRegex(lithium.LithiumError, r"^The testcase \(a\.txt\) has a line containing 'DDBEGIN' but no"):
             t.readTestcase("a.txt")
-

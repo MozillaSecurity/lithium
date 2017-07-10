@@ -32,6 +32,7 @@ def parseOptions(arguments):
 
     return options.condTimeout, options.aArgs, options.bArgs, args
 
+
 def interesting(cliArgs, tempPrefix):
     (timeout, aArgs, bArgs, args) = parseOptions(cliArgs)
 
