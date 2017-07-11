@@ -10,7 +10,7 @@ import sys
 import time
 
 
-log = logging.getLogger("lithium")  # pylint: disable=invalid-name
+log = logging.getLogger("lithium")
 
 
 class LithiumError(Exception):
