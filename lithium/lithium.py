@@ -1163,7 +1163,7 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
         args = parser.parse_known_args(argv)
         self.strategy = strategies.get(args[0].strategy if args else None, strategies[defaultStrategy])()
 
-        parser = argparse.ArgumentParser(  # pylint: disable=redefined-variable-type
+        parser = argparse.ArgumentParser(
             description="Lithium, an automated testcase reduction tool by Jesse Ruderman.",
             epilog="See doc/using.html for more information.",
             usage="./lithium.py [options] condition [condition options] file-to-reduce\n\n"
