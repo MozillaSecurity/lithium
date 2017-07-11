@@ -118,7 +118,7 @@ class TestcaseChar(TestcaseLine):
     def readTestcaseWithDDSection(self, f):
         Testcase.readTestcaseWithDDSection(self, f)
 
-        if len(self.parts) > 0:
+        if self.parts:
             # Move the line break at the end of the last line out of the reducible
             # part so the "DDEND" line doesn't get combined with another line.
             self.parts.pop()
@@ -239,7 +239,7 @@ class Minimize(Strategy):
             log.info("Lithium result: the original testcase is not 'interesting'!")
             return 1
 
-        if len(testcase.parts) == 0:
+        if not testcase.parts:
             log.info("The file has %s so there's nothing for Lithium to try to remove!", quantity(0, testcase.atom))
 
         testcase.writeTestcase(tempFilename("original", False))
@@ -287,7 +287,7 @@ class Minimize(Strategy):
             if chunkStart >= len(testcase.parts):
                 testcase.writeTestcase(tempFilename("did-round-%d" % chunkSize))
                 last = (chunkSize <= finalChunkSize)
-                empty = (len(testcase.parts) == 0)
+                empty = not testcase.parts
                 log.info("")
                 if not empty and anyChunksRemoved and (self.minimizeRepeat == "always" or (self.minimizeRepeat == "last" and last)):
                     chunkStart = 0
@@ -753,7 +753,7 @@ class ReplacePropertiesByGlobals(Minimize):
                     words[word] += [chunk]
 
         # All patterns have been removed sucessfully.
-        if len(words) == 0:
+        if not words:
             return 0, testcase
 
         log.info("Starting a round with chunks of %s.", quantity(chunkSize, testcase.atom))
@@ -790,7 +790,7 @@ class ReplacePropertiesByGlobals(Minimize):
                     numRemovedChars += maybeRemoved
                     summary[chunkIdx] = "s"
                     words[word] = [c for c in chunks if c not in chunkIndexes]
-                    if len(words[word]) == 0:
+                    if not words[word]:
                         del words[word]
                 else:
                     log.info("Removing prefixes of %s made the file 'uninteresting'.", description)
@@ -890,11 +890,11 @@ class ReplaceArgumentsByGlobals(Minimize):
 
             # Match calls of anonymous function.
             for match in re.finditer(br"}\s*\)\s*\(((?:[^()]|\([^,()]*\))*)\)", line):
-                if len(anonymousStack) == 0:
+                if not anonymousStack:
                     continue
                 anon = anonymousStack[-1]
                 anonymousStack = anonymousStack[:-1]
-                if match.group(1) == b"" and len(anon["defs"]) == 0:
+                if match.group(1) == b"" and not anon["defs"]:
                     continue
                 if match.group(1) == b"":
                     args = []
@@ -917,14 +917,14 @@ class ReplaceArgumentsByGlobals(Minimize):
                 functions[fun]["uses"] += [{"values": args, "chunk": chunk, "pattern": pattern}]
 
         # All patterns have been removed sucessfully.
-        if len(functions) == 0 and len(anonymousQueue) == 0:
+        if not functions and not anonymousQueue:
             return 0, testcase
 
         log.info("Starting removing function arguments.")
 
         for fun, argsMap in functions.items():
             description = "arguments of '%s'" % fun.decode("utf-8", "replace")
-            if "defs" not in argsMap or len(argsMap["uses"]) == 0:
+            if "defs" not in argsMap or not argsMap["uses"]:
                 log.info("Ignoring %s because it is 'uninteresting'.", description)
                 continue
 
@@ -1185,7 +1185,7 @@ class Lithium(object):
 
         if args.testcase:
             testcaseFilename = args.testcase
-        elif len(extra_args) > 0:
+        elif extra_args:
             testcaseFilename = extra_args[-1]  # can be overridden by --testcase in processOptions
         else:
             parser.error("No testcase specified (use --testcase or last condition arg)")
