@@ -8,7 +8,7 @@
 import sys
 
 
-def interesting(args, tempPrefix):
+def interesting(args, _temp_prefix):
     mod = int(args[0])
     filename = args[1]
 
