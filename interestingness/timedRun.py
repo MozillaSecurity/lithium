@@ -143,7 +143,7 @@ def timed_run(commandWithArgs,  # pylint: disable=too-many-branches,too-many-loc
         else:
             break
 
-    if killed and (os.name != "posix" or rc == -signal.SIGKILL):
+    if killed and (os.name != "posix" or rc == -signal.SIGKILL):  # pylint: disable=no-member
         msg = 'TIMED OUT'
         sta = TIMED_OUT
     elif rc == 0:
