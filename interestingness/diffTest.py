@@ -11,7 +11,7 @@ This can be used to isolate and minimize differential behaviour test cases.
 #   https://github.com/MozillaSecurity/lithium/pull/2
 
 from __future__ import print_function
-from optparse import OptionParser
+from optparse import OptionParser  # pylint: disable=deprecated-module
 
 import timedRun
 import filecmp

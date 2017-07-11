@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 
-from optparse import OptionParser
+from optparse import OptionParser  # pylint: disable=deprecated-module
 
 import timedRun
 import fileIngredients
