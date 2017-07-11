@@ -84,9 +84,12 @@ class TestCase(unittest.TestCase):
 
                 def __init__(self, test_case, logger_name, level):
                     self.test_case = test_case
+                    self.logger = None
                     self.logger_name = logger_name
                     self.level = getattr(logging, level) if level else logging.INFO
                     self.msg = None
+                    self.old = None
+                    self.watcher = None
 
                 def __enter__(self):
                     if isinstance(self.logger_name, logging.Logger):
