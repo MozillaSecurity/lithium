@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # coding=utf-8
+"""
+Interesting if the product of the numbers in the file divides the argument.
 
-# Interesting if the product of the numbers in the file divides the argument.
-
-# e.g. lithium product_divides 35 11.txt
+e.g. lithium product_divides 35 11.txt
+"""
 
 import sys
 
 
 def interesting(args, _temp_prefix):
+    """
+    simple version for testing
+    """
     mod = int(args[0])
     filename = args[1]
 
