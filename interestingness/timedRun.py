@@ -47,12 +47,12 @@ def xpkill(p):
     """Based on mozilla-central/source/build/automation.py.in ."""
     try:
         p.kill()
-    except WindowsError:
+    except WindowsError:  # pylint: disable=undefined-variable
         if p.poll() == 0:
             try:
                 print('Trying to kill the process the first time...')
                 p.kill()  # Verify that the process is really killed.
-            except WindowsError:
+            except WindowsError:  # pylint: disable=undefined-variable
                 if p.poll() == 0:
                     print('Trying to kill the process the second time...')
                     p.kill()  # Re-verify that the process is really killed.
