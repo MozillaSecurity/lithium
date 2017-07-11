@@ -22,6 +22,6 @@ def interesting(args, tempPrefix):
     if prod % mod == 0:
         sys.stdout.write("%d is divisible by %d\n" % (prod, mod))
         return True
-    else:
-        sys.stdout.write("%d is not divisible by %d\n" % (prod, mod))
-        return False
+
+    sys.stdout.write("%d is not divisible by %d\n" % (prod, mod))
+    return False

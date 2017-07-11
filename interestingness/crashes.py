@@ -28,6 +28,6 @@ def interesting(cliArgs, tempPrefix):
     if runinfo.sta == timedRun.CRASHED:
         print('Exit status: ' + runinfo.msg + timeString)
         return True
-    else:
-        print("[Uninteresting] It didn't crash." + timeString)
-        return False
+
+    print("[Uninteresting] It didn't crash." + timeString)
+    return False

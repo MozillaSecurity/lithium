@@ -14,6 +14,6 @@ def interesting(args, tempPrefix):
 
     if runinfo.sta == timedRun.TIMED_OUT:
         return True
-    else:
-        print("Exited in %.3f seconds" % runinfo.elapsedtime)
-        return False
+
+    print("Exited in %.3f seconds" % runinfo.elapsedtime)
+    return False

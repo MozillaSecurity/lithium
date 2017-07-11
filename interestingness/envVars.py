@@ -45,21 +45,21 @@ def findLlvmBinPath():
         # Create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8
         if os.path.isfile('/usr/bin/llvm-symbolizer'):
             return ''
-        else:
-            print('WARNING: Please install clang via `apt-get install clang` if using Ubuntu.')
-            print('then create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8.')
-            print('Try: `ln -s /usr/bin/llvm-symbolizer-3.8 /usr/bin/llvm-symbolizer`')
-            return ''
+
+        print('WARNING: Please install clang via `apt-get install clang` if using Ubuntu.')
+        print('then create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8.')
+        print('Try: `ln -s /usr/bin/llvm-symbolizer-3.8 /usr/bin/llvm-symbolizer`')
+        return ''
 
     if isMac:
         # Assumes LLVM was installed through Homebrew. Works with at least version 3.6.2.
         brewLLVMPath = '/usr/local/opt/llvm/bin'
         if os.path.isdir(brewLLVMPath):
             return brewLLVMPath
-        else:
-            print('WARNING: Please install llvm from Homebrew via `brew install llvm`.')
-            print('ASan stacks will not have symbols as Xcode does not install llvm-symbolizer.')
-            return ''
+
+        print('WARNING: Please install llvm from Homebrew via `brew install llvm`.')
+        print('ASan stacks will not have symbols as Xcode does not install llvm-symbolizer.')
+        return ''
 
     # https://developer.mozilla.org/en-US/docs/Building_Firefox_with_Address_Sanitizer#Manual_Build
     if isWin:

@@ -13,8 +13,7 @@ import re
 def fileContains(f, s, isRegex, vb=True):
     if isRegex:
         return fileContainsRegex(f, re.compile(s, re.MULTILINE), verbose=vb)
-    else:
-        return fileContainsStr(f, s, verbose=vb), s
+    return fileContainsStr(f, s, verbose=vb), s
 
 
 def fileContainsStr(f, s, verbose=True):
