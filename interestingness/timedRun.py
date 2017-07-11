@@ -28,10 +28,11 @@ def getSignalName(num, default=None):
     return default
 
 
-class rundata(object):
+class rundata(object):  # pylint: disable=too-few-public-methods,too-many-instance-attributes
     """Define struct that contains data from a process that has already ended."""
 
-    def __init__(self, sta, rc, msg, elapsedtime, killed, pid, out, err):
+    def __init__(self,  # pylint: disable=too-many-arguments
+                 sta, rc, msg, elapsedtime, killed, pid, out, err):
         """Initialize with given parameters."""
         self.sta = sta
         self.rc = rc
@@ -74,7 +75,8 @@ def makeEnv(binPath):
     return env
 
 
-def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):
+def timed_run(commandWithArgs,  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+              timeout, logPrefix, inp=None, preexec_fn=None):
     """If logPrefix is None, uses pipes instead of files for all output."""
     if not isinstance(commandWithArgs, list):
         raise TypeError("commandWithArgs should be a list (of strings).")
