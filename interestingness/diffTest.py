@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
+# pylint: disable=invalid-name,missing-docstring
 
 '''
 This test minimizes a test case by comparing a single binary with different command line arguments.

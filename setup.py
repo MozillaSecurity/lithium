@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
+# flake8: noqa
+# pylint: disable=missing-docstring
 
 from setuptools import setup
 
