@@ -2,12 +2,12 @@ dist: trusty
 sudo: false
 language: python
 python:
-    - 2.7
-    - 3.3
-    - 3.4
-    - 3.5
-    - 3.6
-    - nightly
+    - "2.7"
+    - "3.3"
+    - "3.4"
+    - "3.5"
+    - "3.6"
+    - "nightly"
 before_install:
     - pip install --upgrade setuptools pip
     - pip install --upgrade virtualenv
