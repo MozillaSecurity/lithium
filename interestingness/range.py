@@ -50,7 +50,7 @@ def interesting(cliArgs, tempPrefix):
         conditionScript.init(conditionArgs)
 
     assert (rangeMax - rangeMin) >= 0
-    for i in xrange(rangeMin, rangeMax + 1):
+    for i in range(rangeMin, rangeMax + 1):
         # This doesn't do anything if RANGENUM is not found.
         replacedConditionArgs = [s.replace('RANGENUM', str(i)) for s in conditionArgs]
         print('Range number %d:' % i, end=' ')

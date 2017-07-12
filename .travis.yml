@@ -19,10 +19,7 @@ install:
     - pylint --version
     - git --version
 before_script:
-    - |
-        if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then
-            flake8 --count ${TRAVIS_BUILD_DIR}
-        fi
+    - flake8 --count ${TRAVIS_BUILD_DIR}
     # - |
     #     if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then
     #         pylint ${TRAVIS_BUILD_DIR}
