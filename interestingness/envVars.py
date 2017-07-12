@@ -18,8 +18,9 @@ isWin = (platform.system() == 'Windows')
 ENV_PATH_SEPARATOR = ';' if os.name == 'nt' else ':'
 
 
-def envWithPath(path, runningEnv=os.environ):
+def envWithPath(path, runningEnv=None):
     """Append the path to the appropriate library path on various platforms."""
+    runningEnv = runningEnv or os.environ
     if isLinux:
         libPath = 'LD_LIBRARY_PATH'
     elif isMac:
