@@ -39,10 +39,10 @@ class TestCase(unittest.TestCase):
     if sys.version_info.major == 2:
 
         def assertRegex(self, *args, **kwds):
-            return self.assertRegexpMatches(*args, **kwds)
+            return self.assertRegexpMatches(*args, **kwds)  # pylint: disable=deprecated-method
 
         def assertRaisesRegex(self, *args, **kwds):
-            return self.assertRaisesRegexp(*args, **kwds)
+            return self.assertRaisesRegexp(*args, **kwds)  # pylint: disable=deprecated-method
 
     if sys.version_info[:2] < (3, 4):
         #
