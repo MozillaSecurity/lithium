@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring,line-too-long,too-many-locals,too-many-statements,too-many-branches,too-many-lines,too-many-instance-attributes,too-many-arguments
+# pylint: disable=invalid-name,missing-docstring,line-too-long,too-many-lines,too-many-locals,too-many-statements
 
 import argparse
 import logging
@@ -474,7 +474,8 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
     def list_fiveParts(lst, step, f, s, t):
         return (lst[:f], lst[f:s], lst[s:(s + step)], lst[(s + step):(t + step)], lst[(t + step):])
 
-    def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):
+    def tryRemovingChunks(self,  # pylint: disable=too-many-branches
+                          chunkSize, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
@@ -733,7 +734,8 @@ class ReplacePropertiesByGlobals(Minimize):
 
         return 0, (finalChunkSize == 1 and self.minimizeRepeat != "never"), testcase
 
-    def tryMakingGlobals(self, chunkSize, numChars, testcase, interesting, tempFilename):
+    def tryMakingGlobals(self,  # pylint: disable=too-many-arguments,too-many-branches
+                         chunkSize, numChars, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
@@ -849,7 +851,8 @@ class ReplaceArgumentsByGlobals(Minimize):
         return 0, False, testcase
 
     @staticmethod
-    def tryArgumentsAsGlobals(roundNum, testcase, interesting, tempFilename):
+    def tryArgumentsAsGlobals(roundNum,  # pylint: disable=too-many-branches
+                              testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
@@ -1035,7 +1038,7 @@ class ReplaceArgumentsByGlobals(Minimize):
         return numMovedArguments, testcase
 
 
-class Lithium(object):
+class Lithium(object):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
 
@@ -1105,7 +1108,7 @@ class Lithium(object):
 
         # Try to parse --conflict before anything else
         class ArgParseTry(argparse.ArgumentParser):
-            def exit(subself, **kwds):  # pylint: disable=no-self-argument
+            def exit(subself, **kwds):  # pylint: disable=arguments-differ,no-self-argument
                 pass
 
             def error(subself, message):  # pylint: disable=no-self-argument

@@ -38,10 +38,10 @@ class TestCase(unittest.TestCase):
 
     if sys.version_info.major == 2:
 
-        def assertRegex(self, *args, **kwds):
+        def assertRegex(self, *args, **kwds):  # pylint: disable=arguments-differ
             return self.assertRegexpMatches(*args, **kwds)  # pylint: disable=deprecated-method
 
-        def assertRaisesRegex(self, *args, **kwds):
+        def assertRaisesRegex(self, *args, **kwds):  # pylint: disable=arguments-differ
             return self.assertRaisesRegexp(*args, **kwds)  # pylint: disable=deprecated-method
 
     if sys.version_info[:2] < (3, 4):
@@ -242,14 +242,14 @@ class LithiumTests(TestCase):
             interesting_called = False
             cleanup_called = False
 
-            def init(sub, conditionArgs):
+            def init(sub, conditionArgs):  # pylint: disable=no-self-argument
                 sub.init_called = True
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 sub.interesting_called = True
                 return True
 
-            def cleanup(sub, conditionArgs):
+            def cleanup(sub, conditionArgs):  # pylint: disable=no-self-argument
                 sub.cleanup_called = True
         inter = Interesting()
         l.conditionScript = inter
@@ -270,7 +270,7 @@ class LithiumTests(TestCase):
         class Interesting(DummyInteresting):
             inter = False
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 return sub.inter
         l.conditionScript = Interesting()
         l.strategy = lithium.Minimize()
@@ -303,7 +303,7 @@ class StrategyTests(TestCase):
     def test_minimize(self):
         class Interesting(DummyInteresting):
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 with open("a.txt", "rb") as f:
                     return b"o\n" in f.read()
         l = lithium.Lithium()
@@ -322,7 +322,7 @@ class StrategyTests(TestCase):
     def test_minimize_around(self):
         class Interesting(DummyInteresting):
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 with open("a.txt", "rb") as f:
                     data = f.read()
                     return b"o\n" in data and len(set(data.split(b"o\n"))) == 1
@@ -342,7 +342,7 @@ class StrategyTests(TestCase):
     def test_minimize_balanced(self):
         class Interesting(DummyInteresting):
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 with open("a.txt", "rb") as f:
                     data = f.read()
                     if b"o\n" in data:
@@ -386,7 +386,7 @@ class StrategyTests(TestCase):
 
         class Interesting(DummyInteresting):
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
         l = lithium.Lithium()
@@ -417,7 +417,7 @@ class StrategyTests(TestCase):
 
         class Interesting(DummyInteresting):
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
         l = lithium.Lithium()
