@@ -23,7 +23,7 @@ install:
 build: off
 test_script:
     - "%PYTHON%\\python.exe -m flake8 --count %APPVEYOR_BUILD_FOLDER%"
-    # - If NOT "%PYTHON%"=="%PYTHON:Python27=%" ( %PYTHON%\\python.exe -m pylint %APPVEYOR_BUILD_FOLDER% )
+    - "%PYTHON%\\python.exe -m pylint %APPVEYOR_BUILD_FOLDER%"
     - "%PYTHON%\\python.exe -m pytest lithium\\tests.py -v --cov . --cov-report term-missing"
 on_success:
     - "%PYTHON%\\python.exe -m codecov"
