@@ -32,11 +32,6 @@ path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
 
-try:
-    xrange
-except NameError:
-    xrange = range
-
 
 def parseOptions(arguments):
     parser = OptionParser()
