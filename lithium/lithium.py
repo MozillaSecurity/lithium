@@ -378,7 +378,7 @@ class MinimizeSurroundingPairs(Minimize):
             raise ValueError("%s is not in list" % e)
         return l[(p + 1):].index(e) + (p + 1)
 
-    def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):
+    def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):  # pylint: disable=too-many-locals
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
@@ -493,7 +493,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
     def list_fiveParts(lst, step, f, s, t):
         return (lst[:f], lst[f:s], lst[s:(s + step)], lst[(s + step):(t + step)], lst[(t + step):])
 
-    def tryRemovingChunks(self,  # pylint: disable=too-many-branches
+    def tryRemovingChunks(self,  # pylint: disable=too-many-branches,too-many-locals
                           chunkSize, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
@@ -766,7 +766,7 @@ class ReplacePropertiesByGlobals(Minimize):
 
         return 0, (finalChunkSize == 1 and self.minimizeRepeat != "never"), testcase
 
-    def tryMakingGlobals(self,  # pylint: disable=too-many-arguments,too-many-branches
+    def tryMakingGlobals(self,  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
                          chunkSize, numChars, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
@@ -889,7 +889,7 @@ class ReplaceArgumentsByGlobals(Minimize):
         return 0, False, testcase
 
     @staticmethod
-    def tryArgumentsAsGlobals(roundNum,  # pylint: disable=too-many-branches
+    def tryArgumentsAsGlobals(roundNum,  # pylint: disable=too-many-branches,too-many-locals
                               testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
@@ -1132,7 +1132,7 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
             if self.lastInteresting is not None:
                 self.lastInteresting.writeTestcase()
 
-    def processArgs(self, argv=None):
+    def processArgs(self, argv=None):  # pylint: disable=too-many-locals
         # Build list of strategies and testcase types
         strategies = {}
         testcaseTypes = {}
