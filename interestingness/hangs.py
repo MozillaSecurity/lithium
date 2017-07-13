@@ -1,7 +1,10 @@
 #!/usr/bin/env python
-from __future__ import print_function
+# coding=utf-8
+# pylint: disable=invalid-name,missing-docstring
 
-import timedRun
+from __future__ import absolute_import, print_function
+
+from . import timedRun
 
 
 def interesting(args, tempPrefix):
@@ -11,6 +14,6 @@ def interesting(args, tempPrefix):
 
     if runinfo.sta == timedRun.TIMED_OUT:
         return True
-    else:
-        print("Exited in %.3f seconds" % runinfo.elapsedtime)
-        return False
+
+    print("Exited in %.3f seconds" % runinfo.elapsedtime)
+    return False

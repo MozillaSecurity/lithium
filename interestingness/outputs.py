@@ -1,10 +1,13 @@
 #!/usr/bin/env python
-from __future__ import print_function
+# coding=utf-8
+# pylint: disable=invalid-name,missing-docstring
 
-from optparse import OptionParser
+from __future__ import absolute_import, print_function
 
-import timedRun
-import fileIngredients
+from optparse import OptionParser  # pylint: disable=deprecated-module
+
+from . import fileIngredients
+from . import timedRun
 
 
 def parseOptions(arguments):

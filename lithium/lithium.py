@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring,line-too-long,too-many-locals,too-many-statements,too-many-branches,too-many-lines,too-many-instance-attributes,too-many-arguments
+# pylint: disable=invalid-name,missing-docstring,too-many-lines,too-many-statements
+
+from __future__ import absolute_import
 
 import argparse
 import logging
@@ -10,7 +12,7 @@ import sys
 import time
 
 
-log = logging.getLogger("lithium")  # pylint: disable=invalid-name
+log = logging.getLogger("lithium")
 
 
 class LithiumError(Exception):
@@ -55,7 +57,8 @@ class Testcase(object):
             # Determine whether the f has a DDBEGIN..DDEND section.
             for line in f:
                 if line.find(b"DDEND") != -1:
-                    raise LithiumError("The testcase (%s) has a line containing 'DDEND' without a line containing 'DDBEGIN' before it." % self.filename)
+                    raise LithiumError("The testcase (%s) has a line containing 'DDEND' "
+                                       "without a line containing 'DDBEGIN' before it." % self.filename)
                 if line.find(b"DDBEGIN") != -1:
                     hasDDSection = True
                     break
@@ -85,7 +88,8 @@ class Testcase(object):
                 break
             self.readTestcaseLine(line)
         else:
-            raise LithiumError("The testcase (%s) has a line containing 'DDBEGIN' but no line containing 'DDEND'." % self.filename)
+            raise LithiumError("The testcase (%s) has a line containing 'DDBEGIN' but no line "
+                               "containing 'DDEND'." % self.filename)
 
         for line in f:
             self.after += line
@@ -118,7 +122,7 @@ class TestcaseChar(TestcaseLine):
     def readTestcaseWithDDSection(self, f):
         Testcase.readTestcaseWithDDSection(self, f)
 
-        if len(self.parts) > 0:
+        if self.parts:
             # Move the line break at the end of the last line out of the reducible
             # part so the "DDEND" line doesn't get combined with another line.
             self.parts.pop()
@@ -141,7 +145,9 @@ class TestcaseSymbol(TestcaseLine):
         self.cutBefore = self.DEFAULT_CUT_BEFORE
 
     def readTestcaseLine(self, line):
-        cutter = b"[" + self.cutBefore + b"]?[^" + self.cutBefore + self.cutAfter + b"]*(?:[" + self.cutAfter + b"]|$|(?=[" + self.cutBefore + b"]))"
+        cutter = (b"[" + self.cutBefore + b"]?" +
+                  b"[^" + self.cutBefore + self.cutAfter + b"]*" +
+                  b"(?:[" + self.cutAfter + b"]|$|(?=[" + self.cutBefore + b"]))")
         for statement in re.finditer(cutter, line):
             if statement.group(0):
                 self.parts.append(statement.group(0))
@@ -151,7 +157,8 @@ class Strategy(object):
     """
     Abstract minimization strategy class
 
-    Implementers should define a main() method which takes a testcase and calls the interesting callback repeatedly to minimize the testcase.
+    Implementers should define a main() method which takes a testcase and calls the interesting callback repeatedly
+    to minimize the testcase.
     """
 
     def addArgs(self, parser):
@@ -207,10 +214,12 @@ class Minimize(Strategy):
         grp_add.add_argument(
             "--chunkstart", type=int,
             default=0,
-            help="For the first round only, start n chars/lines into the file. Best for max to divide n. [Mostly intended for internal use]")
+            help="For the first round only, start n chars/lines into the file. Best for max to divide n. "
+                 "[Mostly intended for internal use]")
         grp_add.add_argument(
             "--repeatfirstround", action="store_true",
-            help="Treat the first round as if it removed chunks; possibly repeat it.  [Mostly intended for internal use]")
+            help="Treat the first round as if it removed chunks; possibly repeat it. "
+                 "[Mostly intended for internal use]")
         grp_add.add_argument(
             "--maxruntime", type=int,
             default=None,
@@ -239,7 +248,7 @@ class Minimize(Strategy):
             log.info("Lithium result: the original testcase is not 'interesting'!")
             return 1
 
-        if len(testcase.parts) == 0:
+        if not testcase.parts:
             log.info("The file has %s so there's nothing for Lithium to try to remove!", quantity(0, testcase.atom))
 
         testcase.writeTestcase(tempFilename("original", False))
@@ -287,9 +296,10 @@ class Minimize(Strategy):
             if chunkStart >= len(testcase.parts):
                 testcase.writeTestcase(tempFilename("did-round-%d" % chunkSize))
                 last = (chunkSize <= finalChunkSize)
-                empty = (len(testcase.parts) == 0)
+                empty = not testcase.parts
                 log.info("")
-                if not empty and anyChunksRemoved and (self.minimizeRepeat == "always" or (self.minimizeRepeat == "last" and last)):
+                if not empty and anyChunksRemoved and (self.minimizeRepeat == "always" or
+                                                       (self.minimizeRepeat == "last" and last)):
                     chunkStart = 0
                     log.info("Starting another round of chunk size %d", chunkSize)
                 elif empty or last:
@@ -302,7 +312,8 @@ class Minimize(Strategy):
                 anyChunksRemoved = False
 
             chunkEnd = min(len(testcase.parts), chunkStart + chunkSize)
-            description = "Removing a chunk of size %d starting at %d of %d" % (chunkSize, chunkStart, len(testcase.parts))
+            description = "Removing a chunk of size %d starting at %d of %d" % (
+                chunkSize, chunkStart, len(testcase.parts))
             testcaseSuggestion = testcase.copy()
             testcaseSuggestion.parts = testcaseSuggestion.parts[:chunkStart] + testcaseSuggestion.parts[chunkEnd:]
             if interesting(testcaseSuggestion):
@@ -367,7 +378,7 @@ class MinimizeSurroundingPairs(Minimize):
             raise ValueError("%s is not in list" % e)
         return l[(p + 1):].index(e) + (p + 1)
 
-    def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):
+    def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):  # pylint: disable=too-many-locals
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
@@ -386,7 +397,7 @@ class MinimizeSurroundingPairs(Minimize):
 
         log.info("Starting a round with chunks of %s.", quantity(chunkSize, testcase.atom))
 
-        summary = ["S" for i in range(numChunks)]
+        summary = ["S" for _ in range(numChunks)]
         chunkStart = chunkSize
         beforeChunkIdx = 0
         keepChunkIdx = 1
@@ -398,10 +409,13 @@ class MinimizeSurroundingPairs(Minimize):
                 chunkBefEnd = chunkStart
                 chunkAftStart = min(len(testcase.parts), chunkStart + chunkSize)
                 chunkAftEnd = min(len(testcase.parts), chunkAftStart + chunkSize)
-                description = "chunk #%d & #%d of %d chunks of size %d" % (beforeChunkIdx, afterChunkIdx, numChunks, chunkSize)
+                description = "chunk #%d & #%d of %d chunks of size %d" % (
+                    beforeChunkIdx, afterChunkIdx, numChunks, chunkSize)
 
                 testcaseSuggestion = testcase.copy()
-                testcaseSuggestion.parts = testcaseSuggestion.parts[:chunkBefStart] + testcaseSuggestion.parts[chunkBefEnd:chunkAftStart] + testcaseSuggestion.parts[chunkAftEnd:]
+                testcaseSuggestion.parts = (testcaseSuggestion.parts[:chunkBefStart] +
+                                            testcaseSuggestion.parts[chunkBefEnd:chunkAftStart] +
+                                            testcaseSuggestion.parts[chunkAftEnd:])
                 if interesting(testcaseSuggestion):
                     testcase = testcaseSuggestion
                     log.info("Yay, reduced it by removing %s :)", description)
@@ -438,11 +452,16 @@ class MinimizeSurroundingPairs(Minimize):
             chunkStart = len(testcase.parts)
 
         atomsSurviving = atomsInitial - atomsRemoved
-        printableSummary = " ".join(["".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2)])
+        printableSummary = " ".join(
+            "".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2))
         log.info("")
         log.info("Done with a round of chunk size %d!", chunkSize)
-        log.info("%s survived; %s removed.", quantity(summary.count("S"), "chunk"), quantity(summary.count("-"), "chunk"))
-        log.info("%s survived; %s removed.", quantity(atomsSurviving, testcase.atom), quantity(atomsRemoved, testcase.atom))
+        log.info("%s survived; %s removed.",
+                 quantity(summary.count("S"), "chunk"),
+                 quantity(summary.count("-"), "chunk"))
+        log.info("%s survived; %s removed.",
+                 quantity(atomsSurviving, testcase.atom),
+                 quantity(atomsRemoved, testcase.atom))
         log.info("Which chunks survived: %s", printableSummary)
         log.info("")
 
@@ -474,7 +493,8 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
     def list_fiveParts(lst, step, f, s, t):
         return (lst[:f], lst[f:s], lst[s:(s + step)], lst[(s + step):(t + step)], lst[(t + step):])
 
-    def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):
+    def tryRemovingChunks(self,  # pylint: disable=too-many-branches,too-many-locals
+                          chunkSize, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
@@ -503,9 +523,11 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
         try:
             while chunkStart < len(testcase.parts):
 
-                description = "chunk #%d%s of %d chunks of size %d" % (lhsChunkIdx, "".join(" " for i in range(len(str(lhsChunkIdx)) + 4)), numChunks, chunkSize)
+                description = "chunk #%d%s of %d chunks of size %d" % (
+                    lhsChunkIdx, "".join(" " for i in range(len(str(lhsChunkIdx)) + 4)), numChunks, chunkSize)
 
-                assert summary[:lhsChunkIdx].count("S") * chunkSize == chunkStart, "the chunkStart should correspond to the lhsChunkIdx modulo the removed chunks."
+                assert summary[:lhsChunkIdx].count("S") * chunkSize == chunkStart, (
+                    "the chunkStart should correspond to the lhsChunkIdx modulo the removed chunks.")
 
                 chunkLhsStart = chunkStart
                 chunkLhsEnd = min(len(testcase.parts), chunkLhsStart + chunkSize)
@@ -517,7 +539,8 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 # If the chunk is already balanced, try to remove it.
                 if nCurly == 0 and nSquare == 0 and nNormal == 0:
                     testcaseSuggestion = testcase.copy()
-                    testcaseSuggestion.parts = testcaseSuggestion.parts[:chunkLhsStart] + testcaseSuggestion.parts[chunkLhsEnd:]
+                    testcaseSuggestion.parts = (testcaseSuggestion.parts[:chunkLhsStart] +
+                                                testcaseSuggestion.parts[chunkLhsEnd:])
                     if interesting(testcaseSuggestion):
                         testcase = testcaseSuggestion
                         log.info("Yay, reduced it by removing %s :)", description)
@@ -556,10 +579,13 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 chunkRhsStart = min(len(testcase.parts), chunkRhsStart)
                 chunkRhsEnd = min(len(testcase.parts), chunkRhsStart + chunkSize)
 
-                description = "chunk #%d & #%d of %d chunks of size %d" % (lhsChunkIdx, rhsChunkIdx, numChunks, chunkSize)
+                description = "chunk #%d & #%d of %d chunks of size %d" % (
+                    lhsChunkIdx, rhsChunkIdx, numChunks, chunkSize)
 
                 testcaseSuggestion = testcase.copy()
-                testcaseSuggestion.parts = testcaseSuggestion.parts[:chunkLhsStart] + testcaseSuggestion.parts[chunkLhsEnd:chunkRhsStart] + testcaseSuggestion.parts[chunkRhsEnd:]
+                testcaseSuggestion.parts = (testcaseSuggestion.parts[:chunkLhsStart] +
+                                            testcaseSuggestion.parts[chunkLhsEnd:chunkRhsStart] +
+                                            testcaseSuggestion.parts[chunkRhsEnd:])
                 if interesting(testcaseSuggestion):
                     testcase = testcaseSuggestion
                     log.info("Yay, reduced it by removing %s :)", description)
@@ -589,8 +615,10 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 chunkMidStart = chunkLhsEnd
                 midChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
                 while chunkMidStart < chunkRhsStart:
-                    assert summary[:midChunkIdx].count("S") * chunkSize == chunkMidStart, "the chunkMidStart should correspond to the midChunkIdx modulo the removed chunks."
-                    description = "chunk #%d%s of %d chunks of size %d" % (midChunkIdx, "".join(" " for i in range(len(str(lhsChunkIdx)) + 4)), numChunks, chunkSize)
+                    assert summary[:midChunkIdx].count("S") * chunkSize == chunkMidStart, (
+                        "the chunkMidStart should correspond to the midChunkIdx modulo the removed chunks.")
+                    description = "chunk #%d%s of %d chunks of size %d" % (
+                        midChunkIdx, "".join(" " for i in range(len(str(lhsChunkIdx)) + 4)), numChunks, chunkSize)
 
                     p = self.list_fiveParts(testcase.parts, chunkSize, chunkLhsStart, chunkMidStart, chunkRhsStart)
 
@@ -660,11 +688,16 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
             chunkStart = len(testcase.parts)
 
         atomsSurviving = atomsInitial - atomsRemoved
-        printableSummary = " ".join("".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2))
+        printableSummary = " ".join(
+            "".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2))
         log.info("")
         log.info("Done with a round of chunk size %d!", chunkSize)
-        log.info("%s survived; %s removed.", quantity(summary.count("S"), "chunk"), quantity(summary.count("-"), "chunk"))
-        log.info("%s survived; %s removed.", quantity(atomsSurviving, testcase.atom), quantity(atomsRemoved, testcase.atom))
+        log.info("%s survived; %s removed.",
+                 quantity(summary.count("S"), "chunk"),
+                 quantity(summary.count("-"), "chunk"))
+        log.info("%s survived; %s removed.",
+                 quantity(atomsSurviving, testcase.atom),
+                 quantity(atomsRemoved, testcase.atom))
         log.info("Which chunks survived: %s", printableSummary)
         log.info("")
 
@@ -733,7 +766,8 @@ class ReplacePropertiesByGlobals(Minimize):
 
         return 0, (finalChunkSize == 1 and self.minimizeRepeat != "never"), testcase
 
-    def tryMakingGlobals(self, chunkSize, numChars, testcase, interesting, tempFilename):
+    def tryMakingGlobals(self,  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
+                         chunkSize, numChars, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
@@ -753,7 +787,7 @@ class ReplacePropertiesByGlobals(Minimize):
                     words[word] += [chunk]
 
         # All patterns have been removed sucessfully.
-        if len(words) == 0:
+        if not words:
             return 0, testcase
 
         log.info("Starting a round with chunks of %s.", quantity(chunkSize, testcase.atom))
@@ -775,7 +809,8 @@ class ReplacePropertiesByGlobals(Minimize):
                 if len(chunkStarts) == 1 and finalChunkSize != chunkSize:
                     continue
 
-                description = "'%s' in chunk #%d of %d chunks of size %d" % (word.decode("utf-8", "replace"), chunkIdx, numChunks, chunkSize)
+                description = "'%s' in chunk #%d of %d chunks of size %d" % (
+                    word.decode("utf-8", "replace"), chunkIdx, numChunks, chunkSize)
 
                 maybeRemoved = 0
                 newTC = testcase.copy()
@@ -790,17 +825,22 @@ class ReplacePropertiesByGlobals(Minimize):
                     numRemovedChars += maybeRemoved
                     summary[chunkIdx] = "s"
                     words[word] = [c for c in chunks if c not in chunkIndexes]
-                    if len(words[word]) == 0:
+                    if not words[word]:
                         del words[word]
                 else:
                     log.info("Removing prefixes of %s made the file 'uninteresting'.", description)
 
         numSurvivingChars = numChars - numRemovedChars
-        printableSummary = " ".join("".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2))
+        printableSummary = " ".join(
+            "".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2))
         log.info("")
         log.info("Done with a round of chunk size %d!", chunkSize)
-        log.info("%s survived; %s shortened.", quantity(summary.count("S"), "chunk"), quantity(summary.count("s"), "chunk"))
-        log.info("%s survived; %s removed.", quantity(numSurvivingChars, "character"), quantity(numRemovedChars, "character"))
+        log.info("%s survived; %s shortened.",
+                 quantity(summary.count("S"), "chunk"),
+                 quantity(summary.count("s"), "chunk"))
+        log.info("%s survived; %s removed.",
+                 quantity(numSurvivingChars, "character"),
+                 quantity(numRemovedChars, "character"))
         log.info("Which chunks survived: %s", printableSummary)
         log.info("")
 
@@ -849,7 +889,8 @@ class ReplaceArgumentsByGlobals(Minimize):
         return 0, False, testcase
 
     @staticmethod
-    def tryArgumentsAsGlobals(roundNum, testcase, interesting, tempFilename):
+    def tryArgumentsAsGlobals(roundNum,  # pylint: disable=too-many-branches,too-many-locals
+                              testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
@@ -863,7 +904,8 @@ class ReplaceArgumentsByGlobals(Minimize):
         anonymousStack = []
         for chunk, line in enumerate(testcase.parts):
             # Match function definition with at least one argument.
-            for match in re.finditer(br"(?:function\s+(\w+)|(\w+)\s*=\s*function)\s*\((\s*\w+\s*(?:,\s*\w+\s*)*)\)", line):
+            for match in re.finditer(br"(?:function\s+(\w+)|(\w+)\s*=\s*function)\s*\((\s*\w+\s*(?:,\s*\w+\s*)*)\)",
+                                     line):
                 fun = match.group(1)
                 if fun is None:
                     fun = match.group(2)
@@ -890,11 +932,11 @@ class ReplaceArgumentsByGlobals(Minimize):
 
             # Match calls of anonymous function.
             for match in re.finditer(br"}\s*\)\s*\(((?:[^()]|\([^,()]*\))*)\)", line):
-                if len(anonymousStack) == 0:
+                if not anonymousStack:
                     continue
                 anon = anonymousStack[-1]
                 anonymousStack = anonymousStack[:-1]
-                if match.group(1) == b"" and len(anon["defs"]) == 0:
+                if match.group(1) == b"" and not anon["defs"]:
                     continue
                 if match.group(1) == b"":
                     args = []
@@ -917,14 +959,14 @@ class ReplaceArgumentsByGlobals(Minimize):
                 functions[fun]["uses"] += [{"values": args, "chunk": chunk, "pattern": pattern}]
 
         # All patterns have been removed sucessfully.
-        if len(functions) == 0 and len(anonymousQueue) == 0:
+        if not functions and not anonymousQueue:
             return 0, testcase
 
         log.info("Starting removing function arguments.")
 
         for fun, argsMap in functions.items():
             description = "arguments of '%s'" % fun.decode("utf-8", "replace")
-            if "defs" not in argsMap or len(argsMap["uses"]) == 0:
+            if "defs" not in argsMap or not argsMap["uses"]:
                 log.info("Ignoring %s because it is 'uninteresting'.", description)
                 continue
 
@@ -1035,7 +1077,7 @@ class ReplaceArgumentsByGlobals(Minimize):
         return numMovedArguments, testcase
 
 
-class Lithium(object):
+class Lithium(object):  # pylint: disable=too-many-instance-attributes
 
     def __init__(self):
 
@@ -1090,7 +1132,7 @@ class Lithium(object):
             if self.lastInteresting is not None:
                 self.lastInteresting.writeTestcase()
 
-    def processArgs(self, argv=None):
+    def processArgs(self, argv=None):  # pylint: disable=too-many-locals
         # Build list of strategies and testcase types
         strategies = {}
         testcaseTypes = {}
@@ -1105,7 +1147,7 @@ class Lithium(object):
 
         # Try to parse --conflict before anything else
         class ArgParseTry(argparse.ArgumentParser):
-            def exit(subself, **kwds):  # pylint: disable=no-self-argument
+            def exit(subself, **kwds):  # pylint: disable=arguments-differ,no-self-argument
                 pass
 
             def error(subself, message):  # pylint: disable=no-self-argument
@@ -1121,7 +1163,7 @@ class Lithium(object):
         args = parser.parse_known_args(argv)
         self.strategy = strategies.get(args[0].strategy if args else None, strategies[defaultStrategy])()
 
-        parser = argparse.ArgumentParser(  # pylint: disable=redefined-variable-type
+        parser = argparse.ArgumentParser(
             description="Lithium, an automated testcase reduction tool by Jesse Ruderman.",
             epilog="See doc/using.html for more information.",
             usage="./lithium.py [options] condition [condition options] file-to-reduce\n\n"
@@ -1145,12 +1187,14 @@ class Lithium(object):
         grp_atoms.add_argument(
             "-c", "--char",
             action="store_true",
-            help="Don't treat lines as atomic units; treat the file as a sequence of characters rather than a sequence of lines.")
+            help="Don't treat lines as atomic units; "
+                 "treat the file as a sequence of characters rather than a sequence of lines.")
         grp_atoms.add_argument(
             "-s", "--symbol",
             action="store_true",
             help="Treat the file as a sequence of strings separated by tokens. "
-                 "The characters by which the strings are delimited are defined by the --cutBefore, and --cutAfter options.")
+                 "The characters by which the strings are delimited are defined by "
+                 "the --cutBefore, and --cutAfter options.")
         grp_opt.add_argument(
             "--cutBefore",
             default=TestcaseSymbol.DEFAULT_CUT_BEFORE,
@@ -1185,7 +1229,7 @@ class Lithium(object):
 
         if args.testcase:
             testcaseFilename = args.testcase
-        elif len(extra_args) > 0:
+        elif extra_args:
             testcaseFilename = extra_args[-1]  # can be overridden by --testcase in processOptions
         else:
             parser.error("No testcase specified (use --testcase or last condition arg)")

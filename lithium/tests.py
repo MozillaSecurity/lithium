@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding=utf-8
+# pylint: disable=invalid-name,missing-docstring,too-few-public-methods
+
+from __future__ import absolute_import
+
 import collections
 import logging
 import math
@@ -8,7 +14,7 @@ import sys
 import tempfile
 import unittest
 
-import lithium
+from . import lithium
 
 
 log = logging.getLogger("lithium_test")
@@ -34,11 +40,11 @@ class TestCase(unittest.TestCase):
 
     if sys.version_info.major == 2:
 
-        def assertRegex(self, *args, **kwds):
-            return self.assertRegexpMatches(*args, **kwds)
+        def assertRegex(self, *args, **kwds):  # pylint: disable=arguments-differ
+            return self.assertRegexpMatches(*args, **kwds)  # pylint: disable=deprecated-method
 
-        def assertRaisesRegex(self, *args, **kwds):
-            return self.assertRaisesRegexp(*args, **kwds)
+        def assertRaisesRegex(self, *args, **kwds):  # pylint: disable=arguments-differ
+            return self.assertRaisesRegexp(*args, **kwds)  # pylint: disable=deprecated-method
 
     if sys.version_info[:2] < (3, 4):
         #
@@ -81,9 +87,12 @@ class TestCase(unittest.TestCase):
 
                 def __init__(self, test_case, logger_name, level):
                     self.test_case = test_case
+                    self.logger = None
                     self.logger_name = logger_name
                     self.level = getattr(logging, level) if level else logging.INFO
                     self.msg = None
+                    self.old = None
+                    self.watcher = None
 
                 def __enter__(self):
                     if isinstance(self.logger_name, logging.Logger):
@@ -106,7 +115,8 @@ class TestCase(unittest.TestCase):
                         return False
                     self.test_case.assertGreater(
                         len(self.watcher.records), 0,
-                        "no logs of level %s or higher triggered on %s" % (logging.getLevelName(self.level), self.logger.name))
+                        "no logs of level %s or higher triggered on %s" % (
+                            logging.getLevelName(self.level), self.logger.name))
 
             return _AssertLogsContext(self, logger, level)
 
@@ -235,14 +245,14 @@ class LithiumTests(TestCase):
             interesting_called = False
             cleanup_called = False
 
-            def init(sub, conditionArgs):
+            def init(sub, conditionArgs):  # pylint: disable=no-self-argument
                 sub.init_called = True
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 sub.interesting_called = True
                 return True
 
-            def cleanup(sub, conditionArgs):
+            def cleanup(sub, conditionArgs):  # pylint: disable=no-self-argument
                 sub.cleanup_called = True
         inter = Interesting()
         l.conditionScript = inter
@@ -263,7 +273,7 @@ class LithiumTests(TestCase):
         class Interesting(DummyInteresting):
             inter = False
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 return sub.inter
         l.conditionScript = Interesting()
         l.strategy = lithium.Minimize()
@@ -296,7 +306,7 @@ class StrategyTests(TestCase):
     def test_minimize(self):
         class Interesting(DummyInteresting):
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 with open("a.txt", "rb") as f:
                     return b"o\n" in f.read()
         l = lithium.Lithium()
@@ -315,7 +325,7 @@ class StrategyTests(TestCase):
     def test_minimize_around(self):
         class Interesting(DummyInteresting):
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 with open("a.txt", "rb") as f:
                     data = f.read()
                     return b"o\n" in data and len(set(data.split(b"o\n"))) == 1
@@ -335,7 +345,7 @@ class StrategyTests(TestCase):
     def test_minimize_balanced(self):
         class Interesting(DummyInteresting):
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 with open("a.txt", "rb") as f:
                     data = f.read()
                     if b"o\n" in data:
@@ -360,26 +370,42 @@ class StrategyTests(TestCase):
     def test_replace_properties(self):
         valid_reductions = (
             # original: this.list, prototype.push, prototype.last
-            b"function Foo() {\n  this.list = [];\n}\nFoo.prototype.push = function(a) {\n  this.list.push(a);\n}\nFoo.prototype.last = function() {\n  return this.list.pop();\n}\n",
+            b"function Foo() {\n  this.list = [];\n}\n" +
+            b"Foo.prototype.push = function(a) {\n  this.list.push(a);\n}\n" +
+            b"Foo.prototype.last = function() {\n  return this.list.pop();\n}\n",
             #           this.list, prototype.push,           last
-            b"function Foo() {\n  this.list = [];\n}\nFoo.prototype.push = function(a) {\n  this.list.push(a);\n}\nlast = function() {\n  return this.list.pop();\n}\n",
+            b"function Foo() {\n  this.list = [];\n}\n" +
+            b"Foo.prototype.push = function(a) {\n  this.list.push(a);\n}\n" +
+            b"last = function() {\n  return this.list.pop();\n}\n",
             #           this.list,           push, prototype.last
-            b"function Foo() {\n  this.list = [];\n}\npush = function(a) {\n  this.list.push(a);\n}\nFoo.prototype.last = function() {\n  return this.list.pop();\n}\n",
+            b"function Foo() {\n  this.list = [];\n}\n" +
+            b"push = function(a) {\n  this.list.push(a);\n}\n" +
+            b"Foo.prototype.last = function() {\n  return this.list.pop();\n}\n",
             #           this.list,           push,           last
-            b"function Foo() {\n  this.list = [];\n}\npush = function(a) {\n  this.list.push(a);\n}\nlast = function() {\n  return this.list.pop();\n}\n",
+            b"function Foo() {\n  this.list = [];\n}\n" +
+            b"push = function(a) {\n  this.list.push(a);\n}\n" +
+            b"last = function() {\n  return this.list.pop();\n}\n",
             #                list, prototype.push, prototype.last
-            b"function Foo() {\n  list = [];\n}\nFoo.prototype.push = function(a) {\n  list.push(a);\n}\nFoo.prototype.last = function() {\n  return list.pop();\n}\n",
+            b"function Foo() {\n  list = [];\n}\n" +
+            b"Foo.prototype.push = function(a) {\n  list.push(a);\n}\n" +
+            b"Foo.prototype.last = function() {\n  return list.pop();\n}\n",
             #                list, prototype.push,           last
-            b"function Foo() {\n  list = [];\n}\nFoo.prototype.push = function(a) {\n  list.push(a);\n}\nlast = function() {\n  return list.pop();\n}\n",
+            b"function Foo() {\n  list = [];\n}\n" +
+            b"Foo.prototype.push = function(a) {\n  list.push(a);\n}\n" +
+            b"last = function() {\n  return list.pop();\n}\n",
             #                list,           push, prototype.last
-            b"function Foo() {\n  list = [];\n}\npush = function(a) {\n  list.push(a);\n}\nFoo.prototype.last = function() {\n  return list.pop();\n}\n",
+            b"function Foo() {\n  list = [];\n}\n" +
+            b"push = function(a) {\n  list.push(a);\n}\n" +
+            b"Foo.prototype.last = function() {\n  return list.pop();\n}\n",
             # reduced:       list,           push,           last
-            b"function Foo() {\n  list = [];\n}\npush = function(a) {\n  list.push(a);\n}\nlast = function() {\n  return list.pop();\n}\n"
+            b"function Foo() {\n  list = [];\n}\n" +
+            b"push = function(a) {\n  list.push(a);\n}\n" +
+            b"last = function() {\n  return list.pop();\n}\n"
         )
 
         class Interesting(DummyInteresting):
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
         l = lithium.Lithium()
@@ -394,7 +420,8 @@ class StrategyTests(TestCase):
             self.assertEqual(l.run(), 0)
             with open("a.txt", "rb") as f:
                 if testcaseType is lithium.TestcaseChar:
-                    self.assertEqual(f.read(), valid_reductions[0])  # Char doesn't give this strategy enough to work with
+                    # Char doesn't give this strategy enough to work with
+                    self.assertEqual(f.read(), valid_reductions[0])
                 else:
                     self.assertEqual(f.read(), valid_reductions[-1])
 
@@ -410,7 +437,7 @@ class StrategyTests(TestCase):
 
         class Interesting(DummyInteresting):
 
-            def interesting(sub, conditionArgs, tempPrefix):
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
         l = lithium.Lithium()
@@ -425,7 +452,8 @@ class StrategyTests(TestCase):
             self.assertEqual(l.run(), 0)
             with open("a.txt", "rb") as f:
                 if testcaseType is lithium.TestcaseChar:
-                    self.assertEqual(f.read(), valid_reductions[0])  # Char doesn't give this strategy enough to work with
+                    # Char doesn't give this strategy enough to work with
+                    self.assertEqual(f.read(), valid_reductions[0])
                 else:
                     self.assertEqual(f.read(), valid_reductions[-1])
 
@@ -508,17 +536,21 @@ class TestcaseTests(TestCase):
         with open("a.txt", "w") as f:
             f.write("DDEND\n")
         t = lithium.TestcaseLine()
-        with self.assertRaisesRegex(lithium.LithiumError, r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
+        with self.assertRaisesRegex(lithium.LithiumError,
+                                    r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
             t.readTestcase("a.txt")
         with open("a.txt", "w") as f:
             f.write("DDBEGIN DDEND\n")
-        with self.assertRaisesRegex(lithium.LithiumError, r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
+        with self.assertRaisesRegex(lithium.LithiumError,
+                                    r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
             t.readTestcase("a.txt")
         with open("a.txt", "w") as f:
             f.write("DDEND DDBEGIN\n")
-        with self.assertRaisesRegex(lithium.LithiumError, r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
+        with self.assertRaisesRegex(lithium.LithiumError,
+                                    r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
             t.readTestcase("a.txt")
         with open("a.txt", "w") as f:
             f.write("DDBEGIN\n")
-        with self.assertRaisesRegex(lithium.LithiumError, r"^The testcase \(a\.txt\) has a line containing 'DDBEGIN' but no"):
+        with self.assertRaisesRegex(lithium.LithiumError,
+                                    r"^The testcase \(a\.txt\) has a line containing 'DDBEGIN' but no"):
             t.readTestcase("a.txt")

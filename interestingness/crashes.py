@@ -1,9 +1,12 @@
 #!/usr/bin/env python
+# coding=utf-8
+# pylint: disable=invalid-name,missing-docstring
 
-from __future__ import print_function
-from optparse import OptionParser
+from __future__ import absolute_import, print_function
 
-import timedRun
+from optparse import OptionParser  # pylint: disable=deprecated-module
+
+from . import timedRun
 
 
 def parseOptions(arguments):
@@ -26,6 +29,6 @@ def interesting(cliArgs, tempPrefix):
     if runinfo.sta == timedRun.CRASHED:
         print('Exit status: ' + runinfo.msg + timeString)
         return True
-    else:
-        print("[Uninteresting] It didn't crash." + timeString)
-        return False
+
+    print("[Uninteresting] It didn't crash." + timeString)
+    return False

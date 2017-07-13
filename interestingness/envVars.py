@@ -1,10 +1,13 @@
 #!/usr/bin/env python
+# coding=utf-8
+# pylint: disable=invalid-name,missing-docstring
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
+
 import copy
 import os
 import platform
@@ -16,8 +19,9 @@ isWin = (platform.system() == 'Windows')
 ENV_PATH_SEPARATOR = ';' if os.name == 'nt' else ':'
 
 
-def envWithPath(path, runningEnv=os.environ):
+def envWithPath(path, runningEnv=None):
     """Append the path to the appropriate library path on various platforms."""
+    runningEnv = runningEnv or os.environ
     if isLinux:
         libPath = 'LD_LIBRARY_PATH'
     elif isMac:
@@ -43,21 +47,21 @@ def findLlvmBinPath():
         # Create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8
         if os.path.isfile('/usr/bin/llvm-symbolizer'):
             return ''
-        else:
-            print('WARNING: Please install clang via `apt-get install clang` if using Ubuntu.')
-            print('then create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8.')
-            print('Try: `ln -s /usr/bin/llvm-symbolizer-3.8 /usr/bin/llvm-symbolizer`')
-            return ''
+
+        print('WARNING: Please install clang via `apt-get install clang` if using Ubuntu.')
+        print('then create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8.')
+        print('Try: `ln -s /usr/bin/llvm-symbolizer-3.8 /usr/bin/llvm-symbolizer`')
+        return ''
 
     if isMac:
         # Assumes LLVM was installed through Homebrew. Works with at least version 3.6.2.
         brewLLVMPath = '/usr/local/opt/llvm/bin'
         if os.path.isdir(brewLLVMPath):
             return brewLLVMPath
-        else:
-            print('WARNING: Please install llvm from Homebrew via `brew install llvm`.')
-            print('ASan stacks will not have symbols as Xcode does not install llvm-symbolizer.')
-            return ''
+
+        print('WARNING: Please install llvm from Homebrew via `brew install llvm`.')
+        print('ASan stacks will not have symbols as Xcode does not install llvm-symbolizer.')
+        return ''
 
     # https://developer.mozilla.org/en-US/docs/Building_Firefox_with_Address_Sanitizer#Manual_Build
     if isWin:

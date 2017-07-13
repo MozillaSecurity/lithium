@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-from __future__ import print_function
+# coding=utf-8
+# pylint: disable=invalid-name,missing-docstring
+
+from __future__ import absolute_import, print_function
 
 import os
 import signal
@@ -7,10 +10,7 @@ import subprocess
 import sys
 import time
 
-path0 = os.path.dirname(os.path.abspath(__file__))
-path1 = os.path.abspath(os.path.join(path0, os.pardir, 'interestingness'))
-sys.path.append(path1)
-import envVars  # noqa
+from . import envVars
 
 ASAN_EXIT_CODE = 77
 
@@ -25,10 +25,11 @@ def getSignalName(num, default=None):
     return default
 
 
-class rundata(object):
+class rundata(object):  # pylint: disable=too-few-public-methods,too-many-instance-attributes
     """Define struct that contains data from a process that has already ended."""
 
-    def __init__(self, sta, rc, msg, elapsedtime, killed, pid, out, err):
+    def __init__(self,  # pylint: disable=too-many-arguments
+                 sta, rc, msg, elapsedtime, killed, pid, out, err):
         """Initialize with given parameters."""
         self.sta = sta
         self.rc = rc
@@ -44,12 +45,12 @@ def xpkill(p):
     """Based on mozilla-central/source/build/automation.py.in ."""
     try:
         p.kill()
-    except WindowsError:
+    except WindowsError:  # pylint: disable=undefined-variable
         if p.poll() == 0:
             try:
                 print('Trying to kill the process the first time...')
                 p.kill()  # Verify that the process is really killed.
-            except WindowsError:
+            except WindowsError:  # pylint: disable=undefined-variable
                 if p.poll() == 0:
                     print('Trying to kill the process the second time...')
                     p.kill()  # Re-verify that the process is really killed.
@@ -71,7 +72,8 @@ def makeEnv(binPath):
     return env
 
 
-def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):
+def timed_run(commandWithArgs,  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+              timeout, logPrefix, inp=None, preexec_fn=None):
     """If logPrefix is None, uses pipes instead of files for all output."""
     if not isinstance(commandWithArgs, list):
         raise TypeError("commandWithArgs should be a list (of strings).")
@@ -138,7 +140,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):
         else:
             break
 
-    if killed and (os.name != "posix" or rc == -signal.SIGKILL):
+    if killed and (os.name != "posix" or rc == -signal.SIGKILL):  # pylint: disable=no-member
         msg = 'TIMED OUT'
         sta = TIMED_OUT
     elif rc == 0:

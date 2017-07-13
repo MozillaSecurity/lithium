@@ -1,13 +1,20 @@
 #!/usr/bin/env python
+# coding=utf-8
+"""
+Interesting if the product of the numbers in the file divides the argument.
 
-# Interesting if the product of the numbers in the file divides the argument.
+e.g. lithium product_divides 35 11.txt
+"""
 
-# e.g. lithium product_divides 35 11.txt
+from __future__ import absolute_import
 
 import sys
 
 
-def interesting(args, tempPrefix):
+def interesting(args, _temp_prefix):
+    """
+    simple version for testing
+    """
     mod = int(args[0])
     filename = args[1]
 
@@ -21,6 +28,6 @@ def interesting(args, tempPrefix):
     if prod % mod == 0:
         sys.stdout.write("%d is divisible by %d\n" % (prod, mod))
         return True
-    else:
-        sys.stdout.write("%d is not divisible by %d\n" % (prod, mod))
-        return False
+
+    sys.stdout.write("%d is not divisible by %d\n" % (prod, mod))
+    return False

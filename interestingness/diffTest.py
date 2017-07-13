@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# coding=utf-8
+# pylint: disable=invalid-name,missing-docstring
 
 '''
 This test minimizes a test case by comparing a single binary with different command line arguments.
@@ -8,11 +10,12 @@ This can be used to isolate and minimize differential behaviour test cases.
 # This file came from nbp's GitHub PR #2 for adding new Lithium reduction strategies.
 #   https://github.com/MozillaSecurity/lithium/pull/2
 
-from __future__ import print_function
-from optparse import OptionParser
+from __future__ import absolute_import, print_function
 
-import timedRun
+from optparse import OptionParser  # pylint: disable=deprecated-module
+
 import filecmp
+from . import timedRun
 
 
 def parseOptions(arguments):
