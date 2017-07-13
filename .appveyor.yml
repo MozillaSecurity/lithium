@@ -27,3 +27,4 @@ test_script:
     - "%PYTHON%\\python.exe -m pytest lithium\\tests.py -v --cov . --cov-report term-missing"
 on_success:
     - "%PYTHON%\\python.exe -m codecov"
+skip_branch_with_pr: true
