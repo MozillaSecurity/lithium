@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring,too-many-lines,too-many-locals,too-many-statements
+# pylint: disable=invalid-name,missing-docstring,too-many-lines,too-many-statements
 
 from __future__ import absolute_import
 
