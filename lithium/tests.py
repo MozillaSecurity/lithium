@@ -115,7 +115,8 @@ class TestCase(unittest.TestCase):
                         return False
                     self.test_case.assertGreater(
                         len(self.watcher.records), 0,
-                        "no logs of level %s or higher triggered on %s" % (logging.getLevelName(self.level), self.logger.name))
+                        "no logs of level %s or higher triggered on %s" % (
+                            logging.getLevelName(self.level), self.logger.name))
 
             return _AssertLogsContext(self, logger, level)
 
@@ -369,21 +370,37 @@ class StrategyTests(TestCase):
     def test_replace_properties(self):
         valid_reductions = (
             # original: this.list, prototype.push, prototype.last
-            b"function Foo() {\n  this.list = [];\n}\nFoo.prototype.push = function(a) {\n  this.list.push(a);\n}\nFoo.prototype.last = function() {\n  return this.list.pop();\n}\n",
+            b"function Foo() {\n  this.list = [];\n}\n" +
+            b"Foo.prototype.push = function(a) {\n  this.list.push(a);\n}\n" +
+            b"Foo.prototype.last = function() {\n  return this.list.pop();\n}\n",
             #           this.list, prototype.push,           last
-            b"function Foo() {\n  this.list = [];\n}\nFoo.prototype.push = function(a) {\n  this.list.push(a);\n}\nlast = function() {\n  return this.list.pop();\n}\n",
+            b"function Foo() {\n  this.list = [];\n}\n" +
+            b"Foo.prototype.push = function(a) {\n  this.list.push(a);\n}\n" +
+            b"last = function() {\n  return this.list.pop();\n}\n",
             #           this.list,           push, prototype.last
-            b"function Foo() {\n  this.list = [];\n}\npush = function(a) {\n  this.list.push(a);\n}\nFoo.prototype.last = function() {\n  return this.list.pop();\n}\n",
+            b"function Foo() {\n  this.list = [];\n}\n" +
+            b"push = function(a) {\n  this.list.push(a);\n}\n" +
+            b"Foo.prototype.last = function() {\n  return this.list.pop();\n}\n",
             #           this.list,           push,           last
-            b"function Foo() {\n  this.list = [];\n}\npush = function(a) {\n  this.list.push(a);\n}\nlast = function() {\n  return this.list.pop();\n}\n",
+            b"function Foo() {\n  this.list = [];\n}\n" +
+            b"push = function(a) {\n  this.list.push(a);\n}\n" +
+            b"last = function() {\n  return this.list.pop();\n}\n",
             #                list, prototype.push, prototype.last
-            b"function Foo() {\n  list = [];\n}\nFoo.prototype.push = function(a) {\n  list.push(a);\n}\nFoo.prototype.last = function() {\n  return list.pop();\n}\n",
+            b"function Foo() {\n  list = [];\n}\n" +
+            b"Foo.prototype.push = function(a) {\n  list.push(a);\n}\n" +
+            b"Foo.prototype.last = function() {\n  return list.pop();\n}\n",
             #                list, prototype.push,           last
-            b"function Foo() {\n  list = [];\n}\nFoo.prototype.push = function(a) {\n  list.push(a);\n}\nlast = function() {\n  return list.pop();\n}\n",
+            b"function Foo() {\n  list = [];\n}\n" +
+            b"Foo.prototype.push = function(a) {\n  list.push(a);\n}\n" +
+            b"last = function() {\n  return list.pop();\n}\n",
             #                list,           push, prototype.last
-            b"function Foo() {\n  list = [];\n}\npush = function(a) {\n  list.push(a);\n}\nFoo.prototype.last = function() {\n  return list.pop();\n}\n",
+            b"function Foo() {\n  list = [];\n}\n" +
+            b"push = function(a) {\n  list.push(a);\n}\n" +
+            b"Foo.prototype.last = function() {\n  return list.pop();\n}\n",
             # reduced:       list,           push,           last
-            b"function Foo() {\n  list = [];\n}\npush = function(a) {\n  list.push(a);\n}\nlast = function() {\n  return list.pop();\n}\n"
+            b"function Foo() {\n  list = [];\n}\n" +
+            b"push = function(a) {\n  list.push(a);\n}\n" +
+            b"last = function() {\n  return list.pop();\n}\n"
         )
 
         class Interesting(DummyInteresting):
@@ -403,7 +420,8 @@ class StrategyTests(TestCase):
             self.assertEqual(l.run(), 0)
             with open("a.txt", "rb") as f:
                 if testcaseType is lithium.TestcaseChar:
-                    self.assertEqual(f.read(), valid_reductions[0])  # Char doesn't give this strategy enough to work with
+                    # Char doesn't give this strategy enough to work with
+                    self.assertEqual(f.read(), valid_reductions[0])
                 else:
                     self.assertEqual(f.read(), valid_reductions[-1])
 
@@ -434,7 +452,8 @@ class StrategyTests(TestCase):
             self.assertEqual(l.run(), 0)
             with open("a.txt", "rb") as f:
                 if testcaseType is lithium.TestcaseChar:
-                    self.assertEqual(f.read(), valid_reductions[0])  # Char doesn't give this strategy enough to work with
+                    # Char doesn't give this strategy enough to work with
+                    self.assertEqual(f.read(), valid_reductions[0])
                 else:
                     self.assertEqual(f.read(), valid_reductions[-1])
 
@@ -517,17 +536,21 @@ class TestcaseTests(TestCase):
         with open("a.txt", "w") as f:
             f.write("DDEND\n")
         t = lithium.TestcaseLine()
-        with self.assertRaisesRegex(lithium.LithiumError, r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
+        with self.assertRaisesRegex(lithium.LithiumError,
+                                    r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
             t.readTestcase("a.txt")
         with open("a.txt", "w") as f:
             f.write("DDBEGIN DDEND\n")
-        with self.assertRaisesRegex(lithium.LithiumError, r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
+        with self.assertRaisesRegex(lithium.LithiumError,
+                                    r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
             t.readTestcase("a.txt")
         with open("a.txt", "w") as f:
             f.write("DDEND DDBEGIN\n")
-        with self.assertRaisesRegex(lithium.LithiumError, r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
+        with self.assertRaisesRegex(lithium.LithiumError,
+                                    r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
             t.readTestcase("a.txt")
         with open("a.txt", "w") as f:
             f.write("DDBEGIN\n")
-        with self.assertRaisesRegex(lithium.LithiumError, r"^The testcase \(a\.txt\) has a line containing 'DDBEGIN' but no"):
+        with self.assertRaisesRegex(lithium.LithiumError,
+                                    r"^The testcase \(a\.txt\) has a line containing 'DDBEGIN' but no"):
             t.readTestcase("a.txt")
