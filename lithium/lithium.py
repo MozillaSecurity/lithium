@@ -397,7 +397,7 @@ class MinimizeSurroundingPairs(Minimize):
 
         log.info("Starting a round with chunks of %s.", quantity(chunkSize, testcase.atom))
 
-        summary = ["S" for i in range(numChunks)]
+        summary = ["S" for _ in range(numChunks)]
         chunkStart = chunkSize
         beforeChunkIdx = 0
         keepChunkIdx = 1
