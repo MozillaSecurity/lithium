@@ -2,9 +2,9 @@
 # coding=utf-8
 # pylint: disable=invalid-name,missing-docstring
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
-import timedRun
+from . import timedRun
 
 
 def interesting(args, tempPrefix):

@@ -3,6 +3,8 @@
 # flake8: noqa
 # pylint: disable=missing-docstring
 
+from __future__ import absolute_import
+
 from setuptools import setup
 
 if __name__ == "__main__":

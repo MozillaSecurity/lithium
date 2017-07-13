@@ -2,12 +2,12 @@
 # coding=utf-8
 # pylint: disable=invalid-name,missing-docstring
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 from optparse import OptionParser  # pylint: disable=deprecated-module
 
-import timedRun
-import fileIngredients
+from . import fileIngredients
+from . import timedRun
 
 
 def parseOptions(arguments):

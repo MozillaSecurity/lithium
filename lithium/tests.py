@@ -2,6 +2,8 @@
 # coding=utf-8
 # pylint: disable=invalid-name,missing-docstring,too-few-public-methods
 
+from __future__ import absolute_import
+
 import collections
 import logging
 import math
@@ -12,7 +14,7 @@ import sys
 import tempfile
 import unittest
 
-import lithium
+from . import lithium
 
 
 log = logging.getLogger("lithium_test")

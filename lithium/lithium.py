@@ -2,6 +2,8 @@
 # coding=utf-8
 # pylint: disable=invalid-name,missing-docstring,line-too-long,too-many-lines,too-many-locals,too-many-statements
 
+from __future__ import absolute_import
+
 import argparse
 import logging
 import os
