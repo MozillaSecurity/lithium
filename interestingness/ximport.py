@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring
+# pylint: disable=invalid-name
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-# This lets you import an interestingness test given a full path, or given just a filename
-# (assuming it's in the current directory OR in the same directory as ximport)
+"""
+This lets you import an interestingness test given a full path, or given just a filename.
+(assuming it's in the current directory OR in the same directory as ximport)
+"""
 
 from __future__ import absolute_import
 
@@ -18,7 +20,7 @@ import sys
 log = logging.getLogger("lithium")
 
 
-def importRelativeOrAbsolute(f):
+def importRelativeOrAbsolute(f):  # pylint: disable=missing-docstring
     # maybe there's a way to do this more sanely with the |imp| module...
     if f.endswith(".py"):
         f = f[:-3]
