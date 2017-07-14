@@ -2,10 +2,10 @@
 # coding=utf-8
 # pylint: disable=invalid-name,missing-docstring
 
-'''
+"""
 This test minimizes a test case by comparing a single binary with different command line arguments.
 This can be used to isolate and minimize differential behaviour test cases.
-'''
+"""
 
 # This file came from nbp's GitHub PR #2 for adding new Lithium reduction strategies.
 #   https://github.com/MozillaSecurity/lithium/pull/2
@@ -21,15 +21,15 @@ from . import timedRun
 def parseOptions(arguments):
     parser = OptionParser()
     parser.disable_interspersed_args()
-    parser.add_option('-t', '--timeout', type='int', action='store', dest='condTimeout',
+    parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
                       default=120,
-                      help='Optionally set the timeout. Defaults to "%default" seconds.')
-    parser.add_option('-a', '--a-arg', type='string', action='append', dest='aArgs',
+                      help="Optionally set the timeout. Defaults to '%default' seconds.")
+    parser.add_option("-a", "--a-arg", type="string", action="append", dest="aArgs",
                       default=[],
-                      help='Set of extra arguments given to first run.')
-    parser.add_option('-b', '--b-arg', type='string', action='append', dest='bArgs',
+                      help="Set of extra arguments given to first run.")
+    parser.add_option("-b", "--b-arg", type="string", action="append", dest="bArgs",
                       default=[],
-                      help='Set of extra arguments given to second run.')
+                      help="Set of extra arguments given to second run.")
 
     options, args = parser.parse_args(arguments)
 

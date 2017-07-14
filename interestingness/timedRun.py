@@ -48,16 +48,16 @@ def xpkill(p):
     except WindowsError:  # pylint: disable=undefined-variable
         if p.poll() == 0:
             try:
-                print('Trying to kill the process the first time...')
+                print("Trying to kill the process the first time...")
                 p.kill()  # Verify that the process is really killed.
             except WindowsError:  # pylint: disable=undefined-variable
                 if p.poll() == 0:
-                    print('Trying to kill the process the second time...')
+                    print("Trying to kill the process the second time...")
                     p.kill()  # Re-verify that the process is really killed.
 
 
 def makeEnv(binPath):
-    shellIsDeterministic = '-dm-' in binPath
+    shellIsDeterministic = "-dm-" in binPath
     # Total hack to make this not rely on queryBuildConfiguration in the funfuzz repository.
     # We need this so releng machines (which work off downloaded shells that are in build/dist/js),
     # do not compile LLVM.
@@ -65,10 +65,10 @@ def makeEnv(binPath):
         return None
 
     env = envVars.envWithPath(os.path.abspath(os.path.dirname(binPath)))
-    env['ASAN_OPTIONS'] = 'exitcode=' + str(ASAN_EXIT_CODE)
+    env["ASAN_OPTIONS"] = "exitcode=" + str(ASAN_EXIT_CODE)
     symbolizer_path = envVars.findLlvmBinPath()
     if symbolizer_path is not None:
-        env['ASAN_SYMBOLIZER_PATH'] = os.path.join(symbolizer_path, 'llvm-symbolizer')
+        env["ASAN_SYMBOLIZER_PATH"] = os.path.join(symbolizer_path, "llvm-symbolizer")
     return env
 
 
@@ -88,8 +88,8 @@ def timed_run(commandWithArgs,  # pylint: disable=too-many-branches,too-many-loc
     starttime = time.time()
 
     if useLogFiles:
-        childStdOut = open(logPrefix + "-out.txt", 'w')
-        childStdErr = open(logPrefix + "-err.txt", 'w')
+        childStdOut = open(logPrefix + "-out.txt", "w")
+        childStdErr = open(logPrefix + "-err.txt", "w")
 
     try:
         child = subprocess.Popen(
@@ -113,7 +113,7 @@ def timed_run(commandWithArgs,  # pylint: disable=too-many-branches,too-many-loc
         child.stdin.close()
 
     sta = NONE
-    msg = ''
+    msg = ""
 
     killed = False
 
@@ -129,9 +129,9 @@ def timed_run(commandWithArgs,  # pylint: disable=too-many-branches,too-many-loc
         elapsedtime = time.time() - starttime
         if rc is None:
             if elapsedtime > timeout and not killed:
-                if progname == 'gdb':
-                    raise Exception('Do not use this with gdb, because xpkill in timedRun will ' +
-                                    'kill gdb but leave the process within gdb still running')
+                if progname == "gdb":
+                    raise Exception("Do not use this with gdb, because xpkill in timedRun will "
+                                    "kill gdb but leave the process within gdb still running")
                 xpkill(child)
                 # but continue looping, because maybe kill takes a few seconds or maybe it's busy crashing!
                 killed = True
@@ -141,23 +141,23 @@ def timed_run(commandWithArgs,  # pylint: disable=too-many-branches,too-many-loc
             break
 
     if killed and (os.name != "posix" or rc == -signal.SIGKILL):  # pylint: disable=no-member
-        msg = 'TIMED OUT'
+        msg = "TIMED OUT"
         sta = TIMED_OUT
     elif rc == 0:
-        msg = 'NORMAL'
+        msg = "NORMAL"
         sta = NORMAL
     elif rc == ASAN_EXIT_CODE:
-        msg = 'CRASHED (Address Sanitizer fault)'
+        msg = "CRASHED (Address Sanitizer fault)"
         sta = CRASHED
     elif rc > 0:
-        msg = 'ABNORMAL exit code ' + str(rc)
+        msg = "ABNORMAL exit code " + str(rc)
         sta = ABNORMAL
     else:
         # rc < 0
         # The program was terminated by a signal, which usually indicates a crash.
         # Mac/Linux only!
         signum = -rc
-        msg = 'CRASHED signal %d (%s)' % (signum, getSignalName(signum, "Unknown signal"))
+        msg = "CRASHED signal %d (%s)" % (signum, getSignalName(signum, "Unknown signal"))
         sta = CRASHED
 
     if useLogFiles:
