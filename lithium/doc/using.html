@@ -43,8 +43,8 @@
 <dt>--char (-c)<dt>
 <dd>By default, Lithium treats lines as atomic units.  This is great if each line is a JavaScript statement, but sometimes you want to go further.  Use this option to tell Lithium to treat the file as a sequence of characters instead of a sequence of lines.</dd>
 
-<dt>--strategy=[minimize, check-only]</dt>
-<dd>"minimize" is the default, the algorithm described above. "check-only" tries to run Lithium to determine interestingness, without reduction.</dd>
+<dt>--strategy=[check-only,minimize,minimize-balanced,replace-properties-by-globals,replace-arguments-by-globals,minimize-around]</dt>
+<dd>"minimize" is the default, the algorithm described above. "check-only" tries to run Lithium to determine interestingness, without reduction. For the other strategies, check out <a href="https://github.com/MozillaSecurity/lithium/pull/2">this GitHub PR</a>.</dd>
 
 <dt>--repeat=[always, last, never].</dt>
 <dd>By default, Lithium only repeats at the same chunk size if it just finished the last round (e.g. chunk size 1).  You can use --repeat=always to tell it to repeat any chunk size if something was removed during the round, which can be useful for non-deterministic testcases or non-monotonic situations.  You can use --repeat=never to tell it to exit immediately after a single round at the last chunk size, which can save a little time at the risk of leaving a little bit extra in the file.</dd>
@@ -66,18 +66,17 @@
 
 <h3>Requirements</h3>
 
-<p>Lithium is written in <a href="http://www.python.org/">Python</a> and requires Python 2.4.  (It uses <a href="http://www.python.org/dev/peps/pep-0289/">generator expressions</a> and the <a href="http://docs.python.org/lib/module-subprocess.html">subprocess</a> module, both of which were introduced with Python 2.4)
+<p>Lithium is written in <a href="http://www.python.org/">Python</a> and requires Python 2.7 or 3.4+.</p>
 
 <p>Various versions of Lithium have been used successfully with:</p>
 
 <ul>
-<li>Mac 10.4.10 + Python 2.4.3</li>
-<li>Mac 10.4.10 + Python 2.5.1</li>
-<li>Mac 10.5.7 + Python 2.5.1</li>
-<li>Windows XP + the <a href="http://www.cygwin.com/">Cygwin</a> version of Python 2.5, under both DOS and Bash</li>
+<li>Windows 7 / 10 via <a href="https://wiki.mozilla.org/MozillaBuild">MozillaBuild 2.2.0</a> and up. This comes with 2.7.</li>
+<li>macOS Sierra 10.12 + Python 2.7</li>
+<li>Ubuntu Linux 14.04 / 16.04 + Python 2.7 / Python 3.4+</li>
 </ul>
 
-<p>It is known to <em>not</em> work well in MSYS, an alternative to Cygwin.  I've seen Lithium sorta work in MSYS after adding add ", shell=True" to the call to "subprocess.call" removing the "./" before the test filename, but even then it was buggy.  I recommend using Cygwin's Python instead.</p>
+<p>It may or may not work in Windows XP/Vista anymore.</p>
 
 
 <h3>Credits</h3>
@@ -86,6 +85,7 @@
 <li><a href="algorithm.html">Lithium's testcase reduction algorithm</a> is a modified version of the "ddmin" algorithm in Andreas Zeller's paper, <a href="http://www.st.cs.uni-sb.de/papers/tse2002/">Simplifying and Isolating Failure-Inducing Input</a>.</li>
 <li>The idea of using an external "interestingness test" program came from <a href="http://delta.tigris.org/">Delta</a>, a similar tool that's <a href="http://gcc.gnu.org/wiki/A_guide_to_testcase_reduction">used in clever ways by the GCC project</a>.</li>
 <li>ntr.py, used by many of the "interestingness test" scripts that come with Lithium, is based on <a href="http://bclary.com/log/2007/03/07/timed_run">timed_run.py</a>, which was written by <a href="http://coop.deadsquid.com/">Chris Cooper</a> and <a href="http://bclary.com/">Bob Clary</a>.</li>
+<li>The code was significantly cleaned up and modernized by Jesse Schwartzentruber and Gary Kwong in mid-2017.</li>
 </ul>
 
 </body>
