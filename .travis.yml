@@ -26,7 +26,26 @@ before_script:
             pylint ${TRAVIS_BUILD_DIR}
         fi
     - pip install pytest-cov codecov
+    # Install Lithium via pip
+    - pip install --upgrade --no-index ${TRAVIS_BUILD_DIR}
 script:
+    # -- START of lithium module tests --
+    - "pushd $HOME"  # Do not test from the GitHub repo dir due to Python module intricacies
+    - "pwd"  # Double-check the current directory
+    - "python -c 'import lithium; print(lithium); print(dir(lithium))'"
+    - "python -c 'import lithium; print(lithium.interestingness.crashes)'"
+    # - "python -c 'import lithium; print(lithium.interestingness.diffTest)'"  # diffTest is not used outside of Lithium
+    - "python -c 'import lithium; print(lithium.interestingness.envVars)'"
+    - "python -c 'import lithium; print(lithium.interestingness.fileIngredients)'"
+    - "python -c 'import lithium; print(lithium.interestingness.hangs)'"
+    - "python -c 'import lithium; print(lithium.interestingness.outputs)'"
+    # - "python -c 'import lithium; print(lithium.interestingness.range)'"  # shadows standard python function
+    - "python -c 'import lithium; print(lithium.interestingness.timedRun)'"
+    - "python -c 'import lithium; print(lithium.interestingness.ximport)'"
+    - "python -m lithium"
+    - "python -m lithium.interestingness.crashes"
+    - "popd"
+    # -- END of lithium module tests --
     - py.test lithium/tests.py -v --cov . --cov-report term-missing
 after_success:
     - codecov

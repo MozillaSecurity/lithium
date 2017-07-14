@@ -20,10 +20,29 @@ install:
     - "%PYTHON%\\python.exe -m pylint --version"
     - "git --version"
     - "%PYTHON%\\python.exe -m pip install pytest pytest-cov codecov"
+    # Install Lithium via pip
+    - "%PYTHON%\\python.exe -m pip install --upgrade --no-index %APPVEYOR_BUILD_FOLDER%"
 build: off
 test_script:
     - "%PYTHON%\\python.exe -m flake8 --count %APPVEYOR_BUILD_FOLDER%"
     - "%PYTHON%\\python.exe -m pylint %APPVEYOR_BUILD_FOLDER%"
+    # -- START of lithium module tests --
+    - "pushd %HOMEDRIVE%%HOMEPATH%"  # Do not test from the GitHub repo dir due to Python module intricacies
+    - "chdir"  # Double-check the current directory
+    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium); print(dir(lithium))\""
+    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.crashes)\""
+    # - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.diffTest)\""  # diffTest is not used outside of Lithium
+    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.envVars)\""
+    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.fileIngredients)\""
+    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.hangs)\""
+    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.outputs)\""
+    # - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.range)\""  # shadows standard python function
+    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.timedRun)\""
+    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.ximport)\""
+    - "%PYTHON%\\python.exe -m lithium"
+    - "%PYTHON%\\python.exe -m lithium.interestingness.crashes"
+    - "popd"
+    # -- END of lithium module tests --
     - "%PYTHON%\\python.exe -m pytest lithium\\tests.py -v --cov . --cov-report term-missing"
 on_success:
     - "%PYTHON%\\python.exe -m codecov -X gcov"
