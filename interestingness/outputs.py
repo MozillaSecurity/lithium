@@ -10,8 +10,7 @@ from __future__ import absolute_import, print_function
 
 from optparse import OptionParser  # pylint: disable=deprecated-module
 
-from . import fileIngredients
-from . import timedRun
+from . import fileIngredients, timedRun
 
 
 def parseOptions(arguments):

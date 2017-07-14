@@ -16,9 +16,9 @@ This can be used to isolate and minimize differential behaviour test cases.
 
 from __future__ import absolute_import, print_function
 
+import filecmp
 from optparse import OptionParser  # pylint: disable=deprecated-module
 
-import filecmp
 from . import timedRun
 
 

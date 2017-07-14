@@ -20,7 +20,6 @@ import unittest
 
 from . import lithium
 
-
 log = logging.getLogger("lithium_test")
 logging.basicConfig(level=logging.DEBUG)
 
