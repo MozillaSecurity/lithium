@@ -17,11 +17,15 @@ if __name__ == "__main__":
           entry_points={
               "console_scripts": ["lithium = lithium:main"]
           },
-          packages=["lithium", "lithium.lithium"],
-          package_data={"": [
+          packages=[
+              "lithium",
+              "lithium.lithium",
+              "lithium.interestingness"
+          ],
+          package_data={"lithium": [
               "interestingness/*",
               "lithium/doc/*",
-              "lithium/examples/*.*",
+              "lithium/examples/*",
               "lithium/examples/arithmetic/*"
           ]},
           package_dir={"lithium": ""},
