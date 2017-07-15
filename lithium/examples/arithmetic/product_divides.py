@@ -11,8 +11,6 @@ Interesting if the product of the numbers in the file divides the argument.
 e.g. lithium product_divides 35 11.txt
 """
 
-from __future__ import absolute_import
-
 import sys
 
 

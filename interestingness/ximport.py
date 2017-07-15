@@ -11,8 +11,6 @@ This lets you import an interestingness test given a full path, or given just a 
 (assuming it's in the current directory OR in the same directory as ximport)
 """
 
-from __future__ import absolute_import
-
 import logging
 import os
 import sys
