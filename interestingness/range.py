@@ -30,16 +30,11 @@ Use for:
      lithium.py range 1 50 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -e "n=RANGENUM;" 740654.js
 """
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
-import os
-import sys
 from optparse import OptionParser  # pylint: disable=deprecated-module
 
-path0 = os.path.dirname(os.path.abspath(__file__))
-path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
-sys.path.append(path1)
-import ximport  # noqa  pylint: disable=relative-import,wrong-import-position
+from . import ximport
 
 
 def parseOptions(arguments):  # pylint: disable=missing-docstring
