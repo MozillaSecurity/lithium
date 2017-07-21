@@ -1,4 +1,5 @@
 dist: trusty
+cache: false
 sudo: false
 language: python
 python:
