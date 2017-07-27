@@ -32,9 +32,8 @@ Use for:
 
 from __future__ import absolute_import, print_function
 
+from importlib import import_module
 from optparse import OptionParser  # pylint: disable=deprecated-module
-
-from . import ximport
 
 
 def parseOptions(arguments):  # pylint: disable=missing-docstring
@@ -47,7 +46,7 @@ def parseOptions(arguments):  # pylint: disable=missing-docstring
 
 def interesting(cliArgs, tempPrefix):  # pylint: disable=missing-docstring
     (rangeMin, rangeMax, arguments) = parseOptions(cliArgs)
-    conditionScript = ximport.importRelativeOrAbsolute(arguments[0])
+    conditionScript = import_module("lithium.interestingness." + arguments[0])
     conditionArgs = arguments[1:]
 
     if hasattr(conditionScript, "init"):

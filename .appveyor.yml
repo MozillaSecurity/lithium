@@ -38,10 +38,19 @@ test_script:
     - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.outputs)\""
     # - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.range)\""  # shadows standard python function
     - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.timedRun)\""
-    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.ximport)\""
-    - "%PYTHON%\\python.exe -m lithium"
-    - "%PYTHON%\\python.exe -m lithium.interestingness.crashes"
-    - "popd"
+    - "type nul > temp.js"
+    - "%PYTHON%\\python.exe -m lithium outputs --timeout=2 temp.js dir temp.js"
+    # - "%PYTHON%\\python.exe -m lithium range 1 2 outputs --timeout=2 temp.js dir temp.js"  # shadows standard python function
+    # Invert the exit code for crashes and hangs, since running `dir` with temp.js is not supposed to be "interesting".
+    # Disabled for now.
+    # - "%PYTHON%\\python.exe -m lithium crashes --timeout=2 dir temp.js"
+    # - "%PYTHON%\\python.exe -m lithium range 1 2 crashes --timeout=2 dir temp.js"  # shadows standard python function
+    # - "%PYTHON%\\python.exe -m lithium hangs 3 dir temp.js"
+    # - "%PYTHON%\\python.exe -m lithium range 1 2 hangs 3 dir temp.js"  # shadows standard python function
+    - "rm temp.js"
+    # Don't bother running popd as it exits with a non-zero exit code
+    # - "popd"
+    - "cd %APPVEYOR_BUILD_FOLDER%"
     # -- END of lithium module tests --
     - "%PYTHON%\\python.exe -m pytest lithium\\tests.py -v --cov . --cov-report term-missing"
 on_success:
