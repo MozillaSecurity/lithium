@@ -10,6 +10,9 @@
 .DS_Store
 .gdb_history
 
+# Code coverage
+.coverage
+
 # Setuptools folders.
 /build/
 /dist/
