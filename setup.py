@@ -20,12 +20,13 @@ if __name__ == "__main__":
           packages=[
               "lithium",
               "lithium.lithium",
-              "lithium.interestingness"
+              "lithium.interestingness",
+              #   "lithium.examples.arithmetic"
           ],
           package_data={"lithium": [
               "interestingness/*",
               "lithium/doc/*",
-              "lithium/examples/*",
+              #   "lithium/examples/*",
               "lithium/examples/arithmetic/*"
           ]},
           package_dir={"lithium": ""},

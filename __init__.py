@@ -10,6 +10,5 @@
 from __future__ import absolute_import
 
 from . import interestingness
-from .lithium import examples
-from .lithium.examples import arithmetic
+# from .lithium.examples.arithmetic import product_divides
 from .lithium.lithium import *  # pylint: disable=wildcard-import,unused-wildcard-import
