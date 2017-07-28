@@ -10,7 +10,8 @@
 .DS_Store
 .gdb_history
 
-# Setuptools distribution folder.
+# Setuptools folders.
+/build/
 /dist/
 
 # Python egg metadata, regenerated from source files by setuptools.
