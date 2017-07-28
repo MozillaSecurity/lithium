@@ -19,7 +19,7 @@ def fileContains(f, s, isRegex, vb=True):
 
 def fileContainsStr(f, s, verbose=True):
     with open(f, "rb") as g:
-        gContents = [l.strip() for l in g.read().splitlines() if l.strip()]
+        gContents = [l.decode("utf8", "replace").strip() for l in g.read().splitlines() if l.strip()]
         for line in gContents:
             if line.find(s) != -1:
                 if verbose and s != "":
@@ -35,7 +35,7 @@ def fileContainsRegex(f, regex, verbose=True):
     matchedStr = ""
     found = False
     with open(f, "rb") as g:
-        foundRegex = regex.search(g.read())
+        foundRegex = regex.search(g.read().decode("utf8", "replace"))
         if foundRegex:
             matchedStr = foundRegex.group()
             if verbose and matchedStr != "":
