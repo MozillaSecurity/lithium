@@ -8,7 +8,7 @@
 
 from __future__ import print_function
 
-import timedRun  # pylint: disable=relative-import
+import timedRun  # pylint: disable=relative-import,useless-suppression
 
 
 def interesting(args, tempPrefix):

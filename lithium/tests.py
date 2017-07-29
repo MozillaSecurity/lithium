@@ -17,7 +17,7 @@ import sys
 import tempfile
 import unittest
 
-import lithium  # pylint: disable=relative-import
+import lithium  # pylint: disable=relative-import,useless-suppression
 
 log = logging.getLogger("lithium_test")
 logging.basicConfig(level=logging.DEBUG)
