@@ -467,7 +467,7 @@ class MinimizeSurroundingPairs(Minimize):
 
         testcase.writeTestcase(tempFilename("did-round-%d" % chunkSize))
 
-        return (chunksRemoved > 0), testcase
+        return bool(chunksRemoved), testcase
 
 
 class MinimizeBalancedPairs(MinimizeSurroundingPairs):
@@ -537,7 +537,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 nNormal = normal[lhsChunkIdx]
 
                 # If the chunk is already balanced, try to remove it.
-                if nCurly == 0 and nSquare == 0 and nNormal == 0:
+                if not (nCurly or nSquare or nNormal):
                     testcaseSuggestion = testcase.copy()
                     testcaseSuggestion.parts = (testcaseSuggestion.parts[:chunkLhsStart] +
                                                 testcaseSuggestion.parts[chunkLhsEnd:])
@@ -564,11 +564,11 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     nNormal += normal[rhsChunkIdx]
                     if nCurly < 0 or nSquare < 0 or nNormal < 0:
                         break
-                    if nCurly == 0 and nSquare == 0 and nNormal == 0:
+                    if not (nCurly or nSquare or nNormal):
                         break
 
                 # If we have no match, then just skip this pair of chunks.
-                if nCurly != 0 or nSquare != 0 or nNormal != 0:
+                if nCurly or nSquare or nNormal:
                     log.info("Skipping %s because it is 'uninteresting'.", description)
                     chunkStart += chunkSize
                     lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
@@ -625,7 +625,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     nCurly = curly[midChunkIdx]
                     nSquare = square[midChunkIdx]
                     nNormal = normal[midChunkIdx]
-                    if nCurly != 0 or nSquare != 0 or nNormal != 0:
+                    if nCurly or nSquare or nNormal:
                         log.info("Keeping %s because it is 'uninteresting'.", description)
                         chunkMidStart += chunkSize
                         midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
@@ -703,7 +703,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
         testcase.writeTestcase(tempFilename("did-round-%d" % chunkSize))
 
-        return (chunksRemoved > 0), testcase
+        return bool(chunksRemoved), testcase
 
 
 class ReplacePropertiesByGlobals(Minimize):
@@ -1295,7 +1295,7 @@ def summaryHeader():
 
 
 def divideRoundingUp(n, d):
-    return (n // d) + (1 if n % d != 0 else 0)
+    return (n // d) + (1 if n % d else 0)
 
 
 def isPowerOfTwo(n):
