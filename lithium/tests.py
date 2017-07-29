@@ -175,7 +175,7 @@ class HelperTests(TestCase):
 
     def test_divideRoundingUp(self):
         for _ in range(10000):
-            n = random.randint(1, sys.maxint)
+            n = random.randint(1, sys.maxint)  # pylint: disable=sys-max-int,useless-suppression
             d = random.randint(1, n)
             try:
                 self.assertEqual(divceil(n, d), lithium.divideRoundingUp(n, d))
@@ -197,7 +197,7 @@ class HelperTests(TestCase):
                 raise
         # try 10000 random integers >= 10000
         for _ in range(10000):
-            r = random.randint(10000, sys.maxint)
+            r = random.randint(10000, sys.maxint)  # pylint: disable=sys-max-int,useless-suppression
             try:
                 self.assertEqual(ispow2(r), lithium.isPowerOfTwo(r))
             except Exception:
@@ -224,7 +224,7 @@ class HelperTests(TestCase):
                 raise
         # try 10000 random integers >= 10000
         for _ in range(10000):
-            r = random.randint(10000, sys.maxint)
+            r = random.randint(10000, sys.maxint)  # pylint: disable=sys-max-int,useless-suppression
             try:
                 check_result(lithium.largestPowerOfTwoSmallerThan(r), r)
             except Exception:
