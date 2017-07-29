@@ -80,7 +80,7 @@ def makeEnv(binPath):
     return env
 
 
-def timed_run(commandWithArgs,  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+def timed_run(commandWithArgs,  # pylint: disable=too-complex,too-many-branches,too-many-locals,too-many-statements
               timeout, logPrefix, inp=None, preexec_fn=None):
     """If logPrefix is None, uses pipes instead of files for all output."""
     if not isinstance(commandWithArgs, list):
