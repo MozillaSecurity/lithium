@@ -22,7 +22,7 @@ def fileContainsStr(f, s, verbose=True):
         gContents = [l.strip() for l in g.read().splitlines() if l.strip()]
         for line in gContents:
             if line.find(s) != -1:
-                if verbose and s != "":
+                if verbose and s:
                     print("[Found string in: '" + line.rstrip() + "']", end=" ")
                 return True
     return False
@@ -38,7 +38,7 @@ def fileContainsRegex(f, regex, verbose=True):
         foundRegex = regex.search(g.read())
         if foundRegex:
             matchedStr = foundRegex.group()
-            if verbose and matchedStr != "":
+            if verbose and matchedStr:
                 print("[Found string in: '" + matchedStr + "']", end=" ")
             found = True
     return found, matchedStr

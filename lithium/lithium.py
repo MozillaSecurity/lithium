@@ -910,7 +910,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 if fun is None:
                     fun = match.group(2)
 
-                if match.group(3) == b"":
+                if not match.group(3):
                     args = []
                 else:
                     args = match.group(3).split(b",")
@@ -924,7 +924,7 @@ class ReplaceArgumentsByGlobals(Minimize):
 
             # Match anonymous function definition, which are surrounded by parentheses.
             for match in re.finditer(br"\(function\s*\w*\s*\(((?:\s*\w+\s*(?:,\s*\w+\s*)*)?)\)\s*{", line):
-                if match.group(1) == "":
+                if not match.group(1):
                     args = []
                 else:
                     args = match.group(1).split(",")
@@ -936,9 +936,9 @@ class ReplaceArgumentsByGlobals(Minimize):
                     continue
                 anon = anonymousStack[-1]
                 anonymousStack = anonymousStack[:-1]
-                if match.group(1) == b"" and not anon["defs"]:
+                if not (match.group(1) or anon["defs"]):
                     continue
-                if match.group(1) == b"":
+                if not match.group(1):
                     args = []
                 else:
                     args = match.group(1).split(b",")
@@ -950,7 +950,7 @@ class ReplaceArgumentsByGlobals(Minimize):
             for match in re.finditer(br"((\w+)\s*\(((?:[^()]|\([^,()]*\))*)\))", line):
                 pattern = match.group(1)
                 fun = match.group(2)
-                if match.group(3) == b"":
+                if not match.group(3):
                     args = []
                 else:
                     args = match.group(3).split(b",")
