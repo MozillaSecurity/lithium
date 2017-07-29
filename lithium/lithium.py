@@ -1310,7 +1310,7 @@ def largestPowerOfTwoSmallerThan(n):
 
 
 def quantity(n, unit):
-    "Convert a quantity to a string, with correct pluralization."
+    """Convert a quantity to a string, with correct pluralization."""
     r = "%d %s" % (n, unit)
     if n != 1:
         r += "s"
