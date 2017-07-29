@@ -8,14 +8,14 @@
 
 from __future__ import print_function
 
-from optparse import OptionParser  # pylint: disable=deprecated-module
+import optparse  # pylint: disable=deprecated-module
 
 import fileIngredients  # pylint: disable=relative-import
 import timedRun  # pylint: disable=relative-import
 
 
 def parseOptions(arguments):
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
                       default=120,

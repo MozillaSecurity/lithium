@@ -16,13 +16,13 @@ This can be used to isolate and minimize differential behaviour test cases.
 from __future__ import print_function
 
 import filecmp
-from optparse import OptionParser  # pylint: disable=deprecated-module
+import optparse  # pylint: disable=deprecated-module
 
 import timedRun  # pylint: disable=relative-import
 
 
 def parseOptions(arguments):
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
                       default=120,

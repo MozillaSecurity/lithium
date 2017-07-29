@@ -31,9 +31,9 @@ Use for:
 
 from __future__ import print_function
 
+import optparse  # pylint: disable=deprecated-module
 import os
 import sys
-from optparse import OptionParser  # pylint: disable=deprecated-module
 
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
@@ -42,7 +42,7 @@ import ximport  # noqa  pylint: disable=relative-import,wrong-import-position
 
 
 def parseOptions(arguments):  # pylint: disable=missing-docstring
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     _options, args = parser.parse_args(arguments)
 
