@@ -134,8 +134,7 @@ class DummyInteresting(object):
 
 
 def ispow2(n):
-    """
-    simple version for testing
+    """Simple version for testing
     """
     assert isinstance(n, int) or n.is_integer(), "ispow2() only works for integers, %r is not an integer" % n
     assert n >= 1, "domain error"
@@ -156,8 +155,7 @@ def ispow2(n):
 
 
 def divceil(n, d):
-    """
-    simple version for testing
+    """Simple version for testing
     """
     q = n // d
     r = n % d

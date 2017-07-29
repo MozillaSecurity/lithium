@@ -21,8 +21,7 @@ class LithiumError(Exception):
 
 
 class Testcase(object):
-    """
-    Abstract testcase class.
+    """Abstract testcase class.
 
     Implementers should define readTestcaseLine() and writeTestcase() methods.
     """
@@ -155,8 +154,7 @@ class TestcaseSymbol(TestcaseLine):
 
 
 class Strategy(object):
-    """
-    Abstract minimization strategy class
+    """Abstract minimization strategy class
 
     Implementers should define a main() method which takes a testcase and calls the interesting callback repeatedly
     to minimize the testcase.

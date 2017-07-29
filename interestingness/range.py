@@ -6,8 +6,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-"""
-Repeats an interestingness test a given number of times.
+"""Repeats an interestingness test a given number of times.
 If "RANGENUM" is present, it is replaced in turn with each number in the range.
 
 Use for:

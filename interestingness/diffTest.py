@@ -6,8 +6,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-"""
-This test minimizes a test case by comparing a single binary with different command line arguments.
+"""This test minimizes a test case by comparing a single binary with different command line arguments.
 This can be used to isolate and minimize differential behaviour test cases.
 """
 
