@@ -1155,12 +1155,12 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
 
         defaultStrategy = "minimize"
         assert defaultStrategy in strategies
-        parser = ArgParseTry(add_help=False)
-        parser.add_argument(
+        strategyParser = ArgParseTry(add_help=False)
+        strategyParser.add_argument(
             "--strategy",
             default=defaultStrategy,
             choices=strategies.keys())
-        args = parser.parse_known_args(argv)
+        args = strategyParser.parse_known_args(argv)
         self.strategy = strategies.get(args[0].strategy if args else None, strategies[defaultStrategy])()
 
         parser = argparse.ArgumentParser(
