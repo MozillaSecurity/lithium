@@ -42,11 +42,11 @@ class TestCase(unittest.TestCase):
 
     if sys.version_info.major == 2:
 
-        def assertRegex(self, *args, **kwds):  # pylint: disable=arguments-differ
-            return self.assertRegexpMatches(*args, **kwds)  # pylint: disable=deprecated-method
+        def assertRegex(self, *args, **kwds):  # pylint: disable=arguments-differ,useless-suppression
+            return self.assertRegexpMatches(*args, **kwds)  # pylint: disable=deprecated-method,useless-suppression
 
-        def assertRaisesRegex(self, *args, **kwds):  # pylint: disable=arguments-differ
-            return self.assertRaisesRegexp(*args, **kwds)  # pylint: disable=deprecated-method
+        def assertRaisesRegex(self, *args, **kwds):  # pylint: disable=arguments-differ,useless-suppression
+            return self.assertRaisesRegexp(*args, **kwds)  # pylint: disable=deprecated-method,useless-suppression
 
     if sys.version_info[:2] < (3, 4):
         #
