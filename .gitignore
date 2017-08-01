@@ -13,6 +13,9 @@
 # Code coverage
 .coverage
 
+# Linting via pytest
+/.cache/
+
 # Setuptools folders.
 /build/
 /dist/
