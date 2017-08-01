@@ -54,12 +54,12 @@ def xpkill(p):
     try:
         p.kill()
     except WindowsError:  # pylint: disable=undefined-variable
-        if not p.poll():
+        if p.poll() == 0:
             try:
                 print("Trying to kill the process the first time...")
                 p.kill()  # Verify that the process is really killed.
             except WindowsError:  # pylint: disable=undefined-variable
-                if not p.poll():
+                if p.poll() == 0:
                     print("Trying to kill the process the second time...")
                     p.kill()  # Re-verify that the process is really killed.
 
@@ -151,13 +151,13 @@ def timed_run(commandWithArgs,  # pylint: disable=too-complex,too-many-branches,
     if killed and (os.name != "posix" or rc == -signal.SIGKILL):  # pylint: disable=no-member
         msg = "TIMED OUT"
         sta = TIMED_OUT
-    elif not rc:
+    elif rc == 0:
         msg = "NORMAL"
         sta = NORMAL
     elif rc == ASAN_EXIT_CODE:
         msg = "CRASHED (Address Sanitizer fault)"
         sta = CRASHED
-    elif rc:
+    elif rc > 0:
         msg = "ABNORMAL exit code " + str(rc)
         sta = ABNORMAL
     else:

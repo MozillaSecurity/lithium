@@ -27,7 +27,7 @@ def interesting(args, _temp_prefix):
             if line.isdigit():
                 prod *= int(line)
 
-    if not prod % mod:
+    if prod % mod == 0:
         sys.stdout.write("%d is divisible by %d\n" % (prod, mod))
         return True
 
