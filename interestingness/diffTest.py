@@ -16,7 +16,7 @@ This can be used to isolate and minimize differential behaviour test cases.
 from __future__ import print_function
 
 import filecmp
-import optparse  # pylint: disable=deprecated-module,useless-suppression
+import optparse  # pylint: disable=deprecated-module
 
 import timedRun  # pylint: disable=relative-import,useless-suppression
 

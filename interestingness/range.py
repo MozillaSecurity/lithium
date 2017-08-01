@@ -31,7 +31,7 @@ Use for:
 
 from __future__ import print_function
 
-import optparse  # pylint: disable=deprecated-module,useless-suppression
+import optparse  # pylint: disable=deprecated-module
 import os
 import sys
 
