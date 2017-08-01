@@ -38,7 +38,7 @@ import sys
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
 sys.path.append(path1)
-import ximport  # noqa  pylint: disable=relative-import,useless-suppression,wrong-import-position
+import ximport  # noqa  pylint: disable=relative-import,wrong-import-position
 
 
 def parseOptions(arguments):  # pylint: disable=missing-docstring

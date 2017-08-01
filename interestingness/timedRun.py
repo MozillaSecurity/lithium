@@ -18,7 +18,7 @@ import time
 path0 = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.abspath(os.path.join(path0, os.pardir, 'interestingness'))
 sys.path.append(path1)
-import envVars  # noqa  pylint: disable=relative-import,useless-suppression,wrong-import-position
+import envVars  # noqa  pylint: disable=relative-import,wrong-import-position
 
 ASAN_EXIT_CODE = 77
 
@@ -148,7 +148,7 @@ def timed_run(commandWithArgs,  # pylint: disable=too-complex,too-many-branches,
         else:
             break
 
-    if killed and (os.name != "posix" or rc == -signal.SIGKILL):  # pylint: disable=no-member,useless-suppression
+    if killed and (os.name != "posix" or rc == -signal.SIGKILL):  # pylint: disable=no-member
         msg = "TIMED OUT"
         sta = TIMED_OUT
     elif not rc:
