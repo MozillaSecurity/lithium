@@ -19,11 +19,13 @@ def fileContains(f, s, isRegex, vb=True):
 
 def fileContainsStr(f, s, verbose=True):
     with open(f, "rb") as g:
-        gContents = [l.strip() for l in g.read().splitlines() if l.strip()]
-        for line in gContents:
+        for line in g:
+            line = line.strip()
+            if not line:
+                continue
             if line.find(s) != -1:
-                if verbose and s != "":
-                    print("[Found string in: '" + line.rstrip() + "']", end=" ")
+                if verbose and s != b"":
+                    print("[Found string in: '" + line.decode("utf-8", errors="replace") + "']", end=" ")
                 return True
     return False
 
@@ -38,7 +40,7 @@ def fileContainsRegex(f, regex, verbose=True):
         foundRegex = regex.search(g.read())
         if foundRegex:
             matchedStr = foundRegex.group()
-            if verbose and matchedStr != "":
-                print("[Found string in: '" + matchedStr + "']", end=" ")
+            if verbose and matchedStr != b"":
+                print("[Found string in: '" + matchedStr.decode("utf-8", errors="replace") + "']", end=" ")
             found = True
     return found, matchedStr
