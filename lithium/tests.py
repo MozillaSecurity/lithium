@@ -294,9 +294,9 @@ class InterestingnessTests(TestCase):
             # scan the log output to see how many tests were performed
             for rec in test_logs.records:
                 if "Tests performed:" in rec.msg:
-                    self.assertEqual(rec.args[0], 2) # should have run 2x
+                    self.assertEqual(rec.args[0], 2)  # should have run 2x
                     found_rec = True
-            self.assertTrue(found_rec) # check that we hit the check ;)
+            self.assertTrue(found_rec)  # check that we hit the check ;)
 
 
 class LithiumTests(TestCase):
