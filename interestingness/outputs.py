@@ -9,6 +9,7 @@
 from __future__ import print_function
 
 import optparse  # pylint: disable=deprecated-module
+import sys
 
 import fileIngredients  # pylint: disable=relative-import
 import timedRun  # pylint: disable=relative-import
@@ -32,6 +33,8 @@ def interesting(cliArgs, tempPrefix):
     (timeout, regexEnabled, args) = parseOptions(cliArgs)
 
     searchFor = args[0]
+    if not isinstance(searchFor, bytes):
+        searchFor = searchFor.encode(sys.getfilesystemencoding())
 
     runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix)
 
