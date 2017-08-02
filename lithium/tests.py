@@ -632,7 +632,7 @@ class TestcaseTests(TestCase):
 class SetupTests(TestCase):
 
     def test_installed(self):  # pylint: disable=no-self-use
-        "lithium module tests"
+        """lithium module tests"""
         log.info("creating virtualenv")
         if sys.version_info.major == 2:
             subprocess.check_call([sys.executable, "-m", "virtualenv", "--system-site-packages", "testenv"])
