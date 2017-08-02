@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring,too-few-public-methods
+# pylint: disable=invalid-name,missing-docstring,missing-param-doc,missing-return-doc,missing-return-type-doc
+# pylint: disable=missing-type-doc,too-few-public-methods
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 
 import collections
 import logging
@@ -136,8 +137,7 @@ class DummyInteresting(object):
 
 
 def ispow2(n):
-    """
-    simple version for testing
+    """Simple version for testing
     """
     assert isinstance(n, int) or n.is_integer(), "ispow2() only works for integers, %r is not an integer" % n
     assert n >= 1, "domain error"
@@ -151,15 +151,15 @@ def ispow2(n):
     # if the input is representable as a float, compare the result to math library
     if orig <= sys.float_info.max:
         math_result = math.log(orig) / math.log(2)
-        diff = abs(math_result - round(math_result))  # diff to the next closest integer
+        # diff to the next closest integer
+        diff = abs(math_result - round(math_result))  # pylint: disable=round-builtin
         math_result = diff < 10**-(sys.float_info.dig - 1)  # float_info.dig is the # of decimal digits representable
         assert result == math_result, "ispow2(n) did not match math.log(n)/math.log(2) for n = %d" % orig
     return result
 
 
 def divceil(n, d):
-    """
-    simple version for testing
+    """Simple version for testing
     """
     q = n // d
     r = n % d
@@ -175,7 +175,7 @@ class HelperTests(TestCase):
 
     def test_divideRoundingUp(self):
         for _ in range(10000):
-            n = random.randint(1, sys.maxint)
+            n = random.randint(1, sys.maxint)  # pylint: disable=sys-max-int
             d = random.randint(1, n)
             try:
                 self.assertEqual(divceil(n, d), lithium.divideRoundingUp(n, d))
@@ -197,7 +197,7 @@ class HelperTests(TestCase):
                 raise
         # try 10000 random integers >= 10000
         for _ in range(10000):
-            r = random.randint(10000, sys.maxint)
+            r = random.randint(10000, sys.maxint)  # pylint: disable=sys-max-int
             try:
                 self.assertEqual(ispow2(r), lithium.isPowerOfTwo(r))
             except Exception:
@@ -224,7 +224,7 @@ class HelperTests(TestCase):
                 raise
         # try 10000 random integers >= 10000
         for _ in range(10000):
-            r = random.randint(10000, sys.maxint)
+            r = random.randint(10000, sys.maxint)  # pylint: disable=sys-max-int
             try:
                 check_result(lithium.largestPowerOfTwoSmallerThan(r), r)
             except Exception:

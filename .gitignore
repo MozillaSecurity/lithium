@@ -10,6 +10,12 @@
 .DS_Store
 .gdb_history
 
+# Code coverage
+.coverage
+
+# Linting via pytest
+/.cache/
+
 # Setuptools folders.
 /build/
 /dist/

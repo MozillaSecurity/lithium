@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring,too-many-lines,too-many-statements
+# pylint: disable=invalid-name,missing-docstring,missing-param-doc,missing-return-doc,missing-return-type-doc
+# pylint: disable=missing-type-doc,too-many-lines,too-many-statements
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,8 +23,7 @@ class LithiumError(Exception):
 
 
 class Testcase(object):
-    """
-    Abstract testcase class.
+    """Abstract testcase class.
 
     Implementers should define readTestcaseLine() and writeTestcase() methods.
     """
@@ -156,8 +156,7 @@ class TestcaseSymbol(TestcaseLine):
 
 
 class Strategy(object):
-    """
-    Abstract minimization strategy class
+    """Abstract minimization strategy class
 
     Implementers should define a main() method which takes a testcase and calls the interesting callback repeatedly
     to minimize the testcase.
@@ -469,7 +468,7 @@ class MinimizeSurroundingPairs(Minimize):
 
         testcase.writeTestcase(tempFilename("did-round-%d" % chunkSize))
 
-        return (chunksRemoved > 0), testcase
+        return bool(chunksRemoved), testcase
 
 
 class MinimizeBalancedPairs(MinimizeSurroundingPairs):
@@ -495,7 +494,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
     def list_fiveParts(lst, step, f, s, t):
         return (lst[:f], lst[f:s], lst[s:(s + step)], lst[(s + step):(t + step)], lst[(t + step):])
 
-    def tryRemovingChunks(self,  # pylint: disable=too-many-branches,too-many-locals
+    def tryRemovingChunks(self,  # pylint: disable=too-complex,too-many-branches,too-many-locals
                           chunkSize, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
@@ -539,7 +538,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 nNormal = normal[lhsChunkIdx]
 
                 # If the chunk is already balanced, try to remove it.
-                if nCurly == 0 and nSquare == 0 and nNormal == 0:
+                if not (nCurly or nSquare or nNormal):
                     testcaseSuggestion = testcase.copy()
                     testcaseSuggestion.parts = (testcaseSuggestion.parts[:chunkLhsStart] +
                                                 testcaseSuggestion.parts[chunkLhsEnd:])
@@ -566,11 +565,11 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     nNormal += normal[rhsChunkIdx]
                     if nCurly < 0 or nSquare < 0 or nNormal < 0:
                         break
-                    if nCurly == 0 and nSquare == 0 and nNormal == 0:
+                    if not (nCurly or nSquare or nNormal):
                         break
 
                 # If we have no match, then just skip this pair of chunks.
-                if nCurly != 0 or nSquare != 0 or nNormal != 0:
+                if nCurly or nSquare or nNormal:
                     log.info("Skipping %s because it is 'uninteresting'.", description)
                     chunkStart += chunkSize
                     lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
@@ -627,7 +626,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     nCurly = curly[midChunkIdx]
                     nSquare = square[midChunkIdx]
                     nNormal = normal[midChunkIdx]
-                    if nCurly != 0 or nSquare != 0 or nNormal != 0:
+                    if nCurly or nSquare or nNormal:
                         log.info("Keeping %s because it is 'uninteresting'.", description)
                         chunkMidStart += chunkSize
                         midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
@@ -705,7 +704,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
         testcase.writeTestcase(tempFilename("did-round-%d" % chunkSize))
 
-        return (chunksRemoved > 0), testcase
+        return bool(chunksRemoved), testcase
 
 
 class ReplacePropertiesByGlobals(Minimize):
@@ -768,7 +767,7 @@ class ReplacePropertiesByGlobals(Minimize):
 
         return 0, (finalChunkSize == 1 and self.minimizeRepeat != "never"), testcase
 
-    def tryMakingGlobals(self,  # pylint: disable=too-many-arguments,too-many-branches,too-many-locals
+    def tryMakingGlobals(self,  # pylint: disable=too-complex,too-many-arguments,too-many-branches,too-many-locals
                          chunkSize, numChars, testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
@@ -891,7 +890,7 @@ class ReplaceArgumentsByGlobals(Minimize):
         return 0, False, testcase
 
     @staticmethod
-    def tryArgumentsAsGlobals(roundNum,  # pylint: disable=too-many-branches,too-many-locals
+    def tryArgumentsAsGlobals(roundNum,  # pylint: disable=too-complex,too-many-branches,too-many-locals
                               testcase, interesting, tempFilename):
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
@@ -926,7 +925,7 @@ class ReplaceArgumentsByGlobals(Minimize):
 
             # Match anonymous function definition, which are surrounded by parentheses.
             for match in re.finditer(br"\(function\s*\w*\s*\(((?:\s*\w+\s*(?:,\s*\w+\s*)*)?)\)\s*{", line):
-                if match.group(1) == "":
+                if match.group(1) == b"":
                     args = []
                 else:
                     args = match.group(1).split(",")
@@ -1134,7 +1133,7 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
             if self.lastInteresting is not None:
                 self.lastInteresting.writeTestcase()
 
-    def processArgs(self, argv=None):  # pylint: disable=too-many-locals
+    def processArgs(self, argv=None):  # pylint: disable=too-complex,too-many-locals
         # Build list of strategies and testcase types
         strategies = {}
         testcaseTypes = {}
@@ -1157,12 +1156,12 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
 
         defaultStrategy = "minimize"
         assert defaultStrategy in strategies
-        parser = ArgParseTry(add_help=False)
-        parser.add_argument(
+        strategyParser = ArgParseTry(add_help=False)
+        strategyParser.add_argument(
             "--strategy",
             default=defaultStrategy,
             choices=strategies.keys())
-        args = parser.parse_known_args(argv)
+        args = strategyParser.parse_known_args(argv)
         self.strategy = strategies.get(args[0].strategy if args else None, strategies[defaultStrategy])()
 
         parser = argparse.ArgumentParser(
@@ -1310,7 +1309,7 @@ def largestPowerOfTwoSmallerThan(n):
 
 
 def quantity(n, unit):
-    "Convert a quantity to a string, with correct pluralization."
+    """Convert a quantity to a string, with correct pluralization."""
     r = "%d %s" % (n, unit)
     if n != 1:
         r += "s"

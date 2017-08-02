@@ -7,51 +7,17 @@ python:
     - "3.4"
     - "3.5"
     - "3.6"
-    - "nightly"
 before_install:
     - pip install --upgrade setuptools pip
     - pip install --upgrade virtualenv
 install:
-    - pip install --upgrade flake8 pylint
     - pip --version
     - virtualenv --version
-    - flake8 --version
-    - pylint --version
     - git --version
 before_script:
-    - flake8 --count ${TRAVIS_BUILD_DIR}
-    # Do not run pylint on nightly Python versions as they may not be compatible
-    - |
-        if [[ $TRAVIS_PYTHON_VERSION != "nightly" ]]; then
-            pylint ${TRAVIS_BUILD_DIR}
-        fi
-    - pip install pytest-cov codecov
-    # Install Lithium via pip
-    - pip install --upgrade --no-index ${TRAVIS_BUILD_DIR}
+    - pip install --upgrade flake8 pylint codecov
+    - pip install --upgrade pytest-flake8 pytest-pylint pytest-cov
 script:
-    # -- START of lithium module tests --
-    - "pushd $HOME"  # Do not test from the GitHub repo dir due to Python module intricacies
-    - "pwd"  # Double-check the current directory
-    - "python -c 'import lithium; print(lithium); print(dir(lithium))'"
-    - "python -c 'import lithium; print(lithium.interestingness.crashes)'"
-    # - "python -c 'import lithium; print(lithium.interestingness.diffTest)'"  # diffTest is not used outside of Lithium
-    - "python -c 'import lithium; print(lithium.interestingness.envVars)'"
-    - "python -c 'import lithium; print(lithium.interestingness.fileIngredients)'"
-    - "python -c 'import lithium; print(lithium.interestingness.hangs)'"
-    - "python -c 'import lithium; print(lithium.interestingness.outputs)'"
-    # - "python -c 'import lithium; print(lithium.interestingness.range)'"  # shadows standard python function
-    - "python -c 'import lithium; print(lithium.interestingness.timedRun)'"
-    - "touch temp.js"
-    - "python -m lithium outputs --timeout=2 temp.js ls temp.js"
-    # - "python -m lithium range 1 2 outputs --timeout=2 temp.js ls temp.js"  # shadows standard python function
-    # Invert the exit code for crashes and hangs, since running `ls` with temp.js is not supposed to be "interesting".
-    - "! python -m lithium crashes --timeout=2 ls temp.js"
-    # - "! python -m lithium range 1 2 crashes --timeout=2 ls temp.js"  # shadows standard python function
-    - "! python -m lithium hangs 3 ls temp.js"
-    # - "! python -m lithium range 1 2 hangs 3 ls temp.js"  # shadows standard python function
-    - "rm temp.js"
-    - "popd"
-    # -- END of lithium module tests --
-    - py.test lithium/tests.py -v --cov . --cov-report term-missing
+    - py.test
 after_success:
     - codecov

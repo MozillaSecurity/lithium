@@ -13,46 +13,14 @@ environment:
 install:
     - "%PYTHON%\\python.exe -m pip install --upgrade setuptools pip"
     - "%PYTHON%\\python.exe -m pip install --upgrade virtualenv"
-    - "%PYTHON%\\python.exe -m pip install --upgrade flake8 pylint"
     - "%PYTHON%\\python.exe -m pip --version"
     - "%PYTHON%\\python.exe -m virtualenv --version"
-    - "%PYTHON%\\python.exe -m flake8 --version"
-    - "%PYTHON%\\python.exe -m pylint --version"
     - "git --version"
-    - "%PYTHON%\\python.exe -m pip install pytest pytest-cov codecov"
-    # Install Lithium via pip
-    - "%PYTHON%\\python.exe -m pip install --upgrade --no-index %APPVEYOR_BUILD_FOLDER%"
+    - "%PYTHON%\\python.exe -m pip install --upgrade flake8 pylint codecov"
+    - "%PYTHON%\\python.exe -m pip install --upgrade pytest-flake8 pytest-pylint pytest-cov"
 build: off
 test_script:
-    - "%PYTHON%\\python.exe -m flake8 --count %APPVEYOR_BUILD_FOLDER%"
-    - "%PYTHON%\\python.exe -m pylint %APPVEYOR_BUILD_FOLDER%"
-    # -- START of lithium module tests --
-    - "pushd %HOMEDRIVE%%HOMEPATH%"  # Do not test from the GitHub repo dir due to Python module intricacies
-    - "chdir"  # Double-check the current directory
-    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium); print(dir(lithium))\""
-    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.crashes)\""
-    # - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.diffTest)\""  # diffTest is not used outside of Lithium
-    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.envVars)\""
-    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.fileIngredients)\""
-    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.hangs)\""
-    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.outputs)\""
-    # - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.range)\""  # shadows standard python function
-    - "%PYTHON%\\python.exe -c \"import lithium; print(lithium.interestingness.timedRun)\""
-    - "type nul > temp.js"
-    - "%PYTHON%\\python.exe -m lithium outputs --timeout=2 temp.js dir temp.js"
-    # - "%PYTHON%\\python.exe -m lithium range 1 2 outputs --timeout=2 temp.js dir temp.js"  # shadows standard python function
-    # Invert the exit code for crashes and hangs, since running `dir` with temp.js is not supposed to be "interesting".
-    # Disabled for now.
-    # - "%PYTHON%\\python.exe -m lithium crashes --timeout=2 dir temp.js"
-    # - "%PYTHON%\\python.exe -m lithium range 1 2 crashes --timeout=2 dir temp.js"  # shadows standard python function
-    # - "%PYTHON%\\python.exe -m lithium hangs 3 dir temp.js"
-    # - "%PYTHON%\\python.exe -m lithium range 1 2 hangs 3 dir temp.js"  # shadows standard python function
-    - "rm temp.js"
-    # Don't bother running popd as it exits with a non-zero exit code
-    # - "popd"
-    - "cd %APPVEYOR_BUILD_FOLDER%"
-    # -- END of lithium module tests --
-    - "%PYTHON%\\python.exe -m pytest lithium\\tests.py -v --cov . --cov-report term-missing"
+    - "%PYTHON%\\python.exe -m pytest"
 on_success:
     - "%PYTHON%\\python.exe -m codecov -X gcov"
 skip_branch_with_pr: true

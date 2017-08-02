@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name
+# pylint: disable=invalid-name,missing-return-doc,missing-return-type-doc
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-"""
-Repeats an interestingness test a given number of times.
+"""Repeats an interestingness test a given number of times.
 If "RANGENUM" is present, it is replaced in turn with each number in the range.
 
 Use for:
@@ -33,11 +32,11 @@ Use for:
 from __future__ import absolute_import, print_function
 
 from importlib import import_module
-from optparse import OptionParser  # pylint: disable=deprecated-module
+import optparse  # pylint: disable=deprecated-module
 
 
 def parseOptions(arguments):  # pylint: disable=missing-docstring
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     _options, args = parser.parse_args(arguments)
 

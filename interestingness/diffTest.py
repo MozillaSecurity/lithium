@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring
+# pylint: disable=invalid-name,missing-docstring,missing-return-doc,missing-return-type-doc
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-"""
-This test minimizes a test case by comparing a single binary with different command line arguments.
+"""This test minimizes a test case by comparing a single binary with different command line arguments.
 This can be used to isolate and minimize differential behaviour test cases.
 """
 
@@ -17,13 +16,13 @@ This can be used to isolate and minimize differential behaviour test cases.
 from __future__ import absolute_import, print_function
 
 import filecmp
-from optparse import OptionParser  # pylint: disable=deprecated-module
+import optparse  # pylint: disable=deprecated-module
 
 from . import timedRun
 
 
 def parseOptions(arguments):
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
                       default=120,
