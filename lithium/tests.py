@@ -20,10 +20,6 @@ import subprocess
 import sys
 import tempfile
 import unittest
-if sys.version_info.major == 2:
-    import virtualenv  # noqa pylint: disable=import-error,unused-import
-else:
-    import venv  # noqa pylint: disable=import-error,unused-import
 
 import lithium  # noqa pylint: disable=relative-import,wrong-import-position
 
@@ -635,11 +631,15 @@ class SetupTests(TestCase):
         """lithium module tests"""
         log.info("creating virtualenv")
         if sys.version_info.major == 2:
-            subprocess.check_call([sys.executable, "-m", "virtualenv", "--system-site-packages", "testenv"])
+            # try the import here so the error message is clearer if it's missing
+            import virtualenv  # noqa pylint: disable=import-error,unused-import,unused-variable
+            subprocess.check_call([sys.executable, "-m", "virtualenv", "testenv"])
         else:
-            venv.create("testenv", system_site_packages=True)
+            import venv  # noqa pylint: disable=import-error,unused-import
+            venv.create("testenv", with_pip=True)
         python_exe = os.path.join("testenv", "bin", "python")
         lithium_exe = os.path.join("testenv", "bin", "lithium")
+        subprocess.check_output([python_exe, "-m", "pip", "install", "pytest"])
 
         log.info("installing lithium in virtualenv")
         subprocess.check_call([python_exe, os.path.join(os.path.dirname(__file__), os.pardir, "setup.py"), "install"])
