@@ -13,6 +13,7 @@ import collections
 import logging
 import math
 import os
+import platform
 import random
 import shutil
 import subprocess
@@ -238,8 +239,8 @@ class HelperTests(TestCase):
 
 
 class InterestingnessTests(TestCase):
-    cat_exe = "type" if sys.platform.startswith("win") else "cat"
-    list_exe = "dir" if sys.platform.startswith("win") else "ls"
+    cat_exe = "type" if platform.system() == "Windows" else "cat"
+    list_exe = "dir" if platform.system() == "Windows" else "ls"
     sleep_cmd = [sys.executable, "-c", "import time;time.sleep(3)"]
 
     def test_crashes(self):
