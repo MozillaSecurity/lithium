@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring
+# pylint: disable=invalid-name,missing-docstring,missing-param-doc,missing-raises-doc,missing-return-doc
+# pylint: disable=missing-return-type-doc,missing-type-doc
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -79,7 +80,7 @@ def makeEnv(binPath):
     return env
 
 
-def timed_run(commandWithArgs,  # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+def timed_run(commandWithArgs,  # pylint: disable=too-complex,too-many-branches,too-many-locals,too-many-statements
               timeout, logPrefix, inp=None, preexec_fn=None):
     """If logPrefix is None, uses pipes instead of files for all output."""
     if not isinstance(commandWithArgs, list):
