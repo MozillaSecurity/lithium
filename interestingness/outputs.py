@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring
+# pylint: disable=invalid-name,missing-docstring,missing-return-doc,missing-return-type-doc
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,14 +8,15 @@
 
 from __future__ import print_function
 
-from optparse import OptionParser  # pylint: disable=deprecated-module
+import optparse  # pylint: disable=deprecated-module
+import sys
 
 import fileIngredients  # pylint: disable=relative-import
 import timedRun  # pylint: disable=relative-import
 
 
 def parseOptions(arguments):
-    parser = OptionParser()
+    parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
                       default=120,
@@ -32,6 +33,8 @@ def interesting(cliArgs, tempPrefix):
     (timeout, regexEnabled, args) = parseOptions(cliArgs)
 
     searchFor = args[0]
+    if not isinstance(searchFor, bytes):
+        searchFor = searchFor.encode(sys.getfilesystemencoding())
 
     runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix)
 
