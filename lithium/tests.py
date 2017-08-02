@@ -235,7 +235,12 @@ class HelperTests(TestCase):
 
 
 class InterestingnessTests(TestCase):
-    cat_exe = "type" if platform.system() == "Windows" else "cat"
+    cat_cmd = [sys.executable, "-c", ("import sys;"
+                                      "[sys.stdout.write(f.read()) "
+                                      " for f in "
+                                      "     ([open(a) for a in sys.argv[1:]] or "
+                                      "      [sys.stdin])"
+                                      "]")]
     list_exe = "dir" if platform.system() == "Windows" else "ls"
     sleep_cmd = [sys.executable, "-c", "import time;time.sleep(3)"]
 
@@ -287,7 +292,7 @@ class InterestingnessTests(TestCase):
 
         # check for a known string, twice
         with self.assertLogs("lithium") as test_logs:
-            result = l.main(["range", "0", "2", "outputs", "hello", self.cat_exe, "temp.js"])
+            result = l.main(["range", "0", "2", "outputs", "hello"] + self.cat_cmd + ["temp.js"])
             self.assertEqual(result, 0)
             found_rec = False
             # scan the log output to see how many tests were performed
