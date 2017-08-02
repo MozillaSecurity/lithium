@@ -642,8 +642,8 @@ class SetupTests(TestCase):
         else:
             import venv  # noqa pylint: disable=import-error,unused-import
             venv.create("testenv", with_pip=True)
-        python_exe = os.path.join("testenv", "bin", "python")
-        lithium_exe = os.path.join("testenv", "bin", "lithium")
+        python_exe = os.path.join("testenv", "Scripts" if platform.system() == "Windows" else "bin", "python")
+        lithium_exe = os.path.join("testenv", "Scripts" if platform.system() == "Windows" else "bin", "lithium")
         subprocess.check_output([python_exe, "-m", "pip", "install", "pytest"])
 
         log.info("installing lithium in virtualenv")
