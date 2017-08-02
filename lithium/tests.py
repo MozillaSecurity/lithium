@@ -246,8 +246,8 @@ class InterestingnessTests(TestCase):
             pass
 
         # check that `ls` doesn't crash
-        l.processArgs(["crashes", self.list_exe, "temp.js"])
-        self.assertEqual(l.run(), 1)
+        result = l.main(["crashes", self.list_exe, "temp.js"])
+        self.assertEqual(result, 1)
 
         # no easy target to test the opposite case ...
 
@@ -257,12 +257,12 @@ class InterestingnessTests(TestCase):
             pass
 
         # test that `sleep 3` hangs over 1s
-        l.processArgs(["--testcase", "temp.js", "hangs", "1"] + self.sleep_cmd)
-        self.assertEqual(l.run(), 0)
+        result = l.main(["--testcase", "temp.js", "hangs", "1"] + self.sleep_cmd)
+        self.assertEqual(result, 0)
 
         # test that `ls temp.js` does not hang over 1s
-        l.processArgs(["hangs", "1", self.list_exe, "temp.js"])
-        self.assertEqual(l.run(), 1)
+        result = l.main(["hangs", "1", self.list_exe, "temp.js"])
+        self.assertEqual(result, 1)
 
     def test_outputs(self):
         l = lithium.Lithium()
@@ -270,16 +270,16 @@ class InterestingnessTests(TestCase):
             pass
 
         # test that `ls temp.js` contains "temp.js"
-        l.processArgs(["outputs", "temp.js", self.list_exe, "temp.js"])
-        self.assertEqual(l.run(), 0)
+        result = l.main(["outputs", "temp.js", self.list_exe, "temp.js"])
+        self.assertEqual(result, 0)
 
         # test that `ls temp.js` does not contain "blah"
-        l.processArgs(["outputs", "blah", self.list_exe, "temp.js"])
-        self.assertEqual(l.run(), 1)
+        result = l.main(["outputs", "blah", self.list_exe, "temp.js"])
+        self.assertEqual(result, 1)
 
         # test that regex matches work too
-        l.processArgs(["outputs", "--regex", "^.*js$", self.list_exe, "temp.js"])
-        self.assertEqual(l.run(), 0)
+        result = l.main(["outputs", "--regex", "^.*js$", self.list_exe, "temp.js"])
+        self.assertEqual(result, 0)
 
     def test_range(self):
         l = lithium.Lithium()
@@ -287,9 +287,9 @@ class InterestingnessTests(TestCase):
             tempf.write("hello")
 
         # check for a known string, twice
-        l.processArgs(["range", "0", "2", "outputs", "hello", self.cat_exe, "temp.js"])
         with self.assertLogs("lithium") as test_logs:
-            self.assertEqual(l.run(), 0)
+            result = l.main(["range", "0", "2", "outputs", "hello", self.cat_exe, "temp.js"])
+            self.assertEqual(result, 0)
             found_rec = False
             # scan the log output to see how many tests were performed
             for rec in test_logs.records:
