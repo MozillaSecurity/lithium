@@ -37,7 +37,7 @@ def fileContainsRegex(f, regex, verbose=True):
     matchedStr = ""
     found = False
     with open(f, "rb") as g:
-        foundRegex = regex.search(g.read().decode("utf8", "replace"))
+        foundRegex = regex.search(g.read())
         if foundRegex:
             matchedStr = foundRegex.group()
             if verbose and matchedStr != b"":
