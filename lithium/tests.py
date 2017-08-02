@@ -235,7 +235,7 @@ class HelperTests(TestCase):
                 raise
 
 
-class InterestingTests(TestCase):
+class InterestingnessTests(TestCase):
     cat_exe = "type" if sys.platform.startswith("win") else "cat"
     list_exe = "dir" if sys.platform.startswith("win") else "ls"
     sleep_cmd = [sys.executable, "-c", "import time;time.sleep(3)"]
@@ -653,4 +653,4 @@ class SetupTests(TestCase):
         test_path = os.path.join(os.path.dirname(path.decode(sys.getfilesystemencoding())), "lithium", "tests.py")
         subprocess.check_call([python_exe, "-m", "pytest",
                                test_path + "::LithiumTests",
-                               test_path + "::InterestingTests"])
+                               test_path + "::InterestingnessTests"])
