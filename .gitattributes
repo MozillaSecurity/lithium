@@ -1,0 +1,5 @@
+* text=auto
+# 11.txt should have LF line endings or else character reduction tests fail on Windows
+# AppVeyor by default checks out LF line endings, see:
+# http://help.appveyor.com/discussions/problems/671-coreautocrlf
+11.txt text eol=lf
