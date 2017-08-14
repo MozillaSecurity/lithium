@@ -11,6 +11,8 @@
 e.g. lithium product_divides 35 11.txt
 """
 
+from __future__ import absolute_import
+
 import sys
 
 

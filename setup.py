@@ -7,6 +7,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
 from setuptools import setup
 
 if __name__ == "__main__":
@@ -15,11 +17,16 @@ if __name__ == "__main__":
           entry_points={
               "console_scripts": ["lithium = lithium:main"]
           },
-          packages=["lithium", "lithium.lithium"],
-          package_data={"": [
+          packages=[
+              "lithium",
+              "lithium.lithium",
+              "lithium.interestingness",
+              #   "lithium.examples.arithmetic"
+          ],
+          package_data={"lithium": [
               "interestingness/*",
               "lithium/doc/*",
-              "lithium/examples/*.*",
+              #   "lithium/examples/*",
               "lithium/examples/arithmetic/*"
           ]},
           package_dir={"lithium": ""},

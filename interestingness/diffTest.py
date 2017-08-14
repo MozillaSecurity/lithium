@@ -13,12 +13,12 @@ This can be used to isolate and minimize differential behaviour test cases.
 # This file came from nbp's GitHub PR #2 for adding new Lithium reduction strategies.
 #   https://github.com/MozillaSecurity/lithium/pull/2
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 import filecmp
 import optparse  # pylint: disable=deprecated-module
 
-import timedRun  # pylint: disable=relative-import
+from . import timedRun
 
 
 def parseOptions(arguments):

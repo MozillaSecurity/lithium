@@ -7,11 +7,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+from __future__ import absolute_import
+
 import argparse
 import logging
 import os
 import re
-import sys
 import time
 
 log = logging.getLogger("lithium")
@@ -1239,10 +1240,8 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
             self.testcase.cutAfter = args.cutAfter
         self.testcase.readTestcase(testcaseFilename)
 
-        sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, "interestingness"))
-        import ximport  # pylint: disable=import-error
-
-        self.conditionScript = ximport.importRelativeOrAbsolute(extra_args[0])
+        from importlib import import_module
+        self.conditionScript = import_module("lithium.interestingness." + extra_args[0])
         self.conditionArgs = extra_args[1:]
 
     def testcaseTempFilename(self, partialFilename, useNumber=True):

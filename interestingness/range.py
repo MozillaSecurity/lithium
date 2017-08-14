@@ -29,16 +29,10 @@ Use for:
      lithium.py range 1 50 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -e "n=RANGENUM;" 740654.js
 """
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
+from importlib import import_module
 import optparse  # pylint: disable=deprecated-module
-import os
-import sys
-
-path0 = os.path.dirname(os.path.abspath(__file__))
-path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
-sys.path.append(path1)
-import ximport  # noqa  pylint: disable=relative-import,wrong-import-position
 
 
 def parseOptions(arguments):  # pylint: disable=missing-docstring
@@ -51,7 +45,7 @@ def parseOptions(arguments):  # pylint: disable=missing-docstring
 
 def interesting(cliArgs, tempPrefix):  # pylint: disable=missing-docstring
     (rangeMin, rangeMax, arguments) = parseOptions(cliArgs)
-    conditionScript = ximport.importRelativeOrAbsolute(arguments[0])
+    conditionScript = import_module("lithium.interestingness." + arguments[0])
     conditionArgs = arguments[1:]
 
     if hasattr(conditionScript, "init"):
