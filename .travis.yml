@@ -17,6 +17,6 @@ before_script:
     - pip install --upgrade flake8 pylint codecov
     - pip install --upgrade pytest-flake8 pytest-pylint pytest-cov
 script:
-    - py.test
+    - python -m pytest
 after_success:
     - codecov
