@@ -13,13 +13,15 @@ import collections
 import logging
 import math
 import os
+import platform
 import random
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
 
-import lithium  # pylint: disable=relative-import
+import lithium  # noqa pylint: disable=relative-import,wrong-import-position
 
 log = logging.getLogger("lithium_test")
 logging.basicConfig(level=logging.DEBUG)
@@ -230,6 +232,75 @@ class HelperTests(TestCase):
             except Exception:
                 log.debug("r = %d", r)
                 raise
+
+
+class InterestingnessTests(TestCase):
+    cat_cmd = [sys.executable, "-c", ("import sys;"
+                                      "[sys.stdout.write(f.read()) "
+                                      " for f in "
+                                      "     ([open(a) for a in sys.argv[1:]] or "
+                                      "      [sys.stdin])"
+                                      "]")]
+    list_exe = "dir" if platform.system() == "Windows" else "ls"
+    sleep_cmd = [sys.executable, "-c", "import time;time.sleep(3)"]
+
+    def test_crashes(self):
+        l = lithium.Lithium()
+        with open("temp.js", "w"):
+            pass
+
+        # check that `ls` doesn't crash
+        result = l.main(["crashes", self.list_exe, "temp.js"])
+        self.assertEqual(result, 1)
+
+        # no easy target to test the opposite case ...
+
+    def test_hangs(self):
+        l = lithium.Lithium()
+        with open("temp.js", "w"):
+            pass
+
+        # test that `sleep 3` hangs over 1s
+        result = l.main(["--testcase", "temp.js", "hangs", "1"] + self.sleep_cmd)
+        self.assertEqual(result, 0)
+
+        # test that `ls temp.js` does not hang over 1s
+        result = l.main(["hangs", "1", self.list_exe, "temp.js"])
+        self.assertEqual(result, 1)
+
+    def test_outputs(self):
+        l = lithium.Lithium()
+        with open("temp.js", "w"):
+            pass
+
+        # test that `ls temp.js` contains "temp.js"
+        result = l.main(["outputs", "temp.js", self.list_exe, "temp.js"])
+        self.assertEqual(result, 0)
+
+        # test that `ls temp.js` does not contain "blah"
+        result = l.main(["outputs", "blah", self.list_exe, "temp.js"])
+        self.assertEqual(result, 1)
+
+        # test that regex matches work too
+        result = l.main(["outputs", "--regex", "^.*js$", self.list_exe, "temp.js"])
+        self.assertEqual(result, 0)
+
+    def test_range(self):
+        l = lithium.Lithium()
+        with open("temp.js", "w") as tempf:
+            tempf.write("hello")
+
+        # check for a known string, twice
+        with self.assertLogs("lithium") as test_logs:
+            result = l.main(["range", "0", "2", "outputs", "hello"] + self.cat_cmd + ["temp.js"])
+            self.assertEqual(result, 0)
+            found_rec = False
+            # scan the log output to see how many tests were performed
+            for rec in test_logs.records:
+                if "Tests performed:" in rec.msg:
+                    self.assertEqual(rec.args[0], 2)  # should have run 2x
+                    found_rec = True
+            self.assertTrue(found_rec)  # check that we hit the check ;)
 
 
 class LithiumTests(TestCase):
@@ -557,3 +628,37 @@ class TestcaseTests(TestCase):
         with self.assertRaisesRegex(lithium.LithiumError,
                                     r"^The testcase \(a\.txt\) has a line containing 'DDBEGIN' but no"):
             t.readTestcase("a.txt")
+
+
+class SetupTests(TestCase):
+
+    def test_installed(self):  # pylint: disable=no-self-use
+        """lithium module tests"""
+        log.info("creating virtualenv")
+        if sys.version_info.major == 2:
+            # try the import here so the error message is clearer if it's missing
+            import virtualenv  # noqa pylint: disable=import-error,unused-import,unused-variable
+            subprocess.check_call([sys.executable, "-m", "virtualenv", "testenv"])
+        else:
+            import venv  # noqa pylint: disable=import-error,unused-import
+            venv.create("testenv", with_pip=True)
+        python_exe = os.path.join("testenv", "Scripts" if platform.system() == "Windows" else "bin", "python")
+        lithium_exe = os.path.join("testenv", "Scripts" if platform.system() == "Windows" else "bin", "lithium")
+        subprocess.check_output([python_exe, "-m", "pip", "install", "pytest"])
+
+        log.info("installing lithium in virtualenv")
+        subprocess.check_call([python_exe, os.path.join(os.path.dirname(__file__), os.pardir, "setup.py"), "install"])
+
+        log.info("running lithium -h in virtualenv")
+        subprocess.check_call([lithium_exe, "-h"])
+
+        log.info("importing lithium in virtualenv")
+        subprocess.check_call([python_exe, "-c", "import lithium;import lithium.interestingness"])
+
+        # run a subset of tests to make sure lithium works in the virtualenv
+        log.info("re-running some lithium tests in virtualenv")
+        path = subprocess.check_output([python_exe, "-c", "import lithium;print(lithium.__file__)"])
+        test_path = os.path.join(os.path.dirname(path.decode(sys.getfilesystemencoding())), "lithium", "tests.py")
+        subprocess.check_call([python_exe, "-m", "pytest",
+                               test_path + "::LithiumTests",
+                               test_path + "::InterestingnessTests"])

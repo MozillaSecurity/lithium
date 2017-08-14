@@ -7,7 +7,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+import os
 from setuptools import setup
+
+CWD = os.path.dirname(__file__)
 
 if __name__ == "__main__":
     setup(name="lithium",
@@ -22,5 +25,5 @@ if __name__ == "__main__":
               "lithium/examples/*.*",
               "lithium/examples/arithmetic/*"
           ]},
-          package_dir={"lithium": ""},
+          package_dir={"lithium": CWD},
           zip_safe=False)
