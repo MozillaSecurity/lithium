@@ -1327,7 +1327,7 @@ class Lithium(object):  # pylint: disable=missing-docstring,too-many-instance-at
             self.testcase.cutAfter = args.cutAfter
         self.testcase.readTestcase(testcaseFilename)
 
-        sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, "interestingness"))
+        sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "interestingness"))
         import ximport  # pylint: disable=import-error
 
         self.conditionScript = ximport.importRelativeOrAbsolute(extra_args[0])

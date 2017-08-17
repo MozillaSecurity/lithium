@@ -6,13 +6,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 import optparse  # pylint: disable=deprecated-module
 import sys
 
-import fileIngredients  # pylint: disable=relative-import
-import timedRun  # pylint: disable=relative-import
+from . import fileIngredients
+from . import timedRun
 
 
 def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
