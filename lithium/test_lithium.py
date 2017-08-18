@@ -518,17 +518,20 @@ class TestcaseTests(TestCase):
             f.write(b"DDBEGIN\n")
             f.write(b"data\n")
             f.write(b"2\n")
-            f.write(b"'\\u{123}\"1\\x32\\023\n'\n")
-            f.write(b'""\n')
-            f.write(b'"x"\n')
+            f.write(b"'\\u{123}\"1\\x32\\023\n'\n")  # a str with some escapes
+            f.write(b'""\n')  # empty string
+            f.write(b'"\\u12345"\n')  # another str with the last escape format
             f.write(b'data\n')
-            f.write(b'"x"\n')
+            f.write(b'"x"\n')  # last str
             f.write(b"DDEND\n")
             f.write(b"post\n")
         t.readTestcase("a.txt")
         self.assertEqual(t.before, b"pre\nDDBEGIN\ndata\n2\n'")
-        self.assertEqual(t.parts, [b"\\u{123}", b"\"", b"1", b"\\x32", b"\\0", b"2", b"3", b"\n", b"'\n\"\"\n\"", b"x",
-                                   b"\"\ndata\n\"", b"x"])
+        self.assertEqual(t.parts, [b"\\u{123}", b"\"", b"1", b"\\x32", b"\\0", b"2", b"3", b"\n",  # first str
+                                   b"'\n\"\"\n\"",  # empty string contains no chars, included with in-between data
+                                   b"\\u1234", b"5",  # next str
+                                   b"\"\ndata\n\"",
+                                   b"x"])  # last str
         self.assertEqual(t.after, b"\"\nDDEND\npost\n")
 
     def test_symbol(self):
