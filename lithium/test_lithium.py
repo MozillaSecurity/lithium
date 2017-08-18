@@ -23,6 +23,7 @@ import lithium  # pylint: disable=relative-import
 
 log = logging.getLogger("lithium_test")
 logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("flake8").setLevel(logging.WARNING)
 
 
 # python 3 has unlimited precision integers
@@ -509,6 +510,26 @@ class TestcaseTests(TestCase):
         self.assertEqual(t.before, b"pre\nDDBEGIN\n")
         self.assertEqual(t.parts, [b"d", b"a", b"t", b"a", b"\n", b"2"])
         self.assertEqual(t.after, b"\nDDEND\npost\n")
+
+    def test_jsstr(self):
+        t = lithium.TestcaseJsStr()
+        with open("a.txt", "wb") as f:
+            f.write(b"pre\n")
+            f.write(b"DDBEGIN\n")
+            f.write(b"data\n")
+            f.write(b"2\n")
+            f.write(b"'\\u{123}\"1\\x32\\023\n'\n")
+            f.write(b'""\n')
+            f.write(b'"x"\n')
+            f.write(b'data\n')
+            f.write(b'"x"\n')
+            f.write(b"DDEND\n")
+            f.write(b"post\n")
+        t.readTestcase("a.txt")
+        self.assertEqual(t.before, b"pre\nDDBEGIN\ndata\n2\n'")
+        self.assertEqual(t.parts, [b"\\u{123}", b"\"", b"1", b"\\x32", b"\\0", b"2", b"3", b"\n", b"'\n\"\"\n\"", b"x",
+                                   b"\"\ndata\n\"", b"x"])
+        self.assertEqual(t.after, b"\"\nDDEND\npost\n")
 
     def test_symbol(self):
         t = lithium.TestcaseSymbol()
