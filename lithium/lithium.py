@@ -1284,6 +1284,7 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
 
         self.tempDir = args.tempdir
         atom = TestcaseChar.atom if args.char else TestcaseLine.atom
+        atom = TestcaseJsStr.atom if args.js else atom
         atom = TestcaseSymbol.atom if args.symbol else atom
 
         extra_args = args.extra_args[0]
