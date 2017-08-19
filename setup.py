@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-# flake8: noqa
 # pylint: disable=missing-docstring
 #
 # This Source Code Form is subject to the terms of the Mozilla Public

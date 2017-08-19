@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-return-doc,missing-return-type-doc
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,16 +13,17 @@ import logging
 import os
 import sys
 
-log = logging.getLogger("lithium")
+log = logging.getLogger("lithium")  # pylint: disable=invalid-name
 
 
-def importRelativeOrAbsolute(f):  # pylint: disable=missing-docstring
+def importRelativeOrAbsolute(f):  # pylint: disable=invalid-name,missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
     # maybe there's a way to do this more sanely with the |imp| module...
     if f.endswith(".py"):
         f = f[:-3]
     if f.endswith(".pyc"):
         f = f[:-4]
-    p, f = os.path.split(f)
+    p, f = os.path.split(f)  # pylint: disable=invalid-name
     if p:
         # Add the path part of the given filename to the import path
         sys.path.append(p)
@@ -32,7 +32,7 @@ def importRelativeOrAbsolute(f):  # pylint: disable=missing-docstring
         sys.path.append(".")
     try:
         module = __import__(f)
-    except ImportError as e:
+    except ImportError as e:  # pylint: disable=invalid-name
         log.error("Failed to import: " + f)
         log.error("From: " + __file__)
         log.error(e)

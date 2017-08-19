@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring,missing-param-doc,missing-return-doc,missing-return-type-doc
-# pylint: disable=missing-type-doc,too-few-public-methods
+# pylint: disable=invalid-name,missing-docstring
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,9 +45,11 @@ class TestCase(unittest.TestCase):
     if sys.version_info.major == 2:
 
         def assertRegex(self, *args, **kwds):  # pylint: disable=arguments-differ
+            # pylint: disable=missing-return-doc,missing-return-type-doc
             return self.assertRegexpMatches(*args, **kwds)  # pylint: disable=deprecated-method
 
         def assertRaisesRegex(self, *args, **kwds):  # pylint: disable=arguments-differ
+            # pylint: disable=missing-return-doc,missing-return-type-doc
             return self.assertRaisesRegexp(*args, **kwds)  # pylint: disable=deprecated-method
 
     if sys.version_info[:2] < (3, 4):
@@ -74,7 +75,7 @@ class TestCase(unittest.TestCase):
         # AND THERE IS NO OBLIGATION WHATSOEVER TO PROVIDE MAINTENANCE,
         # SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-        def assertLogs(self, logger=None, level=None):
+        def assertLogs(self, logger=None, level=None):  # pylint: disable=missing-return-doc,missing-return-type-doc
 
             _LoggingWatcher = collections.namedtuple("_LoggingWatcher", ["records", "output"])
 
@@ -87,7 +88,7 @@ class TestCase(unittest.TestCase):
                     self.watcher.records.append(record)
                     self.watcher.output.append(self.format(record))
 
-            class _AssertLogsContext(object):
+            class _AssertLogsContext(object):  # pylint: disable=too-few-public-methods
                 LOGGING_FORMAT = "%(levelname)s:%(name)s:%(message)s"
 
                 def __init__(self, test_case, logger_name, level):
@@ -99,7 +100,7 @@ class TestCase(unittest.TestCase):
                     self.old = None
                     self.watcher = None
 
-                def __enter__(self):
+                def __enter__(self):  # pylint: disable=missing-return-doc,missing-return-type-doc
                     if isinstance(self.logger_name, logging.Logger):
                         self.logger = self.logger_name
                     else:
@@ -113,7 +114,8 @@ class TestCase(unittest.TestCase):
                     self.logger.propagate = False
                     return handler.watcher
 
-                def __exit__(self, exc_type, exc_value, tb):
+                def __exit__(self, exc_type, exc_value, tb):  # pylint: disable=missing-return-doc
+                    # pylint: disable=missing-return-type-doc
                     self.logger.handlers, self.logger.propagate = self.old[:2]
                     self.logger.setLevel(self.old[2])
                     if exc_type is not None:
@@ -137,7 +139,7 @@ class DummyInteresting(object):
         pass
 
 
-def ispow2(n):
+def ispow2(n):  # pylint: disable=missing-param-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
     """Simple version for testing
     """
     assert isinstance(n, int) or n.is_integer(), "ispow2() only works for integers, %r is not an integer" % n
@@ -159,7 +161,7 @@ def ispow2(n):
     return result
 
 
-def divceil(n, d):
+def divceil(n, d):  # pylint: disable=missing-param-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
     """Simple version for testing
     """
     q = n // d
@@ -253,6 +255,7 @@ class LithiumTests(TestCase):
                 sub.init_called = True
 
             def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
+                # pylint: disable=missing-return-doc,missing-return-type-doc
                 sub.interesting_called = True
                 return True
 
@@ -278,6 +281,7 @@ class LithiumTests(TestCase):
             inter = False
 
             def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
+                # pylint: disable=missing-return-doc,missing-return-type-doc
                 return sub.inter
         l.conditionScript = Interesting()
         l.strategy = lithium.Minimize()
@@ -311,6 +315,7 @@ class StrategyTests(TestCase):
         class Interesting(DummyInteresting):
 
             def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
+                # pylint: disable=missing-return-doc,missing-return-type-doc
                 with open("a.txt", "rb") as f:
                     return b"o\n" in f.read()
         l = lithium.Lithium()
@@ -330,6 +335,7 @@ class StrategyTests(TestCase):
         class Interesting(DummyInteresting):
 
             def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
+                # pylint: disable=missing-return-doc,missing-return-type-doc
                 with open("a.txt", "rb") as f:
                     data = f.read()
                     return b"o\n" in data and len(set(data.split(b"o\n"))) == 1
@@ -350,6 +356,7 @@ class StrategyTests(TestCase):
         class Interesting(DummyInteresting):
 
             def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
+                # pylint: disable=missing-return-doc,missing-return-type-doc
                 with open("a.txt", "rb") as f:
                     data = f.read()
                     if b"o\n" in data:
@@ -410,6 +417,7 @@ class StrategyTests(TestCase):
         class Interesting(DummyInteresting):
 
             def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
+                # pylint: disable=missing-return-doc,missing-return-type-doc
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
         l = lithium.Lithium()
@@ -442,6 +450,7 @@ class StrategyTests(TestCase):
         class Interesting(DummyInteresting):
 
             def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
+                # pylint: disable=missing-return-doc,missing-return-type-doc
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
         l = lithium.Lithium()

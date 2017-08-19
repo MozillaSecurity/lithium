@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring,missing-param-doc,missing-raises-doc,missing-return-doc
-# pylint: disable=missing-return-type-doc,missing-type-doc
+# pylint: disable=invalid-name,missing-docstring
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,8 +14,8 @@ import subprocess
 import sys
 import time
 
-path0 = os.path.dirname(os.path.abspath(__file__))
-path1 = os.path.abspath(os.path.join(path0, os.pardir, 'interestingness'))
+path0 = os.path.dirname(os.path.abspath(__file__))  # pylint: disable=invalid-name
+path1 = os.path.abspath(os.path.join(path0, os.pardir, 'interestingness'))  # pylint: disable=invalid-name
 sys.path.append(path1)
 import envVars  # noqa  pylint: disable=relative-import,wrong-import-position
 
@@ -25,22 +24,24 @@ ASAN_EXIT_CODE = 77
 (CRASHED, TIMED_OUT, NORMAL, ABNORMAL, NONE) = range(5)
 
 
-def getSignalName(num, default=None):
-    for p in dir(signal):
+def getSignalName(num, default=None):  # pylint: disable=invalid-name,missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
+    for p in dir(signal):  # pylint: disable=invalid-name
         if p.startswith("SIG") and not p.startswith("SIG_"):
             if getattr(signal, p) == num:
                 return p
     return default
 
 
-class rundata(object):  # pylint: disable=too-few-public-methods,too-many-instance-attributes
+class rundata(object):  # pylint: disable=invalid-name,missing-param-doc,missing-type-doc
+    # pylint: disable=too-few-public-methods,too-many-instance-attributes
     """Define struct that contains data from a process that has already ended."""
 
-    def __init__(self,  # pylint: disable=too-many-arguments
+    def __init__(self,  # pylint: disable=missing-param-doc,missing-type-doc,too-many-arguments
                  sta, rc, msg, elapsedtime, killed, pid, out, err):
         """Initialize with given parameters."""
         self.sta = sta
-        self.rc = rc
+        self.rc = rc  # pylint: disable=invalid-name
         self.msg = msg
         self.elapsedtime = elapsedtime
         self.killed = killed
@@ -49,7 +50,7 @@ class rundata(object):  # pylint: disable=too-few-public-methods,too-many-instan
         self.err = err
 
 
-def xpkill(p):
+def xpkill(p):  # pylint: disable=invalid-name,missing-param-doc,missing-type-doc
     """Based on mozilla-central/source/build/automation.py.in ."""
     try:
         p.kill()
@@ -64,8 +65,8 @@ def xpkill(p):
                     p.kill()  # Re-verify that the process is really killed.
 
 
-def makeEnv(binPath):
-    shellIsDeterministic = "-dm-" in binPath
+def makeEnv(binPath):  # pylint: disable=invalid-name,missing-docstring,missing-return-doc,missing-return-type-doc
+    shellIsDeterministic = "-dm-" in binPath  # pylint: disable=invalid-name
     # Total hack to make this not rely on queryBuildConfiguration in the funfuzz repository.
     # We need this so releng machines (which work off downloaded shells that are in build/dist/js),
     # do not compile LLVM.
@@ -80,15 +81,16 @@ def makeEnv(binPath):
     return env
 
 
-def timed_run(commandWithArgs,  # pylint: disable=too-complex,too-many-branches,too-many-locals,too-many-statements
-              timeout, logPrefix, inp=None, preexec_fn=None):
+def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):  # pylint: disable=invalid-name
+    # pylint: disable=missing-param-doc,missing-raises-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
+    # pylint: disable=too-complex,too-many-branches,too-many-locals,too-many-statements
     """If logPrefix is None, uses pipes instead of files for all output."""
     if not isinstance(commandWithArgs, list):
         raise TypeError("commandWithArgs should be a list (of strings).")
     if not isinstance(timeout, int):
         raise TypeError("timeout should be an int.")
 
-    useLogFiles = isinstance(logPrefix, str)
+    useLogFiles = isinstance(logPrefix, str)  # pylint: disable=invalid-name
 
     commandWithArgs[0] = os.path.expanduser(commandWithArgs[0])
     progname = commandWithArgs[0].split(os.path.sep)[-1]
@@ -96,8 +98,8 @@ def timed_run(commandWithArgs,  # pylint: disable=too-complex,too-many-branches,
     starttime = time.time()
 
     if useLogFiles:
-        childStdOut = open(logPrefix + "-out.txt", "w")
-        childStdErr = open(logPrefix + "-err.txt", "w")
+        childStdOut = open(logPrefix + "-out.txt", "w")  # pylint: disable=invalid-name
+        childStdErr = open(logPrefix + "-err.txt", "w")  # pylint: disable=invalid-name
 
     try:
         child = subprocess.Popen(
@@ -109,7 +111,7 @@ def timed_run(commandWithArgs,  # pylint: disable=too-complex,too-many-branches,
             env=makeEnv(commandWithArgs[0]),
             preexec_fn=preexec_fn
         )
-    except OSError as e:
+    except OSError as e:  # pylint: disable=invalid-name
         print("Tried to run:")
         print("  %r" % commandWithArgs)
         print("but got this error:")
@@ -133,7 +135,7 @@ def timed_run(commandWithArgs,  # pylint: disable=too-complex,too-many-branches,
 
     # This part is a bit like subprocess.communicate, but with a timeout
     while 1:
-        rc = child.poll()
+        rc = child.poll()  # pylint: disable=invalid-name
         elapsedtime = time.time() - starttime
         if rc is None:
             if elapsedtime > timeout and not killed:
