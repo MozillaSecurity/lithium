@@ -23,6 +23,7 @@ import lithium  # pylint: disable=relative-import
 
 log = logging.getLogger("lithium_test")
 logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("flake8").setLevel(logging.WARNING)
 
 
 # python 3 has unlimited precision integers
