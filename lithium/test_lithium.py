@@ -511,6 +511,30 @@ class TestcaseTests(TestCase):
         self.assertEqual(t.parts, [b"d", b"a", b"t", b"a", b"\n", b"2"])
         self.assertEqual(t.after, b"\nDDEND\npost\n")
 
+    def test_jsstr(self):
+        """Test that the TestcaseJsStr class splits JS strings properly"""
+        t = lithium.TestcaseJsStr()
+        with open("a.txt", "wb") as f:
+            f.write(b"pre\n")
+            f.write(b"DDBEGIN\n")
+            f.write(b"data\n")
+            f.write(b"2\n")
+            f.write(b"'\\u{123}\"1\\x32\\023\n'\n")  # a str with some escapes
+            f.write(b'""\n')  # empty string
+            f.write(b'"\\u12345Xyz"\n')  # another str with the last escape format
+            f.write(b'Data\xFF\n')
+            f.write(b'"x\xFF"\n')  # last str
+            f.write(b"DDEND\n")
+            f.write(b"post\n")
+        t.readTestcase("a.txt")
+        self.assertEqual(t.before, b"pre\nDDBEGIN\ndata\n2\n'")
+        self.assertEqual(t.parts, [b"\\u{123}", b"\"", b"1", b"\\x32", b"\\0", b"2", b"3", b"\n",  # first JS str
+                                   b"'\n\"\"\n\"",  # empty string contains no chars, included with in-between data
+                                   b"\\u1234", b"5", b"X", b"y", b"z",  # next JS str
+                                   b"\"\nData\xFF\n\"",
+                                   b"x", b"\xFF"])  # last JS str
+        self.assertEqual(t.after, b"\"\nDDEND\npost\n")
+
     def test_symbol(self):
         t = lithium.TestcaseSymbol()
         with open("a.txt", "wb") as f:

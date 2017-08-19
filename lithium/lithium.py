@@ -134,6 +134,72 @@ class TestcaseChar(TestcaseLine):
             self.parts.append(line[i:i + 1])
 
 
+class TestcaseJsStr(TestcaseChar):
+    """Testcase type for splitting JS strings byte-wise.
+
+    Data between JS string contents (including the string quotes themselves!) will be a single token for reduction.
+
+    Escapes are also kept together and treated as a single token for reduction.
+    ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String#Escape_notation
+    """
+    atom = "jsstr"
+
+    def readTestcase(self, filename):
+        # these are temporary attributes used to track state in readTestcaseLine (called by super().readTestcase)
+        # they are both deleted after the call below and not available in the instance normally
+        self._instr = None  # pylint: disable=attribute-defined-outside-init
+        self._chars = []  # pylint: disable=attribute-defined-outside-init
+
+        super(TestcaseJsStr, self).readTestcase(filename)
+
+        assert self._instr is None, "Unexpected EOF looking for end of string (%s)" % self._instr
+        del self._instr
+
+        # self._chars is a list of all the indices in self.parts which are chars
+        # merge all the non-chars since this was parsed line-wise
+
+        chars = self._chars
+        del self._chars
+
+        # beginning and end are special because we can put them in self.before/self.after
+        if chars:
+            off = -chars[0]
+            if off:
+                header, self.parts = b"".join(self.parts[:-off]), self.parts[-off:]
+                self.before = self.before + header
+            if chars[-1] != len(self.parts) + off:
+                self.parts, footer = self.parts[:chars[-1] + 1 + off], b"".join(self.parts[chars[-1] + 1 + off:])
+                self.after = footer + self.after
+
+        # now scan for chars with a gap > 2 between, which means we can merge
+        for char1, char2 in zip(chars, chars[1:]):
+            if (char2 - char1) > 2:
+                self.parts[off + char1 + 1:off + char2] = [b"".join(self.parts[off + char1 + 1:off + char2])]
+                off += char1 - char2 + 2
+
+    def readTestcaseLine(self, line):
+        last = 0
+        while True:
+            if self._instr:
+                match = re.match(br"(\\u[0-9A-Fa-f]{4}|\\x[0-9A-Fa-f]{2}|\\u\{[0-9A-Fa-f]+\}|\\.|.)", line[last:],
+                                 re.DOTALL)
+                if not match:
+                    break
+                self._chars.append(len(self.parts))
+                if match.group(0) == self._instr:
+                    self._instr = None  # pylint: disable=attribute-defined-outside-init
+                    self._chars.pop()
+            else:
+                match = re.search(br"""['"]""", line[last:])
+                if not match:
+                    break
+                self._instr = match.group(0)  # pylint: disable=attribute-defined-outside-init
+            self.parts.append(line[last:last + match.end(0)])
+            last += match.end(0)
+        if last != len(line):
+            self.parts.append(line[last:])
+
+
 class TestcaseSymbol(TestcaseLine):
     atom = "symbol-delimiter"
     DEFAULT_CUT_AFTER = b"?=;{["
@@ -1190,6 +1256,10 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
             help="Don't treat lines as atomic units; "
                  "treat the file as a sequence of characters rather than a sequence of lines.")
         grp_atoms.add_argument(
+            "-j", "--js",
+            action="store_true",
+            help="Same as --char but only operate within JS strings, keeping escapes intact.")
+        grp_atoms.add_argument(
             "-s", "--symbol",
             action="store_true",
             help="Treat the file as a sequence of strings separated by tokens. "
@@ -1223,6 +1293,7 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
 
         self.tempDir = args.tempdir
         atom = TestcaseChar.atom if args.char else TestcaseLine.atom
+        atom = TestcaseJsStr.atom if args.js else atom
         atom = TestcaseSymbol.atom if args.symbol else atom
 
         extra_args = args.extra_args[0]
