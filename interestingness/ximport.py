@@ -16,8 +16,10 @@ import sys
 log = logging.getLogger("lithium")  # pylint: disable=invalid-name
 
 
-def importRelativeOrAbsolute(f):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
+def importRelativeOrAbsolute(f):  # pylint: disable=invalid-name
+    # pylint: disable=missing-param-doc,missing-raises-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
+    """Import an interestingness test given a full path or a filename."""
+
     # maybe there's a way to do this more sanely with the |imp| module...
     if f.endswith(".py"):
         f = f[:-3]

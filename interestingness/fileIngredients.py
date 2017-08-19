@@ -32,11 +32,12 @@ def fileContainsStr(f, s, verbose=True):  # pylint: disable=invalid-name,missing
     return False
 
 
-def fileContainsRegex(f, regex, verbose=True):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
-    # e.g. ~/fuzzing/lithium/lithium.py crashesat --timeout=30
-    #       --regex '^#0\s*0x.* in\s*.*(?:\n|\r\n?)#1\s*' ./js --ion -n 735957.js
-    # Note that putting "^" and "$" together is unlikely to work.
+def fileContainsRegex(f, regex, verbose=True):  # pylint: disable=invalid-name
+    # pylint: disable=missing-param-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
+    """e.g. ~/fuzzing/lithium/lithium.py crashesat --timeout=30
+     --regex '^#0\\s*0x.* in\\s*.*(?:\\n|\\r\\n?)#1\\s*' ./js --ion -n 735957.js
+     Note that putting "^" and "$" together is unlikely to work."""
+
     matchedStr = ""  # pylint: disable=invalid-name
     found = False
     with open(f, "rb") as g:  # pylint: disable=invalid-name

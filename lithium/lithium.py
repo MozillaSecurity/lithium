@@ -246,7 +246,19 @@ class CheckOnly(Strategy):  # pylint: disable=missing-docstring
         return 0
 
 
-class Minimize(Strategy):  # pylint: disable=missing-docstring
+class Minimize(Strategy):
+    """    Main reduction algorithm
+
+    This strategy attempts to remove chunks which might not be interesting
+    code, but which can be removed independently of any other.  This happens
+    frequently with values which are computed, but either after the execution,
+    or never used to influenced the interesting part.
+
+      a = compute();
+      b = compute();   <-- !!!
+      interesting(a);
+      c = compute();   <-- !!!"""
+
     name = "minimize"
 
     def __init__(self):
@@ -334,18 +346,6 @@ class Minimize(Strategy):  # pylint: disable=missing-docstring
 
         return result
 
-    # Main reduction algorithm
-    #
-    # This strategy attempts to remove chunks which might not be interesting
-    # code, but which can be removed independently of any other.  This happens
-    # frequently with values which are computed, but either after the execution,
-    # or never used to influenced the interesting part.
-    #
-    #   a = compute();
-    #   b = compute();   <-- !!!
-    #   interesting(a);
-    #   c = compute();   <-- !!!
-    #
     def run(self, testcase, interesting, tempFilename):  # pylint: disable=invalid-name,missing-docstring
         # pylint: disable=missing-return-doc,missing-return-type-doc
         # pylint: disable=invalid-name
@@ -396,20 +396,20 @@ class Minimize(Strategy):  # pylint: disable=missing-docstring
         return 0, (chunkSize == 1 and not anyChunksRemoved and self.minimizeRepeat != "never"), testcase
 
 
-class MinimizeSurroundingPairs(Minimize):  # pylint: disable=missing-docstring
+class MinimizeSurroundingPairs(Minimize):
+    """    This strategy attempts to remove pairs of chunks which might be surrounding
+    interesting code, but which cannot be removed independently of the other.
+    This happens frequently with patterns such as:
+
+      a = 42;
+      while (true) {
+         b = foo(a);      <-- !!!
+         interesting();
+         a = bar(b);      <-- !!!
+      }"""
+
     name = "minimize-around"
 
-    # This strategy attempts to remove pairs of chunks which might be surrounding
-    # interesting code, but which cannot be removed independently of the other.
-    # This happens frequently with patterns such as:
-    #
-    #   a = 42;
-    #   while (true) {
-    #      b = foo(a);      <-- !!!
-    #      interesting();
-    #      a = bar(b);      <-- !!!
-    #   }
-    #
     def run(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
         # pylint: disable=invalid-name
         chunkSize = min(self.minimizeMax, largestPowerOfTwoSmallerThan(len(testcase.parts)))
@@ -543,24 +543,23 @@ class MinimizeSurroundingPairs(Minimize):  # pylint: disable=missing-docstring
         return bool(chunksRemoved), testcase
 
 
-class MinimizeBalancedPairs(MinimizeSurroundingPairs):  # pylint: disable=missing-docstring
-    name = "minimize-balanced"
+class MinimizeBalancedPairs(MinimizeSurroundingPairs):
+    """    This strategy attempts to remove balanced chunks which might be surrounding
+    interesting code, but which cannot be removed independently of the other.
+    This happens frequently with patterns such as:
 
-    # This strategy attempts to remove balanced chunks which might be surrounding
-    # interesting code, but which cannot be removed independently of the other.
-    # This happens frequently with patterns such as:
-    #
-    #   ...;
-    #   if (cond) {        <-- !!!
-    #      ...;
-    #      interesting();
-    #      ...;
-    #   }                  <-- !!!
-    #   ...;
-    #
-    # The value of the condition might not be interesting, but in order to reach the
-    # interesting code we still have to compute it, and keep extra code alive.
-    #
+      ...;
+      if (cond) {        <-- !!!
+         ...;
+         interesting();
+         ...;
+      }                  <-- !!!
+      ...;
+
+    The value of the condition might not be interesting, but in order to reach the
+    interesting code we still have to compute it, and keep extra code alive."""
+
+    name = "minimize-balanced"
 
     @staticmethod
     def list_fiveParts(lst, step, f, s, t):  # pylint: disable=invalid-name,missing-docstring
@@ -782,36 +781,36 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):  # pylint: disable=missin
         return bool(chunksRemoved), testcase
 
 
-class ReplacePropertiesByGlobals(Minimize):  # pylint: disable=missing-docstring
+class ReplacePropertiesByGlobals(Minimize):
+    """    This strategy attempts to remove members, such that other strategies can
+    then move the lines outside the functions.  The goal is to rename
+    variables at the same time, such that the program remains valid, while
+    removing the dependency on the object on which the member is part of.
+
+      function Foo() {
+        this.list = [];
+      }
+      Foo.prototype.push = function(a) {
+        this.list.push(a);
+      }
+      Foo.prototype.last = function() {
+        return this.list.pop();
+      }
+
+    Which might transform the previous example to something like:
+
+      function Foo() {
+        list = [];
+      }
+      push = function(a) {
+        list.push(a);
+      }
+      last = function() {
+        return list.pop();
+      }"""
+
     name = "replace-properties-by-globals"
 
-    # This strategy attempts to remove members, such that other strategies can
-    # then move the lines outside the functions.  The goal is to rename
-    # variables at the same time, such that the program remains valid, while
-    # removing the dependency on the object on which the member is part of.
-    #
-    #   function Foo() {
-    #     this.list = [];
-    #   }
-    #   Foo.prototype.push = function(a) {
-    #     this.list.push(a);
-    #   }
-    #   Foo.prototype.last = function() {
-    #     return this.list.pop();
-    #   }
-    #
-    # Which might transform the previous example to something like:
-    #
-    #   function Foo() {
-    #     list = [];
-    #   }
-    #   push = function(a) {
-    #     list.push(a);
-    #   }
-    #   last = function() {
-    #     return list.pop();
-    #   }
-    #
     def run(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
         # pylint: disable=invalid-name
         chunkSize = min(self.minimizeMax, 2 * largestPowerOfTwoSmallerThan(len(testcase.parts)))
@@ -927,30 +926,30 @@ class ReplacePropertiesByGlobals(Minimize):  # pylint: disable=missing-docstring
         return numRemovedChars, testcase
 
 
-class ReplaceArgumentsByGlobals(Minimize):  # pylint: disable=missing-docstring
+class ReplaceArgumentsByGlobals(Minimize):
+    """    This strategy attempts to replace arguments by globals, for each named
+    argument of a function we add a setter of the global of the same name before
+    the function call.  The goal is to remove functions by making empty arguments
+    lists instead.
+
+      function foo(a,b) {
+        list = a + b;
+      }
+      foo(2, 3)
+
+    becomes:
+
+      function foo() {
+        list = a + b;
+      }
+      a = 2;
+      b = 3;
+      foo()
+
+    The next logical step is inlining the body of the function at the call site."""
+
     name = "replace-arguments-by-globals"
 
-    # This strategy attempts to replace arguments by globals, for each named
-    # argument of a function we add a setter of the global of the same name before
-    # the function call.  The goal is to remove functions by making empty arguments
-    # lists instead.
-    #
-    #   function foo(a,b) {
-    #     list = a + b;
-    #   }
-    #   foo(2, 3)
-    #
-    # becomes:
-    #
-    #   function foo() {
-    #     list = a + b;
-    #   }
-    #   a = 2;
-    #   b = 3;
-    #   foo()
-    #
-    # The next logical step is inlining the body of the function at the call site.
-    #
     def run(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
         roundNum = 0  # pylint: disable=invalid-name
         while 1:
@@ -1213,8 +1212,10 @@ class Lithium(object):  # pylint: disable=missing-docstring,too-many-instance-at
             if self.lastInteresting is not None:
                 self.lastInteresting.writeTestcase()
 
-    def processArgs(self, argv=None):  # pylint: disable=invalid-name,missing-docstring,too-complex,too-many-locals
-        # Build list of strategies and testcase types
+    def processArgs(self, argv=None):  # pylint: disable=invalid-name,missing-param-doc,missing-type-doc
+        # pylint: disable=too-complex,too-many-locals
+        """Build list of strategies and testcase types."""
+
         strategies = {}
         testcaseTypes = {}  # pylint: disable=invalid-name
         for globalValue in globals().values():  # pylint: disable=invalid-name
