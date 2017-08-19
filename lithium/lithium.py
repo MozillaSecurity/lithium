@@ -135,9 +135,18 @@ class TestcaseChar(TestcaseLine):
 
 
 class TestcaseJsStr(TestcaseChar):
+    """Testcase type for splitting JS strings byte-wise.
+
+    Data between JS string contents (including the string quotes themselves!) will be a single token for reduction.
+
+    Escapes are also kept together and treated as a single token for reduction.
+    ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String#Escape_notation
+    """
     atom = "jsstr"
 
     def readTestcase(self, filename):
+        # these are temporary attributes used to track state in readTestcaseLine (called by super().readTestcase)
+        # they are both deleted after the call below and not available in the instance normally
         self._instr = None  # pylint: disable=attribute-defined-outside-init
         self._chars = []  # pylint: disable=attribute-defined-outside-init
 
