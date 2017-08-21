@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=missing-param-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +13,8 @@ e.g. lithium product_divides 35 11.txt
 import sys
 
 
-def interesting(args, _temp_prefix):
+def interesting(args, _temp_prefix):  # pylint: disable=missing-param-doc,missing-return-doc
+    # pylint: disable=missing-return-type-doc,missing-type-doc
     """Simple version for testing
     """
     mod = int(args[0])

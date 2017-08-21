@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring,missing-param-doc,missing-return-doc,missing-return-type-doc
-# pylint: disable=missing-type-doc,too-many-lines,too-many-statements
+# pylint: disable=missing-docstring
+# pylint: disable=too-many-lines
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,10 +14,10 @@ import re
 import sys
 import time
 
-log = logging.getLogger("lithium")
+log = logging.getLogger("lithium")  # pylint: disable=invalid-name
 
 
-class LithiumError(Exception):
+class LithiumError(Exception):  # pylint: disable=missing-docstring
     pass
 
 
@@ -35,7 +35,7 @@ class Testcase(object):
         self.filename = None
         self.extension = None
 
-    def copy(self):
+    def copy(self):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
         new = type(self)()
 
         new.before = self.before
@@ -47,21 +47,21 @@ class Testcase(object):
 
         return new
 
-    def readTestcase(self, filename):
-        hasDDSection = False
+    def readTestcase(self, filename):  # pylint: disable=invalid-name,missing-docstring
+        hasDDSection = False  # pylint: disable=invalid-name
 
         self.__init__()
         self.filename = filename
         self.extension = os.path.splitext(self.filename)[1]
 
-        with open(self.filename, "rb") as f:
+        with open(self.filename, "rb") as f:  # pylint: disable=invalid-name
             # Determine whether the f has a DDBEGIN..DDEND section.
             for line in f:
                 if line.find(b"DDEND") != -1:
                     raise LithiumError("The testcase (%s) has a line containing 'DDEND' "
                                        "without a line containing 'DDBEGIN' before it." % self.filename)
                 if line.find(b"DDBEGIN") != -1:
-                    hasDDSection = True
+                    hasDDSection = True  # pylint: disable=invalid-name
                     break
 
             f.seek(0)
@@ -77,7 +77,7 @@ class Testcase(object):
                 for line in f:
                     self.readTestcaseLine(line)
 
-    def readTestcaseWithDDSection(self, f):
+    def readTestcaseWithDDSection(self, f):  # pylint: disable=invalid-name,missing-docstring
         for line in f:
             self.before += line
             if line.find(b"DDBEGIN") != -1:
@@ -95,14 +95,14 @@ class Testcase(object):
         for line in f:
             self.after += line
 
-    def readTestcaseLine(self, line):
+    def readTestcaseLine(self, line):  # pylint: disable=invalid-name,missing-docstring
         raise NotImplementedError()
 
-    def writeTestcase(self, filename=None):
+    def writeTestcase(self, filename=None):  # pylint: disable=invalid-name,missing-docstring
         raise NotImplementedError()
 
 
-class TestcaseLine(Testcase):
+class TestcaseLine(Testcase):  # pylint: disable=missing-docstring
     atom = "line"
 
     def readTestcaseLine(self, line):
@@ -111,13 +111,13 @@ class TestcaseLine(Testcase):
     def writeTestcase(self, filename=None):
         if filename is None:
             filename = self.filename
-        with open(filename, "wb") as f:
+        with open(filename, "wb") as f:  # pylint: disable=invalid-name
             f.write(self.before)
             f.writelines(self.parts)
             f.write(self.after)
 
 
-class TestcaseChar(TestcaseLine):
+class TestcaseChar(TestcaseLine):  # pylint: disable=missing-docstring
     atom = "char"
 
     def readTestcaseWithDDSection(self, f):
@@ -200,7 +200,7 @@ class TestcaseJsStr(TestcaseChar):
             self.parts.append(line[last:])
 
 
-class TestcaseSymbol(TestcaseLine):
+class TestcaseSymbol(TestcaseLine):  # pylint: disable=missing-docstring
     atom = "symbol-delimiter"
     DEFAULT_CUT_AFTER = b"?=;{["
     DEFAULT_CUT_BEFORE = b"]}:"
@@ -208,8 +208,8 @@ class TestcaseSymbol(TestcaseLine):
     def __init__(self):
         TestcaseLine.__init__(self)
 
-        self.cutAfter = self.DEFAULT_CUT_AFTER
-        self.cutBefore = self.DEFAULT_CUT_BEFORE
+        self.cutAfter = self.DEFAULT_CUT_AFTER  # pylint: disable=invalid-name
+        self.cutBefore = self.DEFAULT_CUT_BEFORE  # pylint: disable=invalid-name
 
     def readTestcaseLine(self, line):
         cutter = (b"[" + self.cutBefore + b"]?" +
@@ -227,36 +227,48 @@ class Strategy(object):
     to minimize the testcase.
     """
 
-    def addArgs(self, parser):
+    def addArgs(self, parser):  # pylint: disable=invalid-name,missing-docstring
         pass
 
-    def processArgs(self, parser, args):
+    def processArgs(self, parser, args):  # pylint: disable=invalid-name,missing-docstring
         pass
 
-    def main(self, testcase, interesting, tempFilename):
+    def main(self, testcase, interesting, tempFilename):  # pylint: disable=invalid-name,missing-docstring
         raise NotImplementedError()
 
 
-class CheckOnly(Strategy):
+class CheckOnly(Strategy):  # pylint: disable=missing-docstring
     name = "check-only"
 
-    def main(self, testcase, interesting, tempFilename):
-        r = interesting(testcase, writeIt=False)
+    def main(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
+        r = interesting(testcase, writeIt=False)  # pylint: disable=invalid-name
         log.info("Lithium result: %s", ("interesting." if r else "not interesting."))
         return 0
 
 
 class Minimize(Strategy):
+    """    Main reduction algorithm
+
+    This strategy attempts to remove chunks which might not be interesting
+    code, but which can be removed independently of any other.  This happens
+    frequently with values which are computed, but either after the execution,
+    or never used to influenced the interesting part.
+
+      a = compute();
+      b = compute();   <-- !!!
+      interesting(a);
+      c = compute();   <-- !!!"""
+
     name = "minimize"
 
     def __init__(self):
-        self.minimizeRepeat = "last"
-        self.minimizeMin = 1
-        self.minimizeMax = pow(2, 30)
-        self.minimizeChunkStart = 0
-        self.minimizeChunkSize = None
-        self.minimizeRepeatFirstRound = False
-        self.stopAfterTime = None
+        self.minimizeRepeat = "last"  # pylint: disable=invalid-name
+        self.minimizeMin = 1  # pylint: disable=invalid-name
+        self.minimizeMax = pow(2, 30)  # pylint: disable=invalid-name
+        self.minimizeChunkStart = 0  # pylint: disable=invalid-name
+        self.minimizeChunkSize = None  # pylint: disable=invalid-name
+        self.minimizeRepeatFirstRound = False  # pylint: disable=invalid-name
+        self.stopAfterTime = None  # pylint: disable=invalid-name
 
     def addArgs(self, parser):
         grp_add = parser.add_argument_group(description="Additional options for the %s strategy" % self.name)
@@ -307,7 +319,7 @@ class Minimize(Strategy):
         if not isPowerOfTwo(self.minimizeMin) or not isPowerOfTwo(self.minimizeMax):
             parser.error("Min/Max must be powers of two.")
 
-    def main(self, testcase, interesting, tempFilename):
+    def main(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
         log.info("The original testcase has %s.", quantity(len(testcase.parts), testcase.atom))
         log.info("Checking that the original testcase is 'interesting'...")
         if not interesting(testcase, writeIt=False):
@@ -319,8 +331,8 @@ class Minimize(Strategy):
 
         testcase.writeTestcase(tempFilename("original", False))
 
-        origNumParts = len(testcase.parts)
-        result, anySingle, testcase = self.run(testcase, interesting, tempFilename)
+        origNumParts = len(testcase.parts)  # pylint: disable=invalid-name
+        result, anySingle, testcase = self.run(testcase, interesting, tempFilename)  # pylint: disable=invalid-name
 
         testcase.writeTestcase()
 
@@ -334,23 +346,13 @@ class Minimize(Strategy):
 
         return result
 
-    # Main reduction algorithm
-    #
-    # This strategy attempts to remove chunks which might not be interesting
-    # code, but which can be removed independently of any other.  This happens
-    # frequently with values which are computed, but either after the execution,
-    # or never used to influenced the interesting part.
-    #
-    #   a = compute();
-    #   b = compute();   <-- !!!
-    #   interesting(a);
-    #   c = compute();   <-- !!!
-    #
-    def run(self, testcase, interesting, tempFilename):
+    def run(self, testcase, interesting, tempFilename):  # pylint: disable=invalid-name,missing-docstring
+        # pylint: disable=missing-return-doc,missing-return-type-doc
+        # pylint: disable=invalid-name
         chunkSize = min(self.minimizeMax, largestPowerOfTwoSmallerThan(len(testcase.parts)))
-        finalChunkSize = min(chunkSize, max(self.minimizeMin, 1))
-        chunkStart = self.minimizeChunkStart
-        anyChunksRemoved = self.minimizeRepeatFirstRound
+        finalChunkSize = min(chunkSize, max(self.minimizeMin, 1))  # pylint: disable=invalid-name
+        chunkStart = self.minimizeChunkStart  # pylint: disable=invalid-name
+        anyChunksRemoved = self.minimizeRepeatFirstRound  # pylint: disable=invalid-name
 
         while True:
             if self.stopAfterTime and time.time() > self.stopAfterTime:
@@ -395,22 +397,23 @@ class Minimize(Strategy):
 
 
 class MinimizeSurroundingPairs(Minimize):
+    """    This strategy attempts to remove pairs of chunks which might be surrounding
+    interesting code, but which cannot be removed independently of the other.
+    This happens frequently with patterns such as:
+
+      a = 42;
+      while (true) {
+         b = foo(a);      <-- !!!
+         interesting();
+         a = bar(b);      <-- !!!
+      }"""
+
     name = "minimize-around"
 
-    # This strategy attempts to remove pairs of chunks which might be surrounding
-    # interesting code, but which cannot be removed independently of the other.
-    # This happens frequently with patterns such as:
-    #
-    #   a = 42;
-    #   while (true) {
-    #      b = foo(a);      <-- !!!
-    #      interesting();
-    #      a = bar(b);      <-- !!!
-    #   }
-    #
-    def run(self, testcase, interesting, tempFilename):
+    def run(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
+        # pylint: disable=invalid-name
         chunkSize = min(self.minimizeMax, largestPowerOfTwoSmallerThan(len(testcase.parts)))
-        finalChunkSize = max(self.minimizeMin, 1)
+        finalChunkSize = max(self.minimizeMin, 1)  # pylint: disable=invalid-name
 
         while 1:
             anyChunksRemoved, testcase = self.tryRemovingChunks(chunkSize, testcase, interesting, tempFilename)
@@ -430,7 +433,8 @@ class MinimizeSurroundingPairs(Minimize):
         return 0, (finalChunkSize == 1 and self.minimizeRepeat != "never"), testcase
 
     @staticmethod
-    def list_rindex(l, p, e):
+    def list_rindex(l, p, e):  # pylint: disable=invalid-name,missing-docstring
+        # pylint: disable=missing-return-doc,missing-return-type-doc
         if p < 0 or p > len(l):
             raise ValueError("%s is not in list" % e)
         for index, item in enumerate(reversed(l[:p])):
@@ -439,23 +443,26 @@ class MinimizeSurroundingPairs(Minimize):
         raise ValueError("%s is not in list" % e)
 
     @staticmethod
-    def list_nindex(l, p, e):
+    def list_nindex(l, p, e):  # pylint: disable=invalid-name,missing-docstring
+        # pylint: disable=missing-return-doc,missing-return-type-doc
         if p + 1 >= len(l):
             raise ValueError("%s is not in list" % e)
         return l[(p + 1):].index(e) + (p + 1)
 
-    def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):  # pylint: disable=too-many-locals
+    def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):  # pylint: disable=invalid-name
+        # pylint: disable=missing-param-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
+        # pylint: disable=too-many-locals,too-many-statements
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
 
         summary = ""
 
-        chunksRemoved = 0
-        atomsRemoved = 0
+        chunksRemoved = 0  # pylint: disable=invalid-name
+        atomsRemoved = 0  # pylint: disable=invalid-name
 
-        atomsInitial = len(testcase.parts)
-        numChunks = divideRoundingUp(len(testcase.parts), chunkSize)
+        atomsInitial = len(testcase.parts)  # pylint: disable=invalid-name
+        numChunks = divideRoundingUp(len(testcase.parts), chunkSize)  # pylint: disable=invalid-name
 
         # Not enough chunks to remove surrounding blocks.
         if numChunks < 3:
@@ -464,61 +471,61 @@ class MinimizeSurroundingPairs(Minimize):
         log.info("Starting a round with chunks of %s.", quantity(chunkSize, testcase.atom))
 
         summary = ["S" for _ in range(numChunks)]
-        chunkStart = chunkSize
-        beforeChunkIdx = 0
-        keepChunkIdx = 1
-        afterChunkIdx = 2
+        chunkStart = chunkSize  # pylint: disable=invalid-name
+        beforeChunkIdx = 0  # pylint: disable=invalid-name
+        keepChunkIdx = 1  # pylint: disable=invalid-name
+        afterChunkIdx = 2  # pylint: disable=invalid-name
 
         try:
             while chunkStart + chunkSize < len(testcase.parts):
-                chunkBefStart = max(0, chunkStart - chunkSize)
-                chunkBefEnd = chunkStart
-                chunkAftStart = min(len(testcase.parts), chunkStart + chunkSize)
-                chunkAftEnd = min(len(testcase.parts), chunkAftStart + chunkSize)
+                chunkBefStart = max(0, chunkStart - chunkSize)  # pylint: disable=invalid-name
+                chunkBefEnd = chunkStart  # pylint: disable=invalid-name
+                chunkAftStart = min(len(testcase.parts), chunkStart + chunkSize)  # pylint: disable=invalid-name
+                chunkAftEnd = min(len(testcase.parts), chunkAftStart + chunkSize)  # pylint: disable=invalid-name
                 description = "chunk #%d & #%d of %d chunks of size %d" % (
                     beforeChunkIdx, afterChunkIdx, numChunks, chunkSize)
 
-                testcaseSuggestion = testcase.copy()
+                testcaseSuggestion = testcase.copy()  # pylint: disable=invalid-name
                 testcaseSuggestion.parts = (testcaseSuggestion.parts[:chunkBefStart] +
                                             testcaseSuggestion.parts[chunkBefEnd:chunkAftStart] +
                                             testcaseSuggestion.parts[chunkAftEnd:])
                 if interesting(testcaseSuggestion):
                     testcase = testcaseSuggestion
                     log.info("Yay, reduced it by removing %s :)", description)
-                    chunksRemoved += 2
-                    atomsRemoved += (chunkBefEnd - chunkBefStart)
-                    atomsRemoved += (chunkAftEnd - chunkAftStart)
+                    chunksRemoved += 2  # pylint: disable=invalid-name
+                    atomsRemoved += (chunkBefEnd - chunkBefStart)  # pylint: disable=invalid-name
+                    atomsRemoved += (chunkAftEnd - chunkAftStart)  # pylint: disable=invalid-name
                     summary[beforeChunkIdx] = "-"
                     summary[afterChunkIdx] = "-"
                     # The start is now sooner since we remove the chunk which was before this one.
-                    chunkStart -= chunkSize
+                    chunkStart -= chunkSize  # pylint: disable=invalid-name
                     try:
                         # Try to keep removing surrounding chunks of the same part.
-                        beforeChunkIdx = self.list_rindex(summary, keepChunkIdx, "S")
+                        beforeChunkIdx = self.list_rindex(summary, keepChunkIdx, "S")  # pylint: disable=invalid-name
                     except ValueError:
                         # There is no more survinving block on the left-hand-side of
                         # the current chunk, shift everything by one surviving
                         # block. Any ValueError from here means that there is no
                         # longer enough chunk.
-                        beforeChunkIdx = keepChunkIdx
-                        keepChunkIdx = self.list_nindex(summary, keepChunkIdx, "S")
-                        chunkStart += chunkSize
+                        beforeChunkIdx = keepChunkIdx  # pylint: disable=invalid-name
+                        keepChunkIdx = self.list_nindex(summary, keepChunkIdx, "S")  # pylint: disable=invalid-name
+                        chunkStart += chunkSize  # pylint: disable=invalid-name
                 else:
                     log.info("Removing %s made the file 'uninteresting'.", description)
                     # Shift chunk indexes, and seek the next surviving chunk. ValueError
                     # from here means that there is no longer enough chunks.
-                    beforeChunkIdx = keepChunkIdx
-                    keepChunkIdx = afterChunkIdx
-                    chunkStart += chunkSize
+                    beforeChunkIdx = keepChunkIdx  # pylint: disable=invalid-name
+                    keepChunkIdx = afterChunkIdx  # pylint: disable=invalid-name
+                    chunkStart += chunkSize  # pylint: disable=invalid-name
 
-                afterChunkIdx = self.list_nindex(summary, keepChunkIdx, "S")
+                afterChunkIdx = self.list_nindex(summary, keepChunkIdx, "S")  # pylint: disable=invalid-name
 
         except ValueError:
             # This is a valid loop exit point.
-            chunkStart = len(testcase.parts)
+            chunkStart = len(testcase.parts)  # pylint: disable=invalid-name
 
-        atomsSurviving = atomsInitial - atomsRemoved
-        printableSummary = " ".join(
+        atomsSurviving = atomsInitial - atomsRemoved  # pylint: disable=invalid-name
+        printableSummary = " ".join(  # pylint: disable=invalid-name
             "".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2))
         log.info("")
         log.info("Done with a round of chunk size %d!", chunkSize)
@@ -537,41 +544,42 @@ class MinimizeSurroundingPairs(Minimize):
 
 
 class MinimizeBalancedPairs(MinimizeSurroundingPairs):
+    """    This strategy attempts to remove balanced chunks which might be surrounding
+    interesting code, but which cannot be removed independently of the other.
+    This happens frequently with patterns such as:
+
+      ...;
+      if (cond) {        <-- !!!
+         ...;
+         interesting();
+         ...;
+      }                  <-- !!!
+      ...;
+
+    The value of the condition might not be interesting, but in order to reach the
+    interesting code we still have to compute it, and keep extra code alive."""
+
     name = "minimize-balanced"
 
-    # This strategy attempts to remove balanced chunks which might be surrounding
-    # interesting code, but which cannot be removed independently of the other.
-    # This happens frequently with patterns such as:
-    #
-    #   ...;
-    #   if (cond) {        <-- !!!
-    #      ...;
-    #      interesting();
-    #      ...;
-    #   }                  <-- !!!
-    #   ...;
-    #
-    # The value of the condition might not be interesting, but in order to reach the
-    # interesting code we still have to compute it, and keep extra code alive.
-    #
-
     @staticmethod
-    def list_fiveParts(lst, step, f, s, t):
+    def list_fiveParts(lst, step, f, s, t):  # pylint: disable=invalid-name,missing-docstring
+        # pylint: disable=missing-return-doc,missing-return-type-doc
         return (lst[:f], lst[f:s], lst[s:(s + step)], lst[(s + step):(t + step)], lst[(t + step):])
 
-    def tryRemovingChunks(self,  # pylint: disable=too-complex,too-many-branches,too-many-locals
-                          chunkSize, testcase, interesting, tempFilename):
+    def tryRemovingChunks(self, chunkSize, testcase, interesting, tempFilename):
+        # pylint: disable=missing-param-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
+        # pylint: disable=too-many-branches,too-complex,too-many-locals,too-many-statements
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
 
         summary = ""
 
-        chunksRemoved = 0
-        atomsRemoved = 0
+        chunksRemoved = 0  # pylint: disable=invalid-name
+        atomsRemoved = 0  # pylint: disable=invalid-name
 
-        atomsInitial = len(testcase.parts)
-        numChunks = divideRoundingUp(len(testcase.parts), chunkSize)
+        atomsInitial = len(testcase.parts)  # pylint: disable=invalid-name
+        numChunks = divideRoundingUp(len(testcase.parts), chunkSize)  # pylint: disable=invalid-name
 
         # Not enough chunks to remove surrounding blocks.
         if numChunks < 2:
@@ -583,8 +591,8 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
         curly = [(testcase.parts[i].count(b"{") - testcase.parts[i].count(b"}")) for i in range(numChunks)]
         square = [(testcase.parts[i].count(b"[") - testcase.parts[i].count(b"]")) for i in range(numChunks)]
         normal = [(testcase.parts[i].count(b"(") - testcase.parts[i].count(b")")) for i in range(numChunks)]
-        chunkStart = 0
-        lhsChunkIdx = 0
+        chunkStart = 0  # pylint: disable=invalid-name
+        lhsChunkIdx = 0  # pylint: disable=invalid-name
 
         try:
             while chunkStart < len(testcase.parts):
@@ -595,39 +603,39 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 assert summary[:lhsChunkIdx].count("S") * chunkSize == chunkStart, (
                     "the chunkStart should correspond to the lhsChunkIdx modulo the removed chunks.")
 
-                chunkLhsStart = chunkStart
-                chunkLhsEnd = min(len(testcase.parts), chunkLhsStart + chunkSize)
+                chunkLhsStart = chunkStart  # pylint: disable=invalid-name
+                chunkLhsEnd = min(len(testcase.parts), chunkLhsStart + chunkSize)  # pylint: disable=invalid-name
 
-                nCurly = curly[lhsChunkIdx]
-                nSquare = square[lhsChunkIdx]
-                nNormal = normal[lhsChunkIdx]
+                nCurly = curly[lhsChunkIdx]  # pylint: disable=invalid-name
+                nSquare = square[lhsChunkIdx]  # pylint: disable=invalid-name
+                nNormal = normal[lhsChunkIdx]  # pylint: disable=invalid-name
 
                 # If the chunk is already balanced, try to remove it.
                 if not (nCurly or nSquare or nNormal):
-                    testcaseSuggestion = testcase.copy()
+                    testcaseSuggestion = testcase.copy()  # pylint: disable=invalid-name
                     testcaseSuggestion.parts = (testcaseSuggestion.parts[:chunkLhsStart] +
                                                 testcaseSuggestion.parts[chunkLhsEnd:])
                     if interesting(testcaseSuggestion):
                         testcase = testcaseSuggestion
                         log.info("Yay, reduced it by removing %s :)", description)
-                        chunksRemoved += 1
-                        atomsRemoved += (chunkLhsEnd - chunkLhsStart)
+                        chunksRemoved += 1  # pylint: disable=invalid-name
+                        atomsRemoved += (chunkLhsEnd - chunkLhsStart)  # pylint: disable=invalid-name
                         summary[lhsChunkIdx] = "-"
                     else:
                         log.info("Removing %s made the file 'uninteresting'.", description)
-                        chunkStart += chunkSize
-                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
+                        chunkStart += chunkSize  # pylint: disable=invalid-name
+                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")  # pylint: disable=invalid-name
                     continue
 
                 # Otherwise look for the corresponding chunk.
-                rhsChunkIdx = lhsChunkIdx
+                rhsChunkIdx = lhsChunkIdx  # pylint: disable=invalid-name
                 for item in summary[(lhsChunkIdx + 1):]:
-                    rhsChunkIdx += 1
+                    rhsChunkIdx += 1  # pylint: disable=invalid-name
                     if item != "S":
                         continue
-                    nCurly += curly[rhsChunkIdx]
-                    nSquare += square[rhsChunkIdx]
-                    nNormal += normal[rhsChunkIdx]
+                    nCurly += curly[rhsChunkIdx]  # pylint: disable=invalid-name
+                    nSquare += square[rhsChunkIdx]  # pylint: disable=invalid-name
+                    nNormal += normal[rhsChunkIdx]  # pylint: disable=invalid-name
                     if nCurly < 0 or nSquare < 0 or nNormal < 0:
                         break
                     if not (nCurly or nSquare or nNormal):
@@ -636,14 +644,15 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 # If we have no match, then just skip this pair of chunks.
                 if nCurly or nSquare or nNormal:
                     log.info("Skipping %s because it is 'uninteresting'.", description)
-                    chunkStart += chunkSize
-                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
+                    chunkStart += chunkSize  # pylint: disable=invalid-name
+                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")  # pylint: disable=invalid-name
                     continue
 
                 # Otherwise we do have a match and we check if this is interesting to remove both.
+                # pylint: disable=invalid-name
                 chunkRhsStart = chunkLhsStart + chunkSize * summary[lhsChunkIdx:rhsChunkIdx].count("S")
-                chunkRhsStart = min(len(testcase.parts), chunkRhsStart)
-                chunkRhsEnd = min(len(testcase.parts), chunkRhsStart + chunkSize)
+                chunkRhsStart = min(len(testcase.parts), chunkRhsStart)  # pylint: disable=invalid-name
+                chunkRhsEnd = min(len(testcase.parts), chunkRhsStart + chunkSize)  # pylint: disable=invalid-name
 
                 description = "chunk #%d & #%d of %d chunks of size %d" % (
                     lhsChunkIdx, rhsChunkIdx, numChunks, chunkSize)
@@ -751,10 +760,10 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
         except ValueError:
             # This is a valid loop exit point.
-            chunkStart = len(testcase.parts)
+            chunkStart = len(testcase.parts)  # pylint: disable=invalid-name
 
-        atomsSurviving = atomsInitial - atomsRemoved
-        printableSummary = " ".join(
+        atomsSurviving = atomsInitial - atomsRemoved  # pylint: disable=invalid-name
+        printableSummary = " ".join(  # pylint: disable=invalid-name
             "".join(summary[(2 * i):min(2 * (i + 1), numChunks + 1)]) for i in range(numChunks // 2 + numChunks % 2))
         log.info("")
         log.info("Done with a round of chunk size %d!", chunkSize)
@@ -773,36 +782,37 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
 
 class ReplacePropertiesByGlobals(Minimize):
+    """    This strategy attempts to remove members, such that other strategies can
+    then move the lines outside the functions.  The goal is to rename
+    variables at the same time, such that the program remains valid, while
+    removing the dependency on the object on which the member is part of.
+
+      function Foo() {
+        this.list = [];
+      }
+      Foo.prototype.push = function(a) {
+        this.list.push(a);
+      }
+      Foo.prototype.last = function() {
+        return this.list.pop();
+      }
+
+    Which might transform the previous example to something like:
+
+      function Foo() {
+        list = [];
+      }
+      push = function(a) {
+        list.push(a);
+      }
+      last = function() {
+        return list.pop();
+      }"""
+
     name = "replace-properties-by-globals"
 
-    # This strategy attempts to remove members, such that other strategies can
-    # then move the lines outside the functions.  The goal is to rename
-    # variables at the same time, such that the program remains valid, while
-    # removing the dependency on the object on which the member is part of.
-    #
-    #   function Foo() {
-    #     this.list = [];
-    #   }
-    #   Foo.prototype.push = function(a) {
-    #     this.list.push(a);
-    #   }
-    #   Foo.prototype.last = function() {
-    #     return this.list.pop();
-    #   }
-    #
-    # Which might transform the previous example to something like:
-    #
-    #   function Foo() {
-    #     list = [];
-    #   }
-    #   push = function(a) {
-    #     list.push(a);
-    #   }
-    #   last = function() {
-    #     return list.pop();
-    #   }
-    #
-    def run(self, testcase, interesting, tempFilename):
+    def run(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
+        # pylint: disable=invalid-name
         chunkSize = min(self.minimizeMax, 2 * largestPowerOfTwoSmallerThan(len(testcase.parts)))
         finalChunkSize = max(self.minimizeMin, 1)
 
@@ -832,8 +842,9 @@ class ReplacePropertiesByGlobals(Minimize):
 
         return 0, (finalChunkSize == 1 and self.minimizeRepeat != "never"), testcase
 
-    def tryMakingGlobals(self,  # pylint: disable=too-complex,too-many-arguments,too-many-branches,too-many-locals
-                         chunkSize, numChars, testcase, interesting, tempFilename):
+    def tryMakingGlobals(self, chunkSize, numChars, testcase, interesting, tempFilename):
+        # pylint: disable=invalid-name,missing-param-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
+        # pylint: disable=too-many-arguments,too-many-branches,too-complex,too-many-locals
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
@@ -916,34 +927,35 @@ class ReplacePropertiesByGlobals(Minimize):
 
 
 class ReplaceArgumentsByGlobals(Minimize):
+    """    This strategy attempts to replace arguments by globals, for each named
+    argument of a function we add a setter of the global of the same name before
+    the function call.  The goal is to remove functions by making empty arguments
+    lists instead.
+
+      function foo(a,b) {
+        list = a + b;
+      }
+      foo(2, 3)
+
+    becomes:
+
+      function foo() {
+        list = a + b;
+      }
+      a = 2;
+      b = 3;
+      foo()
+
+    The next logical step is inlining the body of the function at the call site."""
+
     name = "replace-arguments-by-globals"
 
-    # This strategy attempts to replace arguments by globals, for each named
-    # argument of a function we add a setter of the global of the same name before
-    # the function call.  The goal is to remove functions by making empty arguments
-    # lists instead.
-    #
-    #   function foo(a,b) {
-    #     list = a + b;
-    #   }
-    #   foo(2, 3)
-    #
-    # becomes:
-    #
-    #   function foo() {
-    #     list = a + b;
-    #   }
-    #   a = 2;
-    #   b = 3;
-    #   foo()
-    #
-    # The next logical step is inlining the body of the function at the call site.
-    #
-    def run(self, testcase, interesting, tempFilename):
-        roundNum = 0
+    def run(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
+        roundNum = 0  # pylint: disable=invalid-name
         while 1:
+            # pylint: disable=invalid-name
             numRemovedArguments, testcase = self.tryArgumentsAsGlobals(roundNum, testcase, interesting, tempFilename)
-            roundNum += 1
+            roundNum += 1  # pylint: disable=invalid-name
 
             if numRemovedArguments and (self.minimizeRepeat == "always" or self.minimizeRepeat == "last"):
                 # Repeat with the same chunk size
@@ -955,19 +967,20 @@ class ReplaceArgumentsByGlobals(Minimize):
         return 0, False, testcase
 
     @staticmethod
-    def tryArgumentsAsGlobals(roundNum,  # pylint: disable=too-complex,too-many-branches,too-many-locals
-                              testcase, interesting, tempFilename):
+    def tryArgumentsAsGlobals(roundNum, testcase, interesting, tempFilename):  # pylint: disable=invalid-name
+        # pylint: disable=missing-param-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
+        # pylint: disable=too-many-branches,too-complex,too-many-locals,too-many-statements
         """Make a single run through the testcase, trying to remove chunks of size chunkSize.
 
         Returns True iff any chunks were removed."""
 
-        numMovedArguments = 0
-        numSurvivedArguments = 0
+        numMovedArguments = 0  # pylint: disable=invalid-name
+        numSurvivedArguments = 0  # pylint: disable=invalid-name
 
         # Map words to the chunk indexes in which they are present.
         functions = {}
-        anonymousQueue = []
-        anonymousStack = []
+        anonymousQueue = []  # pylint: disable=invalid-name
+        anonymousStack = []  # pylint: disable=invalid-name
         for chunk, line in enumerate(testcase.parts):
             # Match function definition with at least one argument.
             for match in re.finditer(br"(?:function\s+(\w+)|(\w+)\s*=\s*function)\s*\((\s*\w+\s*(?:,\s*\w+\s*)*)\)",
@@ -994,6 +1007,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                     args = []
                 else:
                     args = match.group(1).split(",")
+                # pylint: disable=invalid-name
                 anonymousStack += [{"defs": args, "chunk": chunk, "use": None, "useChunk": 0}]
 
             # Match calls of anonymous function.
@@ -1001,7 +1015,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 if not anonymousStack:
                     continue
                 anon = anonymousStack[-1]
-                anonymousStack = anonymousStack[:-1]
+                anonymousStack = anonymousStack[:-1]  # pylint: disable=invalid-name
                 if match.group(1) == b"" and not anon["defs"]:
                     continue
                 if match.group(1) == b"":
@@ -1010,7 +1024,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                     args = match.group(1).split(b",")
                 anon["use"] = args
                 anon["useChunk"] = chunk
-                anonymousQueue += [anon]
+                anonymousQueue += [anon]  # pylint: disable=invalid-name
 
             # match function calls. (and some definitions)
             for match in re.finditer(br"((\w+)\s*\(((?:[^()]|\([^,()]*\))*)\))", line):
@@ -1030,23 +1044,23 @@ class ReplaceArgumentsByGlobals(Minimize):
 
         log.info("Starting removing function arguments.")
 
-        for fun, argsMap in functions.items():
+        for fun, argsMap in functions.items():  # pylint: disable=invalid-name
             description = "arguments of '%s'" % fun.decode("utf-8", "replace")
             if "defs" not in argsMap or not argsMap["uses"]:
                 log.info("Ignoring %s because it is 'uninteresting'.", description)
                 continue
 
-            maybeMovedArguments = 0
-            newTC = testcase.copy()
+            maybeMovedArguments = 0  # pylint: disable=invalid-name
+            newTC = testcase.copy()  # pylint: disable=invalid-name
 
             # Remove the function definition arguments
-            argDefs = argsMap["defs"]
-            defChunk = argsMap["chunk"]
+            argDefs = argsMap["defs"]  # pylint: disable=invalid-name
+            defChunk = argsMap["chunk"]  # pylint: disable=invalid-name
             subst = newTC.parts[defChunk].replace(argsMap["argsPattern"], b"", 1)
             newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk + 1):]
 
             # Copy callers arguments to globals.
-            for argUse in argsMap["uses"]:
+            for argUse in argsMap["uses"]:  # pylint: disable=invalid-name
                 values = argUse["values"]
                 chunk = argUse["chunk"]
                 if chunk == defChunk and values == argDefs:
@@ -1056,46 +1070,46 @@ class ReplaceArgumentsByGlobals(Minimize):
                 setters = b"".join((a + b" = " + v + b";\n") for (a, v) in zip(argDefs, values))
                 subst = setters + newTC.parts[chunk]
                 newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk + 1):]
-            maybeMovedArguments += len(argDefs)
+            maybeMovedArguments += len(argDefs)  # pylint: disable=invalid-name
 
             if interesting(newTC):
                 testcase = newTC
                 log.info("Yay, reduced it by removing %s :)", description)
-                numMovedArguments += maybeMovedArguments
+                numMovedArguments += maybeMovedArguments  # pylint: disable=invalid-name
             else:
-                numSurvivedArguments += maybeMovedArguments
+                numSurvivedArguments += maybeMovedArguments  # pylint: disable=invalid-name
                 log.info("Removing %s made the file 'uninteresting'.", description)
 
-            for argUse in argsMap["uses"]:
+            for argUse in argsMap["uses"]:  # pylint: disable=invalid-name
                 chunk = argUse["chunk"]
                 values = argUse["values"]
                 if chunk == defChunk and values == argDefs:
                     continue
 
-                newTC = testcase.copy()
+                newTC = testcase.copy()  # pylint: disable=invalid-name
                 subst = newTC.parts[chunk].replace(argUse["pattern"], fun + b"()", 1)
                 if newTC.parts[chunk] == subst:
                     continue
                 newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk + 1):]
-                maybeMovedArguments = len(values)
+                maybeMovedArguments = len(values)  # pylint: disable=invalid-name
 
-                descriptionChunk = "%s at %s #%d" % (description, testcase.atom, chunk)
+                descriptionChunk = "%s at %s #%d" % (description, testcase.atom, chunk)  # pylint: disable=invalid-name
                 if interesting(newTC):
                     testcase = newTC
                     log.info("Yay, reduced it by removing %s :)", descriptionChunk)
-                    numMovedArguments += maybeMovedArguments
+                    numMovedArguments += maybeMovedArguments  # pylint: disable=invalid-name
                 else:
-                    numSurvivedArguments += maybeMovedArguments
+                    numSurvivedArguments += maybeMovedArguments  # pylint: disable=invalid-name
                     log.info("Removing %s made the file 'uninteresting'.", descriptionChunk)
 
         # Remove immediate anonymous function calls.
         for anon in anonymousQueue:
-            noopChanges = 0
-            maybeMovedArguments = 0
-            newTC = testcase.copy()
+            noopChanges = 0  # pylint: disable=invalid-name
+            maybeMovedArguments = 0  # pylint: disable=invalid-name
+            newTC = testcase.copy()  # pylint: disable=invalid-name
 
-            argDefs = anon["defs"]
-            defChunk = anon["chunk"]
+            argDefs = anon["defs"]  # pylint: disable=invalid-name
+            defChunk = anon["chunk"]  # pylint: disable=invalid-name
             values = anon["use"]
             chunk = anon["useChunk"]
             description = "arguments of anonymous function at #%s %d" % (testcase.atom, defChunk)
@@ -1103,7 +1117,7 @@ class ReplaceArgumentsByGlobals(Minimize):
             # Remove arguments of the function.
             subst = newTC.parts[defChunk].replace(b",".join(argDefs), b"", 1)
             if newTC.parts[defChunk] == subst:
-                noopChanges += 1
+                noopChanges += 1  # pylint: disable=invalid-name
             newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk + 1):]
 
             # Replace arguments by their value in the scope of the function.
@@ -1112,15 +1126,15 @@ class ReplaceArgumentsByGlobals(Minimize):
             setters = b"".join(b"var %s = %s;\n" % (a, v) for a, v in zip(argDefs, values))
             subst = newTC.parts[defChunk] + b"\n" + setters
             if newTC.parts[defChunk] == subst:
-                noopChanges += 1
+                noopChanges += 1  # pylint: disable=invalid-name
             newTC.parts = newTC.parts[:defChunk] + [subst] + newTC.parts[(defChunk + 1):]
 
             # Remove arguments of the anonymous function call.
             subst = newTC.parts[chunk].replace(b",".join(anon["use"]), b"", 1)
             if newTC.parts[chunk] == subst:
-                noopChanges += 1
+                noopChanges += 1  # pylint: disable=invalid-name
             newTC.parts = newTC.parts[:chunk] + [subst] + newTC.parts[(chunk + 1):]
-            maybeMovedArguments += len(values)
+            maybeMovedArguments += len(values)  # pylint: disable=invalid-name
 
             if noopChanges == 3:
                 continue
@@ -1128,9 +1142,9 @@ class ReplaceArgumentsByGlobals(Minimize):
             if interesting(newTC):
                 testcase = newTC
                 log.info("Yay, reduced it by removing %s :)", description)
-                numMovedArguments += maybeMovedArguments
+                numMovedArguments += maybeMovedArguments  # pylint: disable=invalid-name
             else:
-                numSurvivedArguments += maybeMovedArguments
+                numSurvivedArguments += maybeMovedArguments  # pylint: disable=invalid-name
                 log.info("Removing %s made the file 'uninteresting'.", description)
 
         log.info("")
@@ -1143,38 +1157,38 @@ class ReplaceArgumentsByGlobals(Minimize):
         return numMovedArguments, testcase
 
 
-class Lithium(object):  # pylint: disable=too-many-instance-attributes
+class Lithium(object):  # pylint: disable=missing-docstring,too-many-instance-attributes
 
     def __init__(self):
 
         self.strategy = None
 
-        self.conditionScript = None
-        self.conditionArgs = None
+        self.conditionScript = None  # pylint: disable=invalid-name
+        self.conditionArgs = None  # pylint: disable=invalid-name
 
-        self.testCount = 0
-        self.testTotal = 0
+        self.testCount = 0  # pylint: disable=invalid-name
+        self.testTotal = 0  # pylint: disable=invalid-name
 
-        self.tempDir = None
+        self.tempDir = None  # pylint: disable=invalid-name
 
         self.testcase = None
-        self.lastInteresting = None
+        self.lastInteresting = None  # pylint: disable=invalid-name
 
-        self.tempFileCount = 1
+        self.tempFileCount = 1  # pylint: disable=invalid-name
 
-    def main(self, args=None):
+    def main(self, args=None):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
         logging.basicConfig(format="%(message)s", level=logging.INFO)
         self.processArgs(args)
 
         try:
             return self.run()
 
-        except LithiumError as e:
+        except LithiumError as e:  # pylint: disable=invalid-name
             summaryHeader()
             log.error(e)
             return 1
 
-    def run(self):
+    def run(self):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
         if hasattr(self.conditionScript, "init"):
             self.conditionScript.init(self.conditionArgs)
 
@@ -1198,11 +1212,13 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
             if self.lastInteresting is not None:
                 self.lastInteresting.writeTestcase()
 
-    def processArgs(self, argv=None):  # pylint: disable=too-complex,too-many-locals
-        # Build list of strategies and testcase types
+    def processArgs(self, argv=None):  # pylint: disable=invalid-name,missing-param-doc,missing-type-doc
+        # pylint: disable=too-complex,too-many-locals
+        """Build list of strategies and testcase types."""
+
         strategies = {}
-        testcaseTypes = {}
-        for globalValue in globals().values():
+        testcaseTypes = {}  # pylint: disable=invalid-name
+        for globalValue in globals().values():  # pylint: disable=invalid-name
             if isinstance(globalValue, type):
                 if globalValue is not Strategy and issubclass(globalValue, Strategy):
                     assert globalValue.name not in strategies
@@ -1212,16 +1228,16 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
                     testcaseTypes[globalValue.atom] = globalValue
 
         # Try to parse --conflict before anything else
-        class ArgParseTry(argparse.ArgumentParser):
+        class ArgParseTry(argparse.ArgumentParser):  # pylint: disable=missing-docstring
             def exit(subself, **kwds):  # pylint: disable=arguments-differ,no-self-argument
                 pass
 
             def error(subself, message):  # pylint: disable=no-self-argument
                 pass
 
-        defaultStrategy = "minimize"
+        defaultStrategy = "minimize"  # pylint: disable=invalid-name
         assert defaultStrategy in strategies
-        strategyParser = ArgParseTry(add_help=False)
+        strategyParser = ArgParseTry(add_help=False)  # pylint: disable=invalid-name
         strategyParser.add_argument(
             "--strategy",
             default=defaultStrategy,
@@ -1299,9 +1315,10 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
         extra_args = args.extra_args[0]
 
         if args.testcase:
-            testcaseFilename = args.testcase
+            testcaseFilename = args.testcase  # pylint: disable=invalid-name
         elif extra_args:
-            testcaseFilename = extra_args[-1]  # can be overridden by --testcase in processOptions
+            # can be overridden by --testcase in processOptions
+            testcaseFilename = extra_args[-1]  # pylint: disable=invalid-name
         else:
             parser.error("No testcase specified (use --testcase or last condition arg)")
         self.testcase = testcaseTypes[atom]()
@@ -1316,13 +1333,14 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
         self.conditionScript = ximport.importRelativeOrAbsolute(extra_args[0])
         self.conditionArgs = extra_args[1:]
 
-    def testcaseTempFilename(self, partialFilename, useNumber=True):
+    def testcaseTempFilename(self, partialFilename, useNumber=True):  # pylint: disable=invalid-name,missing-docstring
+        # pylint: disable=missing-return-doc,missing-return-type-doc
         if useNumber:
             partialFilename = "%d-%s" % (self.tempFileCount, partialFilename)
             self.tempFileCount += 1
         return os.path.join(self.tempDir, partialFilename + self.testcase.extension)
 
-    def createTempDir(self):
+    def createTempDir(self):  # pylint: disable=invalid-name,missing-docstring
         i = 1
         while True:
             self.tempDir = "tmp%d" % i
@@ -1335,21 +1353,22 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
                 i += 1
 
     # If the file is still interesting after the change, changes "parts" and returns True.
-    def interesting(self, testcaseSuggestion, writeIt=True):
+    def interesting(self, testcaseSuggestion, writeIt=True):  # pylint: disable=invalid-name,missing-docstring
+        # pylint: disable=missing-return-doc,missing-return-type-doc
         if writeIt:
             testcaseSuggestion.writeTestcase()
 
         self.testCount += 1
         self.testTotal += len(testcaseSuggestion.parts)
 
-        tempPrefix = os.path.join(self.tempDir, "%d" % self.tempFileCount)
+        tempPrefix = os.path.join(self.tempDir, "%d" % self.tempFileCount)  # pylint: disable=invalid-name
         inter = self.conditionScript.interesting(self.conditionArgs, tempPrefix)
 
         # Save an extra copy of the file inside the temp directory.
         # This is useful if you're reducing an assertion and encounter a crash:
         # it gives you a way to try to reproduce the crash.
         if self.tempDir:
-            tempFileTag = "interesting" if inter else "boring"
+            tempFileTag = "interesting" if inter else "boring"  # pylint: disable=invalid-name
             testcaseSuggestion.writeTestcase(self.testcaseTempFilename(tempFileTag))
 
         if inter:
@@ -1361,30 +1380,32 @@ class Lithium(object):  # pylint: disable=too-many-instance-attributes
 
 # Helpers
 
-def summaryHeader():
+def summaryHeader():  # pylint: disable=invalid-name,missing-docstring
     log.info("=== LITHIUM SUMMARY ===")
 
 
-def divideRoundingUp(n, d):
+def divideRoundingUp(n, d):  # pylint: disable=invalid-name,missing-docstring,missing-return-doc,missing-return-type-doc
     return (n // d) + (1 if n % d != 0 else 0)
 
 
-def isPowerOfTwo(n):
+def isPowerOfTwo(n):  # pylint: disable=invalid-name,missing-docstring,missing-return-doc,missing-return-type-doc
     return (1 << max(n.bit_length() - 1, 0)) == n
 
 
-def largestPowerOfTwoSmallerThan(n):
+def largestPowerOfTwoSmallerThan(n):  # pylint: disable=invalid-name,missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
     result = 1 << max(n.bit_length() - 1, 0)
     if result == n and n > 1:
         result >>= 1
     return result
 
 
-def quantity(n, unit):
+def quantity(n, unit):  # pylint: disable=invalid-name,missing-param-doc
+    # pylint: disable=missing-return-doc,missing-return-type-doc,missing-type-doc
     """Convert a quantity to a string, with correct pluralization."""
-    r = "%d %s" % (n, unit)
+    r = "%d %s" % (n, unit)  # pylint: disable=invalid-name
     if n != 1:
-        r += "s"
+        r += "s"  # pylint: disable=invalid-name
     return r
 
 

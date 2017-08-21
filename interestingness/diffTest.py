@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring,missing-return-doc,missing-return-type-doc
+# pylint: disable=invalid-name
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,8 @@ import optparse  # pylint: disable=deprecated-module
 import timedRun  # pylint: disable=relative-import
 
 
-def parseOptions(arguments):
+def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
     parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
@@ -39,11 +40,15 @@ def parseOptions(arguments):
     return options.condTimeout, options.aArgs, options.bArgs, args
 
 
-def interesting(cliArgs, tempPrefix):
-    (timeout, aArgs, bArgs, args) = parseOptions(cliArgs)
+def interesting(cliArgs, tempPrefix):  # pylint: disable=invalid-name,missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
+    (timeout, aArgs, bArgs, args) = parseOptions(cliArgs)  # pylint: disable=invalid-name
 
+    # pylint: disable=invalid-name
     aRuninfo = timedRun.timed_run(args[:1] + aArgs + args[1:], timeout, tempPrefix + "-a")
+    # pylint: disable=invalid-name
     bRuninfo = timedRun.timed_run(args[:1] + bArgs + args[1:], timeout, tempPrefix + "-b")
+    # pylint: disable=invalid-name
     timeString = " (1st Run: %.3f seconds) (2nd Run: %.3f seconds)" % (aRuninfo.elapsedtime, bRuninfo.elapsedtime)
 
     if aRuninfo.sta != timedRun.TIMED_OUT and bRuninfo.sta != timedRun.TIMED_OUT:

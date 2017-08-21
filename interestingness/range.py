@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-return-doc,missing-return-type-doc
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,13 +34,14 @@ import optparse  # pylint: disable=deprecated-module
 import os
 import sys
 
-path0 = os.path.dirname(os.path.abspath(__file__))
-path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))
+path0 = os.path.dirname(os.path.abspath(__file__))  # pylint: disable=invalid-name
+path1 = os.path.abspath(os.path.join(path0, os.pardir, 'util'))  # pylint: disable=invalid-name
 sys.path.append(path1)
 import ximport  # noqa  pylint: disable=relative-import,wrong-import-position
 
 
-def parseOptions(arguments):  # pylint: disable=missing-docstring
+def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
     parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     _options, args = parser.parse_args(arguments)
@@ -49,10 +49,11 @@ def parseOptions(arguments):  # pylint: disable=missing-docstring
     return int(args[0]), int(args[1]), args[2:]  # args[0] is minLoopNum, args[1] maxLoopNum
 
 
-def interesting(cliArgs, tempPrefix):  # pylint: disable=missing-docstring
-    (rangeMin, rangeMax, arguments) = parseOptions(cliArgs)
-    conditionScript = ximport.importRelativeOrAbsolute(arguments[0])
-    conditionArgs = arguments[1:]
+def interesting(cliArgs, tempPrefix):  # pylint: disable=invalid-name,missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
+    (rangeMin, rangeMax, arguments) = parseOptions(cliArgs)  # pylint: disable=invalid-name
+    conditionScript = ximport.importRelativeOrAbsolute(arguments[0])  # pylint: disable=invalid-name
+    conditionArgs = arguments[1:]  # pylint: disable=invalid-name
 
     if hasattr(conditionScript, "init"):
         conditionScript.init(conditionArgs)
@@ -60,7 +61,7 @@ def interesting(cliArgs, tempPrefix):  # pylint: disable=missing-docstring
     assert (rangeMax - rangeMin) >= 0
     for i in range(rangeMin, rangeMax + 1):
         # This doesn't do anything if RANGENUM is not found.
-        replacedConditionArgs = [s.replace("RANGENUM", str(i)) for s in conditionArgs]
+        replacedConditionArgs = [s.replace("RANGENUM", str(i)) for s in conditionArgs]  # pylint: disable=invalid-name
         print("Range number %d:" % i, end=" ")
         if conditionScript.interesting(replacedConditionArgs, tempPrefix):
             return True

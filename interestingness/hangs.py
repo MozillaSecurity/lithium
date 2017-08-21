@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring,missing-return-doc,missing-return-type-doc
+# pylint: disable=missing-docstring
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,8 @@ from __future__ import print_function
 import timedRun  # pylint: disable=relative-import
 
 
-def interesting(args, tempPrefix):
+def interesting(args, tempPrefix):  # pylint: disable=invalid-name,missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
     timeout = int(args[0])
 
     runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix)

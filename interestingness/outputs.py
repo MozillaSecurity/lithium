@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring,missing-return-doc,missing-return-type-doc
+# pylint: disable=missing-docstring
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,8 @@ import fileIngredients  # pylint: disable=relative-import
 import timedRun  # pylint: disable=relative-import
 
 
-def parseOptions(arguments):
+def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
     parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
@@ -29,12 +30,13 @@ def parseOptions(arguments):
     return options.condTimeout, options.useRegex, args
 
 
-def interesting(cliArgs, tempPrefix):
-    (timeout, regexEnabled, args) = parseOptions(cliArgs)
+def interesting(cliArgs, tempPrefix):  # pylint: disable=invalid-name,missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
+    (timeout, regexEnabled, args) = parseOptions(cliArgs)  # pylint: disable=invalid-name
 
-    searchFor = args[0]
+    searchFor = args[0]  # pylint: disable=invalid-name
     if not isinstance(searchFor, bytes):
-        searchFor = searchFor.encode(sys.getfilesystemencoding())
+        searchFor = searchFor.encode(sys.getfilesystemencoding())  # pylint: disable=invalid-name
 
     runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix)
 
