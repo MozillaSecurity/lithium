@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +17,7 @@ from __future__ import absolute_import, print_function
 import filecmp
 import optparse  # pylint: disable=deprecated-module
 
-from . import timedRun
+from . import timed_run
 
 
 def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
@@ -45,13 +44,13 @@ def interesting(cliArgs, tempPrefix):  # pylint: disable=invalid-name,missing-do
     (timeout, aArgs, bArgs, args) = parseOptions(cliArgs)  # pylint: disable=invalid-name
 
     # pylint: disable=invalid-name
-    aRuninfo = timedRun.timed_run(args[:1] + aArgs + args[1:], timeout, tempPrefix + "-a")
+    aRuninfo = timed_run.timed_run(args[:1] + aArgs + args[1:], timeout, tempPrefix + "-a")
     # pylint: disable=invalid-name
-    bRuninfo = timedRun.timed_run(args[:1] + bArgs + args[1:], timeout, tempPrefix + "-b")
+    bRuninfo = timed_run.timed_run(args[:1] + bArgs + args[1:], timeout, tempPrefix + "-b")
     # pylint: disable=invalid-name
     timeString = " (1st Run: %.3f seconds) (2nd Run: %.3f seconds)" % (aRuninfo.elapsedtime, bRuninfo.elapsedtime)
 
-    if aRuninfo.sta != timedRun.TIMED_OUT and bRuninfo.sta != timedRun.TIMED_OUT:
+    if aRuninfo.sta != timed_run.TIMED_OUT and bRuninfo.sta != timed_run.TIMED_OUT:
         if aRuninfo.rc != bRuninfo.rc:
             print("[Interesting] Different return code. (%d, %d)%s" % (aRuninfo.rc, bRuninfo.rc, timeString))
             return True

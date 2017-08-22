@@ -11,8 +11,8 @@ from __future__ import absolute_import, print_function
 import optparse  # pylint: disable=deprecated-module
 import sys
 
-from . import fileIngredients
-from . import timedRun
+from . import file_ingredients
+from . import timed_run
 
 
 def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
@@ -38,11 +38,11 @@ def interesting(cliArgs, tempPrefix):  # pylint: disable=invalid-name,missing-do
     if not isinstance(searchFor, bytes):
         searchFor = searchFor.encode(sys.getfilesystemencoding())  # pylint: disable=invalid-name
 
-    runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix)
+    runinfo = timed_run.timed_run(args[1:], timeout, tempPrefix)
 
     result = (
-        fileIngredients.fileContains(tempPrefix + "-out.txt", searchFor, regexEnabled)[0] or
-        fileIngredients.fileContains(tempPrefix + "-err.txt", searchFor, regexEnabled)[0]
+        file_ingredients.fileContains(tempPrefix + "-out.txt", searchFor, regexEnabled)[0] or
+        file_ingredients.fileContains(tempPrefix + "-err.txt", searchFor, regexEnabled)[0]
     )
 
     print("Exit status: %s (%.3f seconds)" % (runinfo.msg, runinfo.elapsedtime))

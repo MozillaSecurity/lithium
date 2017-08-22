@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name,missing-docstring
+# pylint: disable=missing-docstring
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 
-from . import envVars
+from . import env_vars
 
 ASAN_EXIT_CODE = 77
 
@@ -70,9 +70,9 @@ def makeEnv(binPath):  # pylint: disable=invalid-name,missing-docstring,missing-
     if not shellIsDeterministic:
         return None
 
-    env = envVars.envWithPath(os.path.abspath(os.path.dirname(binPath)))
+    env = env_vars.envWithPath(os.path.abspath(os.path.dirname(binPath)))
     env["ASAN_OPTIONS"] = "exitcode=" + str(ASAN_EXIT_CODE)
-    symbolizer_path = envVars.findLlvmBinPath()
+    symbolizer_path = env_vars.findLlvmBinPath()
     if symbolizer_path is not None:
         env["ASAN_SYMBOLIZER_PATH"] = os.path.join(symbolizer_path, "llvm-symbolizer")
     return env
@@ -137,7 +137,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):  
         if rc is None:
             if elapsedtime > timeout and not killed:
                 if progname == "gdb":
-                    raise Exception("Do not use this with gdb, because xpkill in timedRun will "
+                    raise Exception("Do not use this with gdb, because xpkill in timed_run will "
                                     "kill gdb but leave the process within gdb still running")
                 xpkill(child)
                 # but continue looping, because maybe kill takes a few seconds or maybe it's busy crashing!

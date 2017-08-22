@@ -10,7 +10,7 @@ from __future__ import absolute_import, print_function
 
 import optparse  # pylint: disable=deprecated-module
 
-from . import timedRun
+from . import timed_run
 
 
 def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
@@ -30,9 +30,9 @@ def interesting(cliArgs, tempPrefix):  # pylint: disable=invalid-name,missing-do
     # pylint: disable=missing-return-doc,missing-return-type-doc
     (timeout, args) = parseOptions(cliArgs)
 
-    runinfo = timedRun.timed_run(args, timeout, tempPrefix)
+    runinfo = timed_run.timed_run(args, timeout, tempPrefix)
     timeString = " (%.3f seconds)" % runinfo.elapsedtime  # pylint: disable=invalid-name
-    if runinfo.sta == timedRun.CRASHED:
+    if runinfo.sta == timed_run.CRASHED:
         print("Exit status: " + runinfo.msg + timeString)
         return True
 
