@@ -35,8 +35,7 @@ import optparse  # pylint: disable=deprecated-module
 from . import ximport
 
 
-def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
+def parse_options(arguments):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
     parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     _options, args = parser.parse_args(arguments)
@@ -44,21 +43,20 @@ def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
     return int(args[0]), int(args[1]), args[2:]  # args[0] is minLoopNum, args[1] maxLoopNum
 
 
-def interesting(cliArgs, tempPrefix):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
-    (rangeMin, rangeMax, arguments) = parseOptions(cliArgs)  # pylint: disable=invalid-name
-    conditionScript = ximport.importRelativeOrAbsolute(arguments[0])  # pylint: disable=invalid-name
-    conditionArgs = arguments[1:]  # pylint: disable=invalid-name
+def interesting(cli_args, temp_prefix):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
+    (range_min, range_max, arguments) = parse_options(cli_args)
+    condition_script = ximport.rel_or_abs_import(arguments[0])
+    condition_args = arguments[1:]
 
-    if hasattr(conditionScript, "init"):
-        conditionScript.init(conditionArgs)
+    if hasattr(condition_script, "init"):
+        condition_script.init(condition_args)
 
-    assert (rangeMax - rangeMin) >= 0
-    for i in range(rangeMin, rangeMax + 1):
+    assert (range_max - range_min) >= 0
+    for i in range(range_min, range_max + 1):
         # This doesn't do anything if RANGENUM is not found.
-        replacedConditionArgs = [s.replace("RANGENUM", str(i)) for s in conditionArgs]  # pylint: disable=invalid-name
+        replaced_condition_args = [s.replace("RANGENUM", str(i)) for s in condition_args]
         print("Range number %d:" % i, end=" ")
-        if conditionScript.interesting(replacedConditionArgs, tempPrefix):
+        if condition_script.interesting(replaced_condition_args, temp_prefix):
             return True
 
     return False

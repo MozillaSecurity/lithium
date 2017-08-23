@@ -15,8 +15,7 @@ from . import file_ingredients
 from . import timed_run
 
 
-def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
+def parse_options(arguments):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
     parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
@@ -30,19 +29,18 @@ def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
     return options.condTimeout, options.useRegex, args
 
 
-def interesting(cliArgs, tempPrefix):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
-    (timeout, regexEnabled, args) = parseOptions(cliArgs)  # pylint: disable=invalid-name
+def interesting(cli_args, temp_prefix):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
+    (timeout, regex_enabled, args) = parse_options(cli_args)
 
-    searchFor = args[0]  # pylint: disable=invalid-name
-    if not isinstance(searchFor, bytes):
-        searchFor = searchFor.encode(sys.getfilesystemencoding())  # pylint: disable=invalid-name
+    search_for = args[0]
+    if not isinstance(search_for, bytes):
+        search_for = search_for.encode(sys.getfilesystemencoding())
 
-    runinfo = timed_run.timed_run(args[1:], timeout, tempPrefix)
+    runinfo = timed_run.timed_run(args[1:], timeout, temp_prefix)
 
     result = (
-        file_ingredients.fileContains(tempPrefix + "-out.txt", searchFor, regexEnabled)[0] or
-        file_ingredients.fileContains(tempPrefix + "-err.txt", searchFor, regexEnabled)[0]
+        file_ingredients.file_contains(temp_prefix + "-out.txt", search_for, regex_enabled)[0] or
+        file_ingredients.file_contains(temp_prefix + "-err.txt", search_for, regex_enabled)[0]
     )
 
     print("Exit status: %s (%.3f seconds)" % (runinfo.msg, runinfo.elapsedtime))

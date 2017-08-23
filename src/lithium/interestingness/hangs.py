@@ -11,11 +11,10 @@ from __future__ import absolute_import, print_function
 from . import timed_run
 
 
-def interesting(args, tempPrefix):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
+def interesting(args, temp_prefix):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
     timeout = int(args[0])
 
-    runinfo = timed_run.timed_run(args[1:], timeout, tempPrefix)
+    runinfo = timed_run.timed_run(args[1:], timeout, temp_prefix)
 
     if runinfo.sta == timed_run.TIMED_OUT:
         return True

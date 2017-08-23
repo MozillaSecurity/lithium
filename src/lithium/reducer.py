@@ -54,7 +54,7 @@ class Testcase(object):
         self.filename = filename
         self.extension = os.path.splitext(self.filename)[1]
 
-        with open(self.filename, "rb") as f:  # pylint: disable=invalid-name
+        with open(self.filename, "rb") as f:
             # Determine whether the f has a DDBEGIN..DDEND section.
             for line in f:
                 if line.find(b"DDEND") != -1:
@@ -111,7 +111,7 @@ class TestcaseLine(Testcase):  # pylint: disable=missing-docstring
     def writeTestcase(self, filename=None):
         if filename is None:
             filename = self.filename
-        with open(filename, "wb") as f:  # pylint: disable=invalid-name
+        with open(filename, "wb") as f:
             f.write(self.before)
             f.writelines(self.parts)
             f.write(self.after)
@@ -1330,7 +1330,7 @@ class Lithium(object):  # pylint: disable=missing-docstring,too-many-instance-at
         sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "interestingness"))
         from .interestingness import ximport
 
-        self.conditionScript = ximport.importRelativeOrAbsolute(extra_args[0])
+        self.conditionScript = ximport.rel_or_abs_import(extra_args[0])
         self.conditionArgs = extra_args[1:]
 
     def testcaseTempFilename(self, partialFilename, useNumber=True):  # pylint: disable=invalid-name,missing-docstring

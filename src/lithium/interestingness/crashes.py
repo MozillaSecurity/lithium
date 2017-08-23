@@ -13,8 +13,7 @@ import optparse  # pylint: disable=deprecated-module
 from . import timed_run
 
 
-def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
+def parse_options(arguments):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
     parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
@@ -26,15 +25,14 @@ def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
     return options.condTimeout, args
 
 
-def interesting(cliArgs, tempPrefix):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
-    (timeout, args) = parseOptions(cliArgs)
+def interesting(cli_args, temp_prefix):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
+    (timeout, args) = parse_options(cli_args)
 
-    runinfo = timed_run.timed_run(args, timeout, tempPrefix)
-    timeString = " (%.3f seconds)" % runinfo.elapsedtime  # pylint: disable=invalid-name
+    runinfo = timed_run.timed_run(args, timeout, temp_prefix)
+    time_str = " (%.3f seconds)" % runinfo.elapsedtime
     if runinfo.sta == timed_run.CRASHED:
-        print("Exit status: " + runinfo.msg + timeString)
+        print("Exit status: " + runinfo.msg + time_str)
         return True
 
-    print("[Uninteresting] It didn't crash." + timeString)
+    print("[Uninteresting] It didn't crash." + time_str)
     return False
