@@ -142,7 +142,10 @@ class TestcaseJsStr(TestcaseChar):
     Escapes are also kept together and treated as a single token for reduction.
     ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String#Escape_notation
     """
-    atom = "jsstr"
+    atom = "jsstr char"
+
+    def readTestcaseWithDDSection(self, f):
+        Testcase.readTestcaseWithDDSection(self, f)
 
     def readTestcase(self, filename):
         # these are temporary attributes used to track state in readTestcaseLine (called by super().readTestcase)
