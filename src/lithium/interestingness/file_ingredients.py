@@ -34,8 +34,8 @@ def file_contains_str(file_, regex, verbose=True):  # pylint: disable=missing-do
 
 def file_contains_regex(file_, regex, verbose=True):
     # pylint: disable=missing-param-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
-    """e.g. ~/fuzzing/lithium/lithium.py crashesat --timeout=30
-     --regex '^#0\\s*0x.* in\\s*.*(?:\\n|\\r\\n?)#1\\s*' ./js --ion -n 735957.js
+    """e.g. python -m lithium crashesat --timeout=30
+     --regex '^#0\\s*0x.* in\\s*.*(?:\\n|\\r\\n?)#1\\s*' ./js --fuzzing-safe --no-threads --ion-eager testcase.js
      Note that putting "^" and "$" together is unlikely to work."""
 
     matched_str = ""

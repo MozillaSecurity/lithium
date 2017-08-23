@@ -14,7 +14,7 @@ Use for:
 
    Repeating the test can make the bug occur often enough for Lithium to make progress.
 
-    lithium.py range 1 20 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -m -n intermittent.js
+    python -m lithium range 1 20 crashes --timeout=3 ./js --fuzzing-safe --no-threads --ion-eager intermittent.js
 
 2. Unstable testcases.
 
@@ -25,7 +25,7 @@ Use for:
      schedulegc(n);
 
    On the command line:
-     lithium.py range 1 50 crashes --timeout=3 ./js-dbg-32-mozilla-central-linux -e "n=RANGENUM;" 740654.js
+     python -m lithium range 1 50 crashes -t 3 ./js --fuzzing-safe --no-threads --ion-eager -e "n=RANGENUM;" testcase.js
 """
 
 from __future__ import absolute_import, print_function

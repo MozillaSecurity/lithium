@@ -27,7 +27,7 @@ You'll usually be able to use one of the tests that comes with Lithium.  For the
 
 For example, suppose you have a large file called boom.html that triggers an array-bound assertion in debug builds of Firefox.  To make a reduced testcase, you might use something like:
 
-    ./lithium.py outputs_timed.py 120 "ASSERTION: index out of range" fxdebug/firefox-bin boom.html
+    python -m lithium outputs --timeout=120 "ASSERTION: index out of range" fxdebug/firefox-bin boom.html
 
 Lithium will try to remove as many lines from boom.html as possible while still causing Firefox to print that assertion message.
 

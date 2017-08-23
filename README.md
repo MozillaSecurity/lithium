@@ -23,8 +23,9 @@ To keep *m* small, make sure Lithium's smallest removals won't introduce fatal s
 
 ### Command line syntax
 
-    ./lithium.py [options] interestingness-test.py [arguments for interestingness test]
+    python -m lithium [options] interestingness-test.py [arguments for interestingness test]
 
+Be sure to first install Lithium as a pip package.
 
 ### Command line options
 
