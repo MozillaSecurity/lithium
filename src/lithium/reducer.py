@@ -11,8 +11,9 @@ import argparse
 import logging
 import os
 import re
-import sys
 import time
+
+from lithium.interestingness import ximport
 
 log = logging.getLogger("lithium")  # pylint: disable=invalid-name
 
@@ -1326,9 +1327,6 @@ class Lithium(object):  # pylint: disable=missing-docstring,too-many-instance-at
             self.testcase.cutBefore = args.cutBefore
             self.testcase.cutAfter = args.cutAfter
         self.testcase.readTestcase(testcaseFilename)
-
-        sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), "interestingness"))
-        from .interestingness import ximport
 
         self.conditionScript = ximport.rel_or_abs_import(extra_args[0])
         self.conditionArgs = extra_args[1:]

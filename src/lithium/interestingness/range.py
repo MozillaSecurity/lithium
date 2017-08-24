@@ -32,7 +32,7 @@ from __future__ import absolute_import, print_function
 
 import optparse  # pylint: disable=deprecated-module
 
-from . import ximport
+from lithium.interestingness import ximport
 
 
 def parse_options(arguments):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc

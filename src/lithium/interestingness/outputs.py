@@ -11,8 +11,8 @@ from __future__ import absolute_import, print_function
 import optparse  # pylint: disable=deprecated-module
 import sys
 
-from . import file_ingredients
-from . import timed_run
+from lithium.interestingness import file_ingredients
+from lithium.interestingness import timed_run
 
 
 def parse_options(arguments):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc

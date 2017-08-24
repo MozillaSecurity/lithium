@@ -9,13 +9,13 @@
 
 from __future__ import absolute_import
 
-from .interestingness import crashes
-# from .interestingness import diff_test  # diff_test is not used outside of Lithium
-from .interestingness import env_vars
-from .interestingness import file_ingredients
-from .interestingness import hangs
-from .interestingness import outputs
-from .interestingness import range  # pylint: disable=redefined-builtin
-from .interestingness import timed_run
-from .interestingness import ximport
-from . import reducer
+import lithium.interestingness.crashes
+# import lithium.interestingness.diff_test  # diff_test is not used outside of Lithium
+import lithium.interestingness.env_vars
+import lithium.interestingness.file_ingredients
+import lithium.interestingness.hangs
+import lithium.interestingness.outputs
+import lithium.interestingness.range
+import lithium.interestingness.timed_run
+import lithium.interestingness.ximport
+from lithium.reducer import *  # pylint: disable=wildcard-import

@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 
-from . import env_vars
+from lithium.interestingness import env_vars
 
 ASAN_EXIT_CODE = 77
 
