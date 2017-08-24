@@ -532,7 +532,7 @@ class TestcaseTests(TestCase):
             f.write(b'""\n')  # empty string
             f.write(b'"\\u12345Xyz"\n')  # another str with the last escape format
             f.write(b'Data\xFF\n')
-            f.write(b'"x\xFF"\n')  # last str
+            f.write(b'"x\xFF" something\n')  # last str
             f.write(b"DDEND\n")
             f.write(b"post\n")
         t.readTestcase("a.txt")
@@ -542,7 +542,7 @@ class TestcaseTests(TestCase):
                                    b"\\u1234", b"5", b"X", b"y", b"z",  # next JS str
                                    b"\"\nData\xFF\n\"",
                                    b"x", b"\xFF"])  # last JS str
-        self.assertEqual(t.after, b"\"\nDDEND\npost\n")
+        self.assertEqual(t.after, b"\" something\nDDEND\npost\n")
 
     def test_symbol(self):
         t = reducer.TestcaseSymbol()
