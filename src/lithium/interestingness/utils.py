@@ -19,8 +19,6 @@ import platform
 import re
 import sys
 
-ENV_PATH_SEPARATOR = ";" if os.name == "nt" else ":"
-
 
 def env_with_path(path, curr_env=None):  # pylint: disable=missing-param-doc,missing-return-doc
     # pylint: disable=missing-return-type-doc,missing-type-doc
@@ -28,15 +26,18 @@ def env_with_path(path, curr_env=None):  # pylint: disable=missing-param-doc,mis
     curr_env = curr_env or os.environ
     if platform.system() == "Linux":
         lib_path = "LD_LIBRARY_PATH"
+        path_sep = ":"
     elif platform.system() == "Darwin":
         lib_path = "DYLD_LIBRARY_PATH"
+        path_sep = ":"
     elif platform.system() == "Windows":
         lib_path = "PATH"
+        path_sep = ";"
 
     env = copy.deepcopy(curr_env)
     if lib_path in env:
         if path not in env[lib_path]:
-            env[lib_path] += ENV_PATH_SEPARATOR + path
+            env[lib_path] += path_sep + path
     else:
         env[lib_path] = path
 
