@@ -10,7 +10,7 @@ from setuptools import setup
 
 if __name__ == "__main__":
     setup(name="lithium",
-          version="0.1",
+          version="0.1.0",
           entry_points={
               "console_scripts": ["lithium = lithium:main"]
           },
