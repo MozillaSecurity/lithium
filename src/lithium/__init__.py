@@ -17,5 +17,5 @@ import lithium.interestingness.hangs
 import lithium.interestingness.outputs
 import lithium.interestingness.range
 import lithium.interestingness.timed_run
-import lithium.interestingness.ximport
+import lithium.interestingness.utils
 from lithium.reducer import *  # pylint: disable=wildcard-import

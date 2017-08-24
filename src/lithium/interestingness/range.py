@@ -32,7 +32,7 @@ from __future__ import absolute_import, print_function
 
 import optparse  # pylint: disable=deprecated-module
 
-from lithium.interestingness import ximport
+from lithium.interestingness.utils import ximport
 
 
 def parse_options(arguments):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
@@ -45,7 +45,7 @@ def parse_options(arguments):  # pylint: disable=missing-docstring,missing-retur
 
 def interesting(cli_args, temp_prefix):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
     (range_min, range_max, arguments) = parse_options(cli_args)
-    condition_script = ximport.rel_or_abs_import(arguments[0])
+    condition_script = ximport(arguments[0])
     condition_args = arguments[1:]
 
     if hasattr(condition_script, "init"):
