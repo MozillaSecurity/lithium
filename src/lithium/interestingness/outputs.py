@@ -11,7 +11,7 @@ from __future__ import absolute_import, print_function
 import optparse  # pylint: disable=deprecated-module
 import sys
 
-from lithium.interestingness import file_ingredients
+from lithium.interestingness import utils
 from lithium.interestingness import timed_run
 
 
@@ -39,8 +39,8 @@ def interesting(cli_args, temp_prefix):  # pylint: disable=missing-docstring,mis
     runinfo = timed_run.timed_run(args[1:], timeout, temp_prefix)
 
     result = (
-        file_ingredients.file_contains(temp_prefix + "-out.txt", search_for, regex_enabled)[0] or
-        file_ingredients.file_contains(temp_prefix + "-err.txt", search_for, regex_enabled)[0]
+        utils.file_contains(temp_prefix + "-out.txt", search_for, regex_enabled)[0] or
+        utils.file_contains(temp_prefix + "-err.txt", search_for, regex_enabled)[0]
     )
 
     print("Exit status: %s (%.3f seconds)" % (runinfo.msg, runinfo.elapsedtime))

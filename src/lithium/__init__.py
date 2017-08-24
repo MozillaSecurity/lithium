@@ -11,8 +11,6 @@ from __future__ import absolute_import
 
 import lithium.interestingness.crashes
 # import lithium.interestingness.diff_test  # diff_test is not used outside of Lithium
-import lithium.interestingness.env_vars
-import lithium.interestingness.file_ingredients
 import lithium.interestingness.hangs
 import lithium.interestingness.outputs
 import lithium.interestingness.range

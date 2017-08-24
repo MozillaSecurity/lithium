@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 
-from lithium.interestingness import env_vars
+from lithium.interestingness import utils
 
 ASAN_EXIT_CODE = 77
 
@@ -70,9 +70,9 @@ def make_env(bin_path):  # pylint: disable=missing-docstring,missing-return-doc,
     if not is_shell_deterministic:
         return None
 
-    env = env_vars.env_with_path(os.path.abspath(os.path.dirname(bin_path)))
+    env = utils.env_with_path(os.path.abspath(os.path.dirname(bin_path)))
     env["ASAN_OPTIONS"] = "exitcode=" + str(ASAN_EXIT_CODE)
-    symbolizer_path = env_vars.find_llvm_bin_path()
+    symbolizer_path = utils.find_llvm_bin_path()
     if symbolizer_path is not None:
         env["ASAN_SYMBOLIZER_PATH"] = os.path.join(symbolizer_path, "llvm-symbolizer")
     return env

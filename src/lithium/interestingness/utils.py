@@ -9,10 +9,106 @@
 (assuming it's in the current directory OR in the same directory as ximport)
 """
 
+from __future__ import print_function
+
+import copy
 import importlib
 import logging
 import os
+import platform
+import re
 import sys
+
+ENV_PATH_SEPARATOR = ";" if os.name == "nt" else ":"
+
+
+def env_with_path(path, curr_env=None):  # pylint: disable=missing-param-doc,missing-return-doc
+    # pylint: disable=missing-return-type-doc,missing-type-doc
+    """Append the path to the appropriate library path on various platforms."""
+    curr_env = curr_env or os.environ
+    if platform.system() == "Linux":
+        lib_path = "LD_LIBRARY_PATH"
+    elif platform.system() == "Darwin":
+        lib_path = "DYLD_LIBRARY_PATH"
+    elif platform.system() == "Windows":
+        lib_path = "PATH"
+
+    env = copy.deepcopy(curr_env)
+    if lib_path in env:
+        if path not in env[lib_path]:
+            env[lib_path] += ENV_PATH_SEPARATOR + path
+    else:
+        env[lib_path] = path
+
+    return env
+
+
+def file_contains(f, regex, is_regex, verbosity=True):  # pylint: disable=missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
+    if is_regex:
+        return file_contains_regex(f, re.compile(regex, re.MULTILINE), verbose=verbosity)
+    return file_contains_str(f, regex, verbose=verbosity), regex
+
+
+def file_contains_str(file_, regex, verbose=True):  # pylint: disable=missing-docstring
+    # pylint: disable=missing-return-doc,missing-return-type-doc
+    with open(file_, "rb") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            if line.find(regex) != -1:
+                if verbose and regex != b"":
+                    print("[Found string in: '" + line.decode("utf-8", errors="replace") + "']", end=" ")
+                return True
+    return False
+
+
+def file_contains_regex(file_, regex, verbose=True):
+    # pylint: disable=missing-param-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
+    """e.g. python -m lithium crashesat --timeout=30
+     --regex '^#0\\s*0x.* in\\s*.*(?:\\n|\\r\\n?)#1\\s*' ./js --fuzzing-safe --no-threads --ion-eager testcase.js
+     Note that putting "^" and "$" together is unlikely to work."""
+
+    matched_str = ""
+    found = False
+    with open(file_, "rb") as f:
+        found_regex = regex.search(f.read())
+        if found_regex:
+            matched_str = found_regex.group()
+            if verbose and matched_str != b"":
+                print("[Found string in: '" + matched_str.decode("utf-8", errors="replace") + "']", end=" ")
+            found = True
+    return found, matched_str
+
+
+def find_llvm_bin_path():  # pylint: disable=missing-return-doc,missing-return-type-doc
+    """Return the path to compiled LLVM binaries, which differs depending on compilation method."""
+    if platform.system() == "Linux":
+        # Assumes clang was installed through apt-get. Works with version 3.6.2,
+        # assumed to work with clang 3.8.0.
+        # Create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8
+        if os.path.isfile("/usr/bin/llvm-symbolizer"):
+            return ""
+
+        print("WARNING: Please install clang via `apt-get install clang` if using Ubuntu.")
+        print("then create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8.")
+        print("Try: `ln -s /usr/bin/llvm-symbolizer-3.8 /usr/bin/llvm-symbolizer`")
+        return ""
+
+    if platform.system() == "Darwin":
+        # Assumes LLVM was installed through Homebrew. Works with at least version 3.6.2.
+        brewLLVMPath = "/usr/local/opt/llvm/bin"  # pylint: disable=invalid-name
+        if os.path.isdir(brewLLVMPath):
+            return brewLLVMPath
+
+        print("WARNING: Please install llvm from Homebrew via `brew install llvm`.")
+        print("ASan stacks will not have symbols as Xcode does not install llvm-symbolizer.")
+        return ""
+
+    # https://developer.mozilla.org/en-US/docs/Building_Firefox_with_Address_Sanitizer#Manual_Build
+    if platform.system() == "Windows":
+        return None  # The harness does not yet support Clang on Windows
 
 
 def ximport(module):
