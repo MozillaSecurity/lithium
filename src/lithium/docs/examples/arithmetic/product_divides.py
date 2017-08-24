@@ -5,17 +5,21 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-"""Interesting if the product of the numbers in the file divides the argument.
-
-e.g. lithium product_divides 35 11.txt
-"""
+"""This tests Lithium's main "minimize" algorithm."""
 
 import sys
 
 
-def interesting(args, _temp_prefix):  # pylint: disable=missing-param-doc,missing-return-doc
-    # pylint: disable=missing-return-type-doc,missing-type-doc
-    """Simple version for testing
+def interesting(args, _temp_prefix):
+    """Interesting if the product of the numbers in the file divides the argument.
+
+    Args:
+        args (str): The first parameter.
+        _temp_prefix (str): The second parameter.
+
+    Returns:
+        bool: True if successful, False otherwise.
+
     """
     mod = int(args[0])
     filename = args[1]
