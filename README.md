@@ -8,15 +8,15 @@ Lithium is an automated testcase reduction tool developed by [Jesse Ruderman](ht
 
 Most of what you need to know to use Lithium is in one of these pages:
 
-- [How to use Lithium to reduce Firefox bugs](lithium/doc/using-for-firefox.md).  Lithium has been used it to make reduced testcases for hundreds of Firefox crashes and assertions.
-- [How to create your own "interestingness tests"](lithium/doc/creating-tests.md).  Lithium is flexible enough to reduce files for complicated properties such as "parsed differently by Opera and Firefox".  Just supply a small program that determines when a given file has the property.
+- [How to use Lithium to reduce Firefox bugs](src/lithium/docs/using-for-firefox.md).  Lithium has been used it to make reduced testcases for hundreds of Firefox crashes and assertions.
+- [How to create your own "interestingness tests"](src/lithium/docs/creating-tests.md).  Lithium is flexible enough to reduce files for complicated properties such as "parsed differently by Opera and Firefox".  Just supply a small program that determines when a given file has the property.
 
 
 ### Lithium's algorithm
 
 By default, Lithium uses a clever algorithm that's efficient at reducing most large testcases.  For a testcase with 2048 lines, it will try removing each chunk of size 1024, permanently removing it if it is still 'interesting'.  It then does the same for each chunk of size 512, then 256, all the way down to chunks of size 1.  It then does as many additional rounds at chunk size 1 as necessary until it completes a round without removing anything, at which point the file is 1-minimal (removing any single line from the file makes it 'uninteresting').
 
-If *n* is the size of the testcase and *m* is the size of the 1-minimal testcase found by Lithium, then Lithium usually performs O(m &sdot; lg(n)) tests with a total test size of O(m &sdot; n).  See the [analysis of Lithium's algorithm](lithium/doc/algorithm.md) for more information and proofs.
+If *n* is the size of the testcase and *m* is the size of the 1-minimal testcase found by Lithium, then Lithium usually performs O(m &sdot; lg(n)) tests with a total test size of O(m &sdot; n).  See the [analysis of Lithium's algorithm](src/lithium/docs/algorithm.md) for more information and proofs.
 
 To keep *m* small, make sure Lithium's smallest removals won't introduce fatal syntax errors into the file it is trying to reduce.  For example, don't use --char when trying to reduce a long sequence of JavaScript statements, and don't feed XHTML to Lithium.  (Convert it to HTML first and let Firefox's tag-soup parser sort out the invalidity, or use serializeDOMAsScript.)
 
@@ -64,7 +64,7 @@ Lithium is written in [Python](https://www.python.org/) and requires Python 2.7 
 
 Various versions of Lithium have been used successfully with:
 
-- Windows 7 / 10 via [MozillaBuild 2.2.0](https://wiki.mozilla.org/MozillaBuild) and up. This comes with 2.7.
+- Windows 7 / 10 via [MozillaBuild 3.0](https://wiki.mozilla.org/MozillaBuild) and up. This comes with 2.7 and 3.6.
 - macOS Sierra 10.12 + Python 2.7
 - Ubuntu Linux 14.04 / 16.04 + Python 2.7 / Python 3.4+
 
@@ -73,7 +73,7 @@ It may or may not work in Windows XP/Vista anymore.
 
 ### Credits
 
-- [Lithium's testcase reduction algorithm](lithium/doc/algorithm.md) is a modified version of the "ddmin" algorithm in Andreas Zeller's paper, [Simplifying and Isolating Failure-Inducing Input](https://www.st.cs.uni-saarland.de/papers/tse2002/).
+- [Lithium's testcase reduction algorithm](src/lithium/docs/algorithm.md) is a modified version of the "ddmin" algorithm in Andreas Zeller's paper, [Simplifying and Isolating Failure-Inducing Input](https://www.st.cs.uni-saarland.de/papers/tse2002/).
 - The idea of using an external "interestingness test" program came from [Delta](http://delta.tigris.org/), a similar tool that's [used in clever ways by the GCC project](https://gcc.gnu.org/wiki/A_guide_to_testcase_reduction).
-- ntr.py, used by many of the "interestingness test" scripts that come with Lithium, is based on [timed_run.py](https://web.archive.org/web/20071107032840/http://bclary.com/log/2007/03/07/timed_run), which was written by [Chris Cooper](http://coop.deadsquid.com/) and [Bob Clary](https://bclary.com/).
+- [timed_run](src/lithium/interestingness/timed_run.py), used by many of the "interestingness test" scripts that come with Lithium, is based on [timed_run.py](https://web.archive.org/web/20071107032840/http://bclary.com/log/2007/03/07/timed_run), which was written by [Chris Cooper](http://coop.deadsquid.com/) and [Bob Clary](https://bclary.com/).
 - The code was significantly cleaned up and modernized by Jesse Schwartzentruber and Gary Kwong in mid-2017.
