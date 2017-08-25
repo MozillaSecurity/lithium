@@ -13,7 +13,7 @@ import os
 import re
 import time
 
-from lithium.interestingness.utils import ximport
+from .interestingness.utils import ximport
 
 log = logging.getLogger("lithium")  # pylint: disable=invalid-name
 

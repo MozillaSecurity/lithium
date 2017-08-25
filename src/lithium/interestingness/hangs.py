@@ -8,7 +8,7 @@
 
 from __future__ import absolute_import, print_function
 
-from lithium.interestingness import timed_run
+from . import timed_run
 
 
 def interesting(args, temp_prefix):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc

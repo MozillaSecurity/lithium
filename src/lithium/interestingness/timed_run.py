@@ -14,7 +14,7 @@ import subprocess
 import sys
 import time
 
-from lithium.interestingness import utils
+from . import utils
 
 ASAN_EXIT_CODE = 77
 

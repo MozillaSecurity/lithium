@@ -8,6 +8,6 @@
 
 from __future__ import absolute_import
 
-from lithium.reducer import main
+from .reducer import main
 
 main()
