@@ -13,7 +13,7 @@ import os
 import re
 import time
 
-from .interestingness.utils import ximport
+from .interestingness.utils import rel_or_abs_import
 
 log = logging.getLogger("lithium")  # pylint: disable=invalid-name
 
@@ -1331,7 +1331,7 @@ class Lithium(object):  # pylint: disable=missing-docstring,too-many-instance-at
             self.testcase.cutAfter = args.cutAfter
         self.testcase.readTestcase(testcaseFilename)
 
-        self.conditionScript = ximport(extra_args[0])
+        self.conditionScript = rel_or_abs_import(extra_args[0])
         self.conditionArgs = extra_args[1:]
 
     def testcaseTempFilename(self, partialFilename, useNumber=True):  # pylint: disable=invalid-name,missing-docstring

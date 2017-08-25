@@ -6,7 +6,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 """This lets you import an interestingness test given a full path, or given just a filename.
-(assuming it's in the current directory OR in the same directory as ximport)
+(assuming it's in the current directory OR in the same directory as utils.py)
 """
 
 from __future__ import print_function
@@ -112,7 +112,7 @@ def find_llvm_bin_path():  # pylint: disable=missing-return-doc,missing-return-t
         return None  # The harness does not yet support Clang on Windows
 
 
-def ximport(module):
+def rel_or_abs_import(module):
     # pylint: disable=missing-param-doc,missing-raises-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
     """Import a module from anywhere.
     If a full path to module is given, try to import from there.
