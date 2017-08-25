@@ -18,7 +18,7 @@ import sys
 import tempfile
 import unittest
 
-from lithium import reducer
+import lithium
 
 log = logging.getLogger("lithium_test")
 logging.basicConfig(level=logging.DEBUG)
@@ -181,20 +181,20 @@ class HelperTests(TestCase):
             n = random.randint(1, sys.maxint)  # pylint: disable=sys-max-int
             d = random.randint(1, n)
             try:
-                self.assertEqual(divceil(n, d), reducer.divideRoundingUp(n, d))
-                self.assertEqual(1, reducer.divideRoundingUp(n, n))
-                self.assertEqual(0, reducer.divideRoundingUp(0, n))
-                self.assertEqual(2, reducer.divideRoundingUp(n + 1, n))
+                self.assertEqual(divceil(n, d), lithium.divideRoundingUp(n, d))
+                self.assertEqual(1, lithium.divideRoundingUp(n, n))
+                self.assertEqual(0, lithium.divideRoundingUp(0, n))
+                self.assertEqual(2, lithium.divideRoundingUp(n + 1, n))
             except Exception:
                 log.debug("n = %d, d = %d", n, d)
                 raise
 
     def test_isPowerOfTwo(self):
-        self.assertFalse(reducer.isPowerOfTwo(0))
+        self.assertFalse(lithium.isPowerOfTwo(0))
         # try all integers [1,10000)
         for i in range(1, 10000):
             try:
-                self.assertEqual(ispow2(i), reducer.isPowerOfTwo(i))
+                self.assertEqual(ispow2(i), lithium.isPowerOfTwo(i))
             except Exception:
                 log.debug("i = %d", i)
                 raise
@@ -202,13 +202,13 @@ class HelperTests(TestCase):
         for _ in range(10000):
             r = random.randint(10000, sys.maxint)  # pylint: disable=sys-max-int
             try:
-                self.assertEqual(ispow2(r), reducer.isPowerOfTwo(r))
+                self.assertEqual(ispow2(r), lithium.isPowerOfTwo(r))
             except Exception:
                 log.debug("r = %d", r)
                 raise
 
     def test_largestPowerOfTwoSmallerThan(self):
-        self.assertEqual(1, reducer.largestPowerOfTwoSmallerThan(0))
+        self.assertEqual(1, lithium.largestPowerOfTwoSmallerThan(0))
 
         def check_result(r, i):
             # check that it is a power of two
@@ -221,7 +221,7 @@ class HelperTests(TestCase):
         # try all integers [1,10000)
         for i in range(1, 10000):
             try:
-                check_result(reducer.largestPowerOfTwoSmallerThan(i), i)
+                check_result(lithium.largestPowerOfTwoSmallerThan(i), i)
             except Exception:
                 log.debug("i = %d", i)
                 raise
@@ -229,7 +229,7 @@ class HelperTests(TestCase):
         for _ in range(10000):
             r = random.randint(10000, sys.maxint)  # pylint: disable=sys-max-int
             try:
-                check_result(reducer.largestPowerOfTwoSmallerThan(r), r)
+                check_result(lithium.largestPowerOfTwoSmallerThan(r), r)
             except Exception:
                 log.debug("r = %d", r)
                 raise
@@ -239,10 +239,10 @@ class LithiumTests(TestCase):
 
     def test_executable(self):
         with self.assertRaisesRegex(SystemExit, "0"):
-            reducer.Lithium().main(["-h"])
+            lithium.Lithium().main(["-h"])
 
     def test_class(self):
-        l = reducer.Lithium()
+        l = lithium.Lithium()
         with open("empty.txt", "w"):
             pass
 
@@ -264,8 +264,8 @@ class LithiumTests(TestCase):
         inter = Interesting()
         l.conditionScript = inter
         l.conditionArgs = ["empty.txt"]
-        l.strategy = reducer.CheckOnly()
-        l.testcase = reducer.TestcaseLine()
+        l.strategy = lithium.CheckOnly()
+        l.testcase = lithium.TestcaseLine()
         l.testcase.readTestcase("empty.txt")
         self.assertEqual(l.run(), 0)
         self.assertTrue(inter.init_called)
@@ -273,7 +273,7 @@ class LithiumTests(TestCase):
         self.assertTrue(inter.cleanup_called)
 
     def test_empty(self):
-        l = reducer.Lithium()
+        l = lithium.Lithium()
         with open("empty.txt", "w"):
             pass
 
@@ -284,8 +284,8 @@ class LithiumTests(TestCase):
                 # pylint: disable=missing-return-doc,missing-return-type-doc
                 return sub.inter
         l.conditionScript = Interesting()
-        l.strategy = reducer.Minimize()
-        l.testcase = reducer.TestcaseLine()
+        l.strategy = lithium.Minimize()
+        l.testcase = lithium.TestcaseLine()
         l.testcase.readTestcase("empty.txt")
         with self.assertLogs("lithium") as logs:
             self.assertEqual(l.run(), 1)
@@ -298,12 +298,12 @@ class LithiumTests(TestCase):
     def test_arithmetic(self):
         path = os.path.join(os.path.dirname(__file__), os.pardir, "src", "lithium", "docs", "examples", "arithmetic")
         shutil.copyfile(os.path.join(path, "11.txt"), "11.txt")
-        result = reducer.Lithium().main([os.path.join(path, "product_divides.py"), "35", "11.txt"])
+        result = lithium.Lithium().main([os.path.join(path, "product_divides.py"), "35", "11.txt"])
         self.assertEqual(result, 0)
         with open("11.txt") as f:
             self.assertEqual(f.read(), "2\n\n# DDBEGIN\n5\n7\n# DDEND\n\n2\n")
         shutil.copyfile(os.path.join(path, "11.txt"), "11.txt")
-        result = reducer.Lithium().main(["-c", os.path.join(path, "product_divides.py"), "35", "11.txt"])
+        result = lithium.Lithium().main(["-c", os.path.join(path, "product_divides.py"), "35", "11.txt"])
         self.assertEqual(result, 0)
         with open("11.txt") as f:
             self.assertEqual(f.read(), "2\n\n# DDBEGIN\n5\n7\n# DDEND\n\n2\n")
@@ -318,10 +318,10 @@ class StrategyTests(TestCase):
                 # pylint: disable=missing-return-doc,missing-return-type-doc
                 with open("a.txt", "rb") as f:
                     return b"o\n" in f.read()
-        l = reducer.Lithium()
+        l = lithium.Lithium()
         l.conditionScript = Interesting()
-        l.strategy = reducer.Minimize()
-        for testcaseType in (reducer.TestcaseChar, reducer.TestcaseLine, reducer.TestcaseSymbol):
+        l.strategy = lithium.Minimize()
+        for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
             log.info("Trying with testcase type %s:", testcaseType.__name__)
             with open("a.txt", "wb") as f:
                 f.write(b"x\n\nx\nx\no\nx\nx\nx\n")
@@ -339,10 +339,10 @@ class StrategyTests(TestCase):
                 with open("a.txt", "rb") as f:
                     data = f.read()
                     return b"o\n" in data and len(set(data.split(b"o\n"))) == 1
-        l = reducer.Lithium()
+        l = lithium.Lithium()
         l.conditionScript = Interesting()
-        l.strategy = reducer.MinimizeSurroundingPairs()
-        for testcaseType in (reducer.TestcaseChar, reducer.TestcaseLine, reducer.TestcaseSymbol):
+        l.strategy = lithium.MinimizeSurroundingPairs()
+        for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
             log.info("Trying with testcase type %s:", testcaseType.__name__)
             with open("a.txt", "wb") as f:
                 f.write(b"x\nx\nx\no\nx\nx\nx\n")
@@ -365,10 +365,10 @@ class StrategyTests(TestCase):
                                (a.count(b"(") == b.count(b")")) and \
                                (a.count(b"[") == b.count(b"]"))
                     return False
-        l = reducer.Lithium()
+        l = lithium.Lithium()
         l.conditionScript = Interesting()
-        l.strategy = reducer.MinimizeBalancedPairs()
-        for testcaseType in (reducer.TestcaseChar, reducer.TestcaseLine, reducer.TestcaseSymbol):
+        l.strategy = lithium.MinimizeBalancedPairs()
+        for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
             log.info("Trying with testcase type %s:", testcaseType.__name__)
             with open("a.txt", "wb") as f:
                 f.write(b"[\n[\nxxx{\no\n}\n]\n]\n")
@@ -420,18 +420,18 @@ class StrategyTests(TestCase):
                 # pylint: disable=missing-return-doc,missing-return-type-doc
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
-        l = reducer.Lithium()
-        for testcaseType in (reducer.TestcaseChar, reducer.TestcaseLine, reducer.TestcaseSymbol):
+        l = lithium.Lithium()
+        for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
             log.info("Trying with testcase type %s:", testcaseType.__name__)
             with open("a.txt", "wb") as f:
                 f.write(valid_reductions[0])
             l.conditionScript = Interesting()
-            l.strategy = reducer.ReplacePropertiesByGlobals()
+            l.strategy = lithium.ReplacePropertiesByGlobals()
             l.testcase = testcaseType()
             l.testcase.readTestcase("a.txt")
             self.assertEqual(l.run(), 0)
             with open("a.txt", "rb") as f:
-                if testcaseType is reducer.TestcaseChar:
+                if testcaseType is lithium.TestcaseChar:
                     # Char doesn't give this strategy enough to work with
                     self.assertEqual(f.read(), valid_reductions[0])
                 else:
@@ -453,10 +453,10 @@ class StrategyTests(TestCase):
                 # pylint: disable=missing-return-doc,missing-return-type-doc
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
-        l = reducer.Lithium()
+        l = lithium.Lithium()
         l.conditionScript = Interesting()
-        l.strategy = reducer.ReplaceArgumentsByGlobals()
-        for testcaseType in (reducer.TestcaseChar, reducer.TestcaseLine, reducer.TestcaseSymbol):
+        l.strategy = lithium.ReplaceArgumentsByGlobals()
+        for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
             log.info("Trying with testcase type %s:", testcaseType.__name__)
             with open("a.txt", "wb") as f:
                 f.write(valid_reductions[0])
@@ -464,7 +464,7 @@ class StrategyTests(TestCase):
             l.testcase.readTestcase("a.txt")
             self.assertEqual(l.run(), 0)
             with open("a.txt", "rb") as f:
-                if testcaseType is reducer.TestcaseChar:
+                if testcaseType is lithium.TestcaseChar:
                     # Char doesn't give this strategy enough to work with
                     self.assertEqual(f.read(), valid_reductions[0])
                 else:
@@ -474,7 +474,7 @@ class StrategyTests(TestCase):
 class TestcaseTests(TestCase):
 
     def test_line(self):
-        t = reducer.TestcaseLine()
+        t = lithium.TestcaseLine()
         with open("a.txt", "wb") as f:
             f.write(b"hello")
         t.readTestcase("a.txt")
@@ -493,7 +493,7 @@ class TestcaseTests(TestCase):
             self.assertEqual(f.read(), b"hello")
 
     def test_line_dd(self):
-        t = reducer.TestcaseLine()
+        t = lithium.TestcaseLine()
         with open("a.txt", "wb") as f:
             f.write(b"pre\n")
             f.write(b"DDBEGIN\n")
@@ -507,7 +507,7 @@ class TestcaseTests(TestCase):
         self.assertEqual(t.after, b"DDEND\npost\n")
 
     def test_char_dd(self):
-        t = reducer.TestcaseChar()
+        t = lithium.TestcaseChar()
         with open("a.txt", "wb") as f:
             f.write(b"pre\n")
             f.write(b"DDBEGIN\n")
@@ -522,7 +522,7 @@ class TestcaseTests(TestCase):
 
     def test_jsstr(self):
         """Test that the TestcaseJsStr class splits JS strings properly"""
-        t = reducer.TestcaseJsStr()
+        t = lithium.TestcaseJsStr()
         with open("a.txt", "wb") as f:
             f.write(b"pre\n")
             f.write(b"DDBEGIN\n")
@@ -545,7 +545,7 @@ class TestcaseTests(TestCase):
         self.assertEqual(t.after, b"\" something\nDDEND\npost\n")
 
     def test_symbol(self):
-        t = reducer.TestcaseSymbol()
+        t = lithium.TestcaseSymbol()
         with open("a.txt", "wb") as f:
             f.write(b"pre\n")
             f.write(b"DDBEGIN\n")
@@ -572,22 +572,22 @@ class TestcaseTests(TestCase):
     def test_errors(self):
         with open("a.txt", "w") as f:
             f.write("DDEND\n")
-        t = reducer.TestcaseLine()
-        with self.assertRaisesRegex(reducer.LithiumError,
+        t = lithium.TestcaseLine()
+        with self.assertRaisesRegex(lithium.LithiumError,
                                     r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
             t.readTestcase("a.txt")
         with open("a.txt", "w") as f:
             f.write("DDBEGIN DDEND\n")
-        with self.assertRaisesRegex(reducer.LithiumError,
+        with self.assertRaisesRegex(lithium.LithiumError,
                                     r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
             t.readTestcase("a.txt")
         with open("a.txt", "w") as f:
             f.write("DDEND DDBEGIN\n")
-        with self.assertRaisesRegex(reducer.LithiumError,
+        with self.assertRaisesRegex(lithium.LithiumError,
                                     r"^The testcase \(a\.txt\) has a line containing 'DDEND' without"):
             t.readTestcase("a.txt")
         with open("a.txt", "w") as f:
             f.write("DDBEGIN\n")
-        with self.assertRaisesRegex(reducer.LithiumError,
+        with self.assertRaisesRegex(lithium.LithiumError,
                                     r"^The testcase \(a\.txt\) has a line containing 'DDBEGIN' but no"):
             t.readTestcase("a.txt")
