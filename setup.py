@@ -19,8 +19,8 @@ if __name__ == "__main__":
               "lithium.interestingness",
           ],
           package_data={"lithium": [
-              "docs/*",
-              "docs/examples/*",
+              "docs/*.*",
+              "docs/examples/*.*",
               "docs/examples/arithmetic/*",
           ]},
           package_dir={"": "src"},
