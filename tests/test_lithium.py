@@ -12,8 +12,10 @@ import collections
 import logging
 import math
 import os
+import platform
 import random
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -233,6 +235,133 @@ class HelperTests(TestCase):
             except Exception:
                 log.debug("r = %d", r)
                 raise
+
+
+COMPILER = None
+
+
+def _compile(in_path, out_path):
+    """Try to compile a source file using any available C/C++ compiler.
+
+    @type in_path: str
+    @param in_path: source file to compile from
+
+    @type out_path: str
+    @param out_path: executable file to compile to
+
+    @exception RuntimeError: if the compilation fails or compiler can't be found
+    """
+    # try to find a working compiler
+    global COMPILER  # pylint: disable=global-statement
+    if COMPILER == "cl" or (COMPILER is None and platform.system() == "Windows"):
+        try:
+            subprocess.check_output(["cl", "/Fe" + out_path, in_path], stderr=subprocess.STDOUT)
+            COMPILER = "cl"
+            return
+        except OSError:
+            log.debug("cl not found")
+        except subprocess.CalledProcessError as exc:
+            for line in exc.output.splitlines():
+                log.debug("cl: %s", line)
+    if (COMPILER and COMPILER != "cl") or COMPILER is None:
+        compilers_to_try = [COMPILER] if COMPILER else ["clang", "gcc", "cc"]
+        for compiler in compilers_to_try:
+            try:
+                subprocess.check_output([compiler, "-o" + out_path, in_path], stderr=subprocess.STDOUT)
+                COMPILER = compiler
+                return
+            except OSError:
+                log.debug("%s not found", compiler)
+            except subprocess.CalledProcessError as exc:
+                for line in exc.output.splitlines():
+                    log.debug("%s: %s", compiler, line)
+    if COMPILER is None:
+        # set to False so we only try to find a working compiler once
+        COMPILER = False  # pylint: disable=redefined-variable-type
+        raise RuntimeError("Failed to find a compiler")
+    else:
+        raise RuntimeError("Compile failed")
+
+
+class InterestingnessTests(TestCase):
+    cat_cmd = [sys.executable, "-c", ("import sys;"
+                                      "[sys.stdout.write(f.read()) "
+                                      " for f in "
+                                      "     ([open(a) for a in sys.argv[1:]] or "
+                                      "      [sys.stdin])"
+                                      "]")]
+    list_exe = "dir" if platform.system() == "Windows" else "ls"
+    sleep_cmd = [sys.executable, "-c", "import time;time.sleep(3)"]
+
+    def test_crashes(self):
+        """Tests for the 'crashes' interestingness test"""
+        l = lithium.Lithium()
+        with open("temp.js", "w"):
+            pass
+
+        # check that `ls` doesn't crash
+        result = l.main(["crashes", self.list_exe, "temp.js"])
+        self.assertEqual(result, 1)
+
+        # if a compiler is available, compile a simple crashing test program
+        try:
+            src = os.path.join(os.path.dirname(__file__), os.pardir, "src", "lithium", "docs", "examples", "crash.c")
+            exe = "crash.exe" if platform.system() == "Windows" else "./crash"
+            _compile(src, exe)
+            result = l.main(["crashes", exe, "temp.js"])
+            self.assertEqual(result, 0)
+        except RuntimeError:
+            pass
+
+    def test_hangs(self):
+        """Tests for the 'hangs' interestingness test"""
+        l = lithium.Lithium()
+        with open("temp.js", "w"):
+            pass
+
+        # test that `sleep 3` hangs over 1s
+        result = l.main(["--testcase", "temp.js", "hangs", "1"] + self.sleep_cmd)
+        self.assertEqual(result, 0)
+
+        # test that `ls temp.js` does not hang over 1s
+        result = l.main(["hangs", "1", self.list_exe, "temp.js"])
+        self.assertEqual(result, 1)
+
+    def test_outputs(self):
+        """Tests for the 'hangs' interestingness test"""
+        l = lithium.Lithium()
+        with open("temp.js", "w"):
+            pass
+
+        # test that `ls temp.js` contains "temp.js"
+        result = l.main(["outputs", "temp.js", self.list_exe, "temp.js"])
+        self.assertEqual(result, 0)
+
+        # test that `ls temp.js` does not contain "blah"
+        result = l.main(["outputs", "blah", self.list_exe, "temp.js"])
+        self.assertEqual(result, 1)
+
+        # test that regex matches work too
+        result = l.main(["outputs", "--regex", "^.*js$", self.list_exe, "temp.js"])
+        self.assertEqual(result, 0)
+
+    def test_range(self):
+        """Tests for the 'range' interestingness test"""
+        l = lithium.Lithium()
+        with open("temp.js", "w") as tempf:
+            tempf.write("hello")
+
+        # check for a known string, twice
+        with self.assertLogs("lithium") as test_logs:
+            result = l.main(["range", "0", "2", "outputs", "hello"] + self.cat_cmd + ["temp.js"])
+            self.assertEqual(result, 0)
+            found_rec = False
+            # scan the log output to see how many tests were performed
+            for rec in test_logs.records:
+                if "Tests performed:" in rec.msg:
+                    self.assertEqual(rec.args[0], 2)  # should have run 2x
+                    found_rec = True
+            self.assertTrue(found_rec)  # check that we hit the check ;)
 
 
 class LithiumTests(TestCase):
