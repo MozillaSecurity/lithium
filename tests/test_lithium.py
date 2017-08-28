@@ -18,6 +18,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 import lithium
@@ -288,6 +289,13 @@ class InterestingnessTests(TestCase):
         result = l.main(["crashes", self.list_exe, "temp.js"])
         self.assertEqual(result, 1)
 
+        # check that --timeout works
+        start_time = time.time()
+        result = l.main(["--testcase", "temp.js", "crashes", "--timeout", "1"] + self.sleep_cmd)
+        elapsed = time.time() - start_time
+        self.assertEqual(result, 1)
+        self.assertGreaterEqual(elapsed, 1)
+
         # if a compiler is available, compile a simple crashing test program
         try:
             src = os.path.join(os.path.dirname(__file__), os.pardir, "src", "lithium", "docs", "examples", "crash.c")
@@ -325,6 +333,13 @@ class InterestingnessTests(TestCase):
         # test that `ls temp.js` does not contain "blah"
         result = l.main(["outputs", "blah", self.list_exe, "temp.js"])
         self.assertEqual(result, 1)
+
+        # check that --timeout works
+        start_time = time.time()
+        result = l.main(["--testcase", "temp.js", "outputs", "--timeout", "1", "blah"] + self.sleep_cmd)
+        elapsed = time.time() - start_time
+        self.assertEqual(result, 1)
+        self.assertGreaterEqual(elapsed, 1)
 
         # test that regex matches work too
         result = l.main(["outputs", "--regex", "^.*js$", self.list_exe, "temp.js"])
