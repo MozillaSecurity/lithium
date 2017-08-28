@@ -6,17 +6,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 import optparse  # pylint: disable=deprecated-module
 import sys
 
-import fileIngredients  # pylint: disable=relative-import
-import timedRun  # pylint: disable=relative-import
+from . import utils
+from . import timed_run
 
 
-def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
+def parse_options(arguments):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
     parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
@@ -30,19 +29,18 @@ def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
     return options.condTimeout, options.useRegex, args
 
 
-def interesting(cliArgs, tempPrefix):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
-    (timeout, regexEnabled, args) = parseOptions(cliArgs)  # pylint: disable=invalid-name
+def interesting(cli_args, temp_prefix):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
+    (timeout, regex_enabled, args) = parse_options(cli_args)
 
-    searchFor = args[0]  # pylint: disable=invalid-name
-    if not isinstance(searchFor, bytes):
-        searchFor = searchFor.encode(sys.getfilesystemencoding())  # pylint: disable=invalid-name
+    search_for = args[0]
+    if not isinstance(search_for, bytes):
+        search_for = search_for.encode(sys.getfilesystemencoding())
 
-    runinfo = timedRun.timed_run(args[1:], timeout, tempPrefix)
+    runinfo = timed_run.timed_run(args[1:], timeout, temp_prefix)
 
     result = (
-        fileIngredients.fileContains(tempPrefix + "-out.txt", searchFor, regexEnabled)[0] or
-        fileIngredients.fileContains(tempPrefix + "-err.txt", searchFor, regexEnabled)[0]
+        utils.file_contains(temp_prefix + "-out.txt", search_for, regex_enabled)[0] or
+        utils.file_contains(temp_prefix + "-err.txt", search_for, regex_enabled)[0]
     )
 
     print("Exit status: %s (%.3f seconds)" % (runinfo.msg, runinfo.elapsedtime))

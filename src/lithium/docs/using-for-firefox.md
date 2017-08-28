@@ -20,14 +20,14 @@ You'll usually be able to use one of the tests that comes with Lithium.  For the
 
 | Test | Parameters | What it tests |
 | --- | --- | --- |
-| outputs_timed.py | timeout, string, app+args | app+args outputs *string* (on stdout or stderr) within *timeout* seconds. |
-| hangs.py | timeout, app+args | app+args does not exit within *timeout* seconds. |
-| crashes.py | timeout, app+args | app+args crashes |
-| crashesat.py (Mac-only) | timeout, signature, app+args | app+args crashes, with *signature* somewhere in the crash log.  Recommend using a function near the top of the stack trace. |
+| outputs | timeout, string, app+args | app+args outputs *string* (on stdout or stderr) within *timeout* seconds. |
+| hangs | timeout, app+args | app+args does not exit within *timeout* seconds. |
+| crashes | timeout, app+args | app+args crashes |
+| crashesat (removed) | timeout, signature, app+args | app+args crashes, with *signature* somewhere in the crash log.  Recommend using a function near the top of the stack trace. |
 
 For example, suppose you have a large file called boom.html that triggers an array-bound assertion in debug builds of Firefox.  To make a reduced testcase, you might use something like:
 
-    ./lithium.py outputs_timed.py 120 "ASSERTION: index out of range" fxdebug/firefox-bin boom.html
+    python -m lithium outputs --timeout=120 "ASSERTION: index out of range" fxdebug/firefox-bin boom.html
 
 Lithium will try to remove as many lines from boom.html as possible while still causing Firefox to print that assertion message.
 

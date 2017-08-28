@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-# pylint: disable=invalid-name
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,16 +12,15 @@ This can be used to isolate and minimize differential behaviour test cases.
 # This file came from nbp's GitHub PR #2 for adding new Lithium reduction strategies.
 #   https://github.com/MozillaSecurity/lithium/pull/2
 
-from __future__ import print_function
+from __future__ import absolute_import, print_function
 
 import filecmp
 import optparse  # pylint: disable=deprecated-module
 
-import timedRun  # pylint: disable=relative-import
+from . import timed_run
 
 
-def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
+def parse_options(arguments):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
     parser = optparse.OptionParser()
     parser.disable_interspersed_args()
     parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
@@ -40,30 +38,27 @@ def parseOptions(arguments):  # pylint: disable=invalid-name,missing-docstring
     return options.condTimeout, options.aArgs, options.bArgs, args
 
 
-def interesting(cliArgs, tempPrefix):  # pylint: disable=invalid-name,missing-docstring
-    # pylint: disable=missing-return-doc,missing-return-type-doc
-    (timeout, aArgs, bArgs, args) = parseOptions(cliArgs)  # pylint: disable=invalid-name
+def interesting(cli_args, temp_prefix):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
+    (timeout, a_args, b_args, args) = parse_options(cli_args)
 
-    # pylint: disable=invalid-name
-    aRuninfo = timedRun.timed_run(args[:1] + aArgs + args[1:], timeout, tempPrefix + "-a")
-    # pylint: disable=invalid-name
-    bRuninfo = timedRun.timed_run(args[:1] + bArgs + args[1:], timeout, tempPrefix + "-b")
-    # pylint: disable=invalid-name
-    timeString = " (1st Run: %.3f seconds) (2nd Run: %.3f seconds)" % (aRuninfo.elapsedtime, bRuninfo.elapsedtime)
+    a_runinfo = timed_run.timed_run(args[:1] + a_args + args[1:], timeout, temp_prefix + "-a")
+    b_runinfo = timed_run.timed_run(args[:1] + b_args + args[1:], timeout, temp_prefix + "-b")
+    time_str = " (1st Run: %.3f seconds) (2nd Run: %.3f seconds)" % (a_runinfo.elapsedtime, b_runinfo.elapsedtime)
 
-    if aRuninfo.sta != timedRun.TIMED_OUT and bRuninfo.sta != timedRun.TIMED_OUT:
-        if aRuninfo.rc != bRuninfo.rc:
-            print("[Interesting] Different return code. (%d, %d)%s" % (aRuninfo.rc, bRuninfo.rc, timeString))
+    if a_runinfo.sta != timed_run.TIMED_OUT and b_runinfo.sta != timed_run.TIMED_OUT:
+        if a_runinfo.return_code != b_runinfo.return_code:
+            print("[Interesting] Different return code. (%d, %d)%s" %
+                  (a_runinfo.return_code, b_runinfo.return_code, time_str))
             return True
-        if not filecmp.cmp(aRuninfo.out, bRuninfo.out):
-            print("[Interesting] Different output.%s" % timeString)
+        if not filecmp.cmp(a_runinfo.out, b_runinfo.out):
+            print("[Interesting] Different output.%s" % time_str)
             return True
-        if not filecmp.cmp(aRuninfo.err, bRuninfo.err):
-            print("[Interesting] Different error output.%s" % timeString)
+        if not filecmp.cmp(a_runinfo.err, b_runinfo.err):
+            print("[Interesting] Different error output.%s" % time_str)
             return True
     else:
-        print("[Uninteresting] At least one test timed out.%s" % timeString)
+        print("[Uninteresting] At least one test timed out.%s" % time_str)
         return False
 
-    print("[Uninteresting] Identical behaviour.%s" % timeString)
+    print("[Uninteresting] Identical behaviour.%s" % time_str)
     return False

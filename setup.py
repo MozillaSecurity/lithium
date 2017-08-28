@@ -10,16 +10,18 @@ from setuptools import setup
 
 if __name__ == "__main__":
     setup(name="lithium",
-          version="0.1",
+          version="0.2.0",
           entry_points={
-              "console_scripts": ["lithium = lithium:main"]
+              "console_scripts": ["lithium = lithium.reducer:main"]
           },
-          packages=["lithium", "lithium.lithium"],
-          package_data={"": [
-              "interestingness/*",
-              "lithium/doc/*",
-              "lithium/examples/*.*",
-              "lithium/examples/arithmetic/*"
+          packages=[
+              "lithium",
+              "lithium.interestingness",
+          ],
+          package_data={"lithium": [
+              "docs/*.*",
+              "docs/examples/*.*",
+              "docs/examples/arithmetic/*",
           ]},
-          package_dir={"lithium": ""},
+          package_dir={"": "src"},
           zip_safe=False)

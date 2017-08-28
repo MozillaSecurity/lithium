@@ -11,8 +11,9 @@ import argparse
 import logging
 import os
 import re
-import sys
 import time
+
+from .interestingness.utils import rel_or_abs_import
 
 log = logging.getLogger("lithium")  # pylint: disable=invalid-name
 
@@ -54,7 +55,7 @@ class Testcase(object):
         self.filename = filename
         self.extension = os.path.splitext(self.filename)[1]
 
-        with open(self.filename, "rb") as f:  # pylint: disable=invalid-name
+        with open(self.filename, "rb") as f:
             # Determine whether the f has a DDBEGIN..DDEND section.
             for line in f:
                 if line.find(b"DDEND") != -1:
@@ -111,7 +112,7 @@ class TestcaseLine(Testcase):  # pylint: disable=missing-docstring
     def writeTestcase(self, filename=None):
         if filename is None:
             filename = self.filename
-        with open(filename, "wb") as f:  # pylint: disable=invalid-name
+        with open(filename, "wb") as f:
             f.write(self.before)
             f.writelines(self.parts)
             f.write(self.after)
@@ -1251,12 +1252,12 @@ class Lithium(object):  # pylint: disable=missing-docstring,too-many-instance-at
         parser = argparse.ArgumentParser(
             description="Lithium, an automated testcase reduction tool by Jesse Ruderman.",
             epilog="See doc/using.html for more information.",
-            usage="./lithium.py [options] condition [condition options] file-to-reduce\n\n"
-                  "example: "
-                  "./lithium.py crashes 120 ~/tracemonkey/js/src/debug/js -j a.js\n"
+            usage="python -m lithium [options] condition [condition options] file-to-reduce\n\n"
+                  "Example: "
+                  "python -m lithium crashes --timeout=120 ./js --fuzzing-safe --no-threads --ion-eager a.js\n"
                   "    Lithium will reduce a.js subject to the condition that the following\n"
                   "    crashes in 120 seconds:\n"
-                  "    ~/tracemonkey/js/src/debug/js -j a.js")
+                  "    ./js --fuzzing-safe --no-threads --ion-eager a.js")
         grp_opt = parser.add_argument_group(description="Lithium options")
         grp_opt.add_argument(
             "--testcase",
@@ -1330,10 +1331,7 @@ class Lithium(object):  # pylint: disable=missing-docstring,too-many-instance-at
             self.testcase.cutAfter = args.cutAfter
         self.testcase.readTestcase(testcaseFilename)
 
-        sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, "interestingness"))
-        import ximport  # pylint: disable=import-error
-
-        self.conditionScript = ximport.importRelativeOrAbsolute(extra_args[0])
+        self.conditionScript = rel_or_abs_import(extra_args[0])
         self.conditionArgs = extra_args[1:]
 
     def testcaseTempFilename(self, partialFilename, useNumber=True):  # pylint: disable=invalid-name,missing-docstring
