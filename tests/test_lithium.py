@@ -237,52 +237,6 @@ class HelperTests(TestCase):
                 raise
 
 
-COMPILER = None
-
-
-def _compile(in_path, out_path):
-    """Try to compile a source file using any available C/C++ compiler.
-
-    @type in_path: str
-    @param in_path: source file to compile from
-
-    @type out_path: str
-    @param out_path: executable file to compile to
-
-    @exception RuntimeError: if the compilation fails or compiler can't be found
-    """
-    # try to find a working compiler
-    global COMPILER  # pylint: disable=global-statement
-    if COMPILER == "cl" or (COMPILER is None and platform.system() == "Windows"):
-        try:
-            subprocess.check_output(["cl", "/Fe" + out_path, in_path], stderr=subprocess.STDOUT)
-            COMPILER = "cl"
-            return
-        except OSError:
-            log.debug("cl not found")
-        except subprocess.CalledProcessError as exc:
-            for line in exc.output.splitlines():
-                log.debug("cl: %s", line)
-    if (COMPILER and COMPILER != "cl") or COMPILER is None:
-        compilers_to_try = [COMPILER] if COMPILER else ["clang", "gcc", "cc"]
-        for compiler in compilers_to_try:
-            try:
-                subprocess.check_output([compiler, "-o" + out_path, in_path], stderr=subprocess.STDOUT)
-                COMPILER = compiler
-                return
-            except OSError:
-                log.debug("%s not found", compiler)
-            except subprocess.CalledProcessError as exc:
-                for line in exc.output.splitlines():
-                    log.debug("%s: %s", compiler, line)
-    if COMPILER is None:
-        # set to False so we only try to find a working compiler once
-        COMPILER = False  # pylint: disable=redefined-variable-type
-        raise RuntimeError("Failed to find a compiler")
-    else:
-        raise RuntimeError("Compile failed")
-
-
 class InterestingnessTests(TestCase):
     cat_cmd = [sys.executable, "-c", ("import sys;"
                                       "[sys.stdout.write(f.read()) "
@@ -292,6 +246,37 @@ class InterestingnessTests(TestCase):
                                       "]")]
     list_exe = "dir" if platform.system() == "Windows" else "ls"
     sleep_cmd = [sys.executable, "-c", "import time;time.sleep(3)"]
+    if platform.system() == "Windows":
+        compilers_to_try = ["cl", "clang", "gcc", "cc"]
+    else:
+        compilers_to_try = ["clang", "gcc", "cc"]
+
+    @classmethod
+    def _compile(cls, in_path, out_path):
+        """Try to compile a source file using any available C/C++ compiler.
+
+        @type in_path: str
+        @param in_path: source file to compile from
+
+        @type out_path: str
+        @param out_path: executable file to compile to
+
+        @exception RuntimeError: if the compilation fails or compiler can't be found
+        """
+        assert os.path.isfile(in_path)
+        for compiler in cls.compilers_to_try:
+            try:
+                out_param = "/Fe" if compiler == "cl" else "-o"
+                subprocess.check_output([compiler, out_param + out_path, in_path], stderr=subprocess.STDOUT)
+                cls.compilers_to_try = [compiler]  # this compiler worked, never try any others
+                return
+            except OSError:
+                log.debug("%s not found", compiler)
+            except subprocess.CalledProcessError as exc:
+                for line in exc.output.splitlines():
+                    log.debug("%s: %s", compiler, line)
+        # all of compilers we tried have failed :(
+        raise RuntimeError("Compile failed")
 
     def test_crashes(self):
         """Tests for the 'crashes' interestingness test"""
@@ -307,11 +292,11 @@ class InterestingnessTests(TestCase):
         try:
             src = os.path.join(os.path.dirname(__file__), os.pardir, "src", "lithium", "docs", "examples", "crash.c")
             exe = "crash.exe" if platform.system() == "Windows" else "./crash"
-            _compile(src, exe)
+            self._compile(src, exe)
             result = l.main(["crashes", exe, "temp.js"])
             self.assertEqual(result, 0)
-        except RuntimeError:
-            pass
+        except RuntimeError as exc:
+            log.warning(exc)
 
     def test_hangs(self):
         """Tests for the 'hangs' interestingness test"""
