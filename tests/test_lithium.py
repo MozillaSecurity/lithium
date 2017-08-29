@@ -314,7 +314,9 @@ class InterestingnessTests(TestCase):
         for compiler in cls.compilers_to_try:
             try:
                 out_param = "/Fe" if compiler == "cl" else "-o"
-                subprocess.check_output([compiler, out_param + out_path, in_path], stderr=subprocess.STDOUT)
+                out = subprocess.check_output([compiler, out_param + out_path, in_path], stderr=subprocess.STDOUT)
+                for line in out.splitlines():
+                    log.debug("%s: %s", compiler, line)
                 cls.compilers_to_try = [compiler]  # this compiler worked, never try any others
                 return
             except OSError:
