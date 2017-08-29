@@ -153,14 +153,18 @@ class DisableWER(object):
             wer = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
                                  r"Software\Microsoft\Windows\Windows Error Reporting", 0,
                                  winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE)
+            # disable reporting to microsoft
+            # this might disable dump generation altogether, which is not what we want
             self.wer_disabled = bool(winreg.QueryValueEx(wer, "Disabled")[0])
             if not self.wer_disabled:
                 winreg.SetValueEx(wer, "Disabled", 0, winreg.REG_DWORD, 1)
+            # don't show the crash UI (Debug/Close Application)
             self.wer_dont_show_ui = bool(winreg.QueryValueEx(wer, "DontShowUI")[0])
             if not self.wer_dont_show_ui:
                 winreg.SetValueEx(wer, "DontShowUI", 0, winreg.REG_DWORD, 1)
 
     def __exit__(self, exc_type, exc_value, tb):
+        # restore previous settings
         if winreg is not None:
             wer = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
                                  r"Software\Microsoft\Windows\Windows Error Reporting", 0,
@@ -292,7 +296,7 @@ class InterestingnessTests(TestCase):
                                      "      if len(sys.argv) > 1"
                                      "      else os.listdir('.'))"
                                      "]")]
-    sleep_cmd = [sys.executable, "-c", "import time;time.sleep(3)"]
+    sleep_cmd = [sys.executable, "-c", "import sys,time;time.sleep(int(sys.argv[1]))"]
     if platform.system() == "Windows":
         compilers_to_try = ["cl", "clang", "gcc", "cc"]
     else:
@@ -339,7 +343,7 @@ class InterestingnessTests(TestCase):
 
         # check that --timeout works
         start_time = time.time()
-        result = l.main(["--testcase", "temp.js", "crashes", "--timeout", "1"] + self.sleep_cmd)
+        result = l.main(["--testcase", "temp.js", "crashes", "--timeout", "1"] + self.sleep_cmd + ["3"])
         elapsed = time.time() - start_time
         self.assertEqual(result, 1)
         self.assertGreaterEqual(elapsed, 1)
@@ -362,7 +366,7 @@ class InterestingnessTests(TestCase):
             pass
 
         # test that `sleep 3` hangs over 1s
-        result = l.main(["--testcase", "temp.js", "hangs", "1"] + self.sleep_cmd)
+        result = l.main(["--testcase", "temp.js", "hangs", "1"] + self.sleep_cmd + ["3"])
         self.assertEqual(result, 0)
 
         # test that `ls temp.js` does not hang over 1s
@@ -385,7 +389,7 @@ class InterestingnessTests(TestCase):
 
         # check that --timeout works
         start_time = time.time()
-        result = l.main(["--testcase", "temp.js", "outputs", "--timeout", "1", "blah"] + self.sleep_cmd)
+        result = l.main(["--testcase", "temp.js", "outputs", "--timeout", "1", "blah"] + self.sleep_cmd + ["3"])
         elapsed = time.time() - start_time
         self.assertEqual(result, 1)
         self.assertGreaterEqual(elapsed, 1)

@@ -160,7 +160,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):  
         msg = "ABNORMAL exit code " + str(return_code)
         sta = ABNORMAL
     else:
-        # return_code < 0
+        # return_code < 0 (or > 0x80000000 in Windows+py3)
         # The program was terminated by a signal, which usually indicates a crash.
         # Mac/Linux only!
         signum = -return_code
