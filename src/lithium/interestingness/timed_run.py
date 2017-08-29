@@ -156,7 +156,7 @@ def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):  
     elif return_code == ASAN_EXIT_CODE:
         msg = "CRASHED (Address Sanitizer fault)"
         sta = CRASHED
-    elif return_code > 0:
+    elif 0 < return_code < 0x80000000:
         msg = "ABNORMAL exit code " + str(return_code)
         sta = ABNORMAL
     else:
