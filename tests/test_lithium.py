@@ -290,7 +290,7 @@ class InterestingnessTests(TestCase):
                                      " for p in"
                                      "     (itertools.chain.from_iterable(glob.glob(d) for d in sys.argv[1:])"
                                      "      if len(sys.argv) > 1"
-                                     "      else os.listdir())"
+                                     "      else os.listdir('.'))"
                                      "]")]
     sleep_cmd = [sys.executable, "-c", "import time;time.sleep(3)"]
     if platform.system() == "Windows":
