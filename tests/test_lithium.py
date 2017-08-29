@@ -20,8 +20,14 @@ import sys
 import tempfile
 import time
 import unittest
+if platform.system() != "Windows":
+    winreg = None
+elif sys.version_info.major == 2:
+    import _winreg as winreg  # pylint: disable=import-error
+else:
+    import winreg  # pylint: disable=import-error
 
-import lithium
+import lithium  # noqa pylint: disable=wrong-import-position
 
 log = logging.getLogger("lithium_test")
 logging.basicConfig(level=logging.DEBUG)
@@ -129,6 +135,40 @@ class TestCase(unittest.TestCase):
                             logging.getLevelName(self.level), self.logger.name))
 
             return _AssertLogsContext(self, logger, level)
+
+
+class DisableWER(object):
+    """Disable Windows Error Reporting for the duration of the context manager.
+
+    ref: https://msdn.microsoft.com/en-us/library/bb513638.aspx
+    """
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self):
+        self.wer_disabled = None
+        self.wer_dont_show_ui = None
+
+    def __enter__(self):
+        if winreg is not None:
+            wer = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                 r"Software\Microsoft\Windows\Windows Error Reporting", 0,
+                                 winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE)
+            self.wer_disabled = bool(winreg.QueryValueEx(wer, "Disabled")[0])
+            if not self.wer_disabled:
+                winreg.SetValueEx(wer, "Disabled", 0, winreg.REG_DWORD, 1)
+            self.wer_dont_show_ui = bool(winreg.QueryValueEx(wer, "DontShowUI")[0])
+            if not self.wer_dont_show_ui:
+                winreg.SetValueEx(wer, "DontShowUI", 0, winreg.REG_DWORD, 1)
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if winreg is not None:
+            wer = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                 r"Software\Microsoft\Windows\Windows Error Reporting", 0,
+                                 winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE)
+            if not self.wer_disabled:
+                winreg.SetValueEx(wer, "Disabled", 0, winreg.REG_DWORD, 0)
+            if not self.wer_dont_show_ui:
+                winreg.SetValueEx(wer, "DontShowUI", 0, winreg.REG_DWORD, 0)
 
 
 class DummyInteresting(object):
@@ -307,7 +347,8 @@ class InterestingnessTests(TestCase):
             src = os.path.join(os.path.dirname(__file__), os.pardir, "src", "lithium", "docs", "examples", "crash.c")
             exe = "crash.exe" if platform.system() == "Windows" else "./crash"
             self._compile(src, exe)
-            result = l.main(["crashes", exe, "temp.js"])
+            with DisableWER():
+                result = l.main(["crashes", exe, "temp.js"])
             self.assertEqual(result, 0)
         except RuntimeError as exc:
             log.warning(exc)
