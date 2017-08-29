@@ -240,12 +240,18 @@ class HelperTests(TestCase):
 
 class InterestingnessTests(TestCase):
     cat_cmd = [sys.executable, "-c", ("import sys;"
-                                      "[sys.stdout.write(f.read()) "
-                                      " for f in "
-                                      "     ([open(a) for a in sys.argv[1:]] or "
+                                      "[sys.stdout.write(f.read())"
+                                      " for f in"
+                                      "     ([open(a) for a in sys.argv[1:]] or"
                                       "      [sys.stdin])"
                                       "]")]
-    list_exe = "dir" if platform.system() == "Windows" else "ls"
+    ls_cmd = [sys.executable, "-c", ("import glob,itertools,os,sys;"
+                                     "[sys.stdout.write(p+'\\n')"
+                                     " for p in"
+                                     "     (itertools.chain.from_iterable(glob.glob(d) for d in sys.argv[1:])"
+                                     "      if len(sys.argv) > 1"
+                                     "      else os.listdir())"
+                                     "]")]
     sleep_cmd = [sys.executable, "-c", "import time;time.sleep(3)"]
     if platform.system() == "Windows":
         compilers_to_try = ["cl", "clang", "gcc", "cc"]
@@ -286,7 +292,7 @@ class InterestingnessTests(TestCase):
             pass
 
         # check that `ls` doesn't crash
-        result = l.main(["crashes", self.list_exe, "temp.js"])
+        result = l.main(["crashes"] + self.ls_cmd + ["temp.js"])
         self.assertEqual(result, 1)
 
         # check that --timeout works
@@ -317,7 +323,7 @@ class InterestingnessTests(TestCase):
         self.assertEqual(result, 0)
 
         # test that `ls temp.js` does not hang over 1s
-        result = l.main(["hangs", "1", self.list_exe, "temp.js"])
+        result = l.main(["hangs", "1"] + self.ls_cmd + ["temp.js"])
         self.assertEqual(result, 1)
 
     def test_outputs(self):
@@ -327,11 +333,11 @@ class InterestingnessTests(TestCase):
             pass
 
         # test that `ls temp.js` contains "temp.js"
-        result = l.main(["outputs", "temp.js", self.list_exe, "temp.js"])
+        result = l.main(["outputs", "temp.js"] + self.ls_cmd + ["temp.js"])
         self.assertEqual(result, 0)
 
         # test that `ls temp.js` does not contain "blah"
-        result = l.main(["outputs", "blah", self.list_exe, "temp.js"])
+        result = l.main(["outputs", "blah"] + self.ls_cmd + ["temp.js"])
         self.assertEqual(result, 1)
 
         # check that --timeout works
@@ -342,7 +348,7 @@ class InterestingnessTests(TestCase):
         self.assertGreaterEqual(elapsed, 1)
 
         # test that regex matches work too
-        result = l.main(["outputs", "--regex", "^.*js$", self.list_exe, "temp.js"])
+        result = l.main(["outputs", "--regex", "^.*js$"] + self.ls_cmd + ["temp.js"])
         self.assertEqual(result, 0)
 
     def test_range(self):
