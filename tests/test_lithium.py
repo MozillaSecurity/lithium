@@ -389,7 +389,7 @@ class InterestingnessTests(TestCase):
         self.assertGreaterEqual(elapsed, 1)
 
         # test that regex matches work too
-        result = l.main(["outputs", "--regex", "^.*js\s?$"] + self.ls_cmd + ["temp.js"])
+        result = l.main(["outputs", "--regex", r"^.*js\s?$"] + self.ls_cmd + ["temp.js"])
         self.assertEqual(result, 0)
 
     def test_range(self):
