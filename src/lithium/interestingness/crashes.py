@@ -34,5 +34,5 @@ def interesting(cli_args, temp_prefix):  # pylint: disable=missing-docstring,mis
         print("Exit status: " + runinfo.msg + time_str)
         return True
 
-    print("[Uninteresting] It didn't crash." + time_str)
+    print("[Uninteresting] It didn't crash: " + runinfo.msg + time_str)
     return False

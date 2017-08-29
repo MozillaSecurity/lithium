@@ -12,13 +12,22 @@ import collections
 import logging
 import math
 import os
+import platform
 import random
 import shutil
+import subprocess
 import sys
 import tempfile
+import time
 import unittest
+if platform.system() != "Windows":
+    winreg = None
+elif sys.version_info.major == 2:
+    import _winreg as winreg  # pylint: disable=import-error
+else:
+    import winreg  # pylint: disable=import-error
 
-import lithium
+import lithium  # noqa pylint: disable=wrong-import-position
 
 log = logging.getLogger("lithium_test")
 logging.basicConfig(level=logging.DEBUG)
@@ -128,6 +137,44 @@ class TestCase(unittest.TestCase):
             return _AssertLogsContext(self, logger, level)
 
 
+class DisableWER(object):
+    """Disable Windows Error Reporting for the duration of the context manager.
+
+    ref: https://msdn.microsoft.com/en-us/library/bb513638.aspx
+    """
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self):
+        self.wer_disabled = None
+        self.wer_dont_show_ui = None
+
+    def __enter__(self):
+        if winreg is not None:
+            wer = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                 r"Software\Microsoft\Windows\Windows Error Reporting", 0,
+                                 winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE)
+            # disable reporting to microsoft
+            # this might disable dump generation altogether, which is not what we want
+            self.wer_disabled = bool(winreg.QueryValueEx(wer, "Disabled")[0])
+            if not self.wer_disabled:
+                winreg.SetValueEx(wer, "Disabled", 0, winreg.REG_DWORD, 1)
+            # don't show the crash UI (Debug/Close Application)
+            self.wer_dont_show_ui = bool(winreg.QueryValueEx(wer, "DontShowUI")[0])
+            if not self.wer_dont_show_ui:
+                winreg.SetValueEx(wer, "DontShowUI", 0, winreg.REG_DWORD, 1)
+
+    def __exit__(self, exc_type, exc_value, tb):
+        # restore previous settings
+        if winreg is not None:
+            wer = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
+                                 r"Software\Microsoft\Windows\Windows Error Reporting", 0,
+                                 winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE)
+            if not self.wer_disabled:
+                winreg.SetValueEx(wer, "Disabled", 0, winreg.REG_DWORD, 0)
+            if not self.wer_dont_show_ui:
+                winreg.SetValueEx(wer, "DontShowUI", 0, winreg.REG_DWORD, 0)
+
+
 class DummyInteresting(object):
     def init(self, conditionArgs):
         pass
@@ -233,6 +280,141 @@ class HelperTests(TestCase):
             except Exception:
                 log.debug("r = %d", r)
                 raise
+
+
+class InterestingnessTests(TestCase):
+    cat_cmd = [sys.executable, "-c", ("import sys;"
+                                      "[sys.stdout.write(f.read())"
+                                      " for f in"
+                                      "     ([open(a) for a in sys.argv[1:]] or"
+                                      "      [sys.stdin])"
+                                      "]")]
+    ls_cmd = [sys.executable, "-c", ("import glob,itertools,os,sys;"
+                                     "[sys.stdout.write(p+'\\n')"
+                                     " for p in"
+                                     "     (itertools.chain.from_iterable(glob.glob(d) for d in sys.argv[1:])"
+                                     "      if len(sys.argv) > 1"
+                                     "      else os.listdir('.'))"
+                                     "]")]
+    sleep_cmd = [sys.executable, "-c", "import sys,time;time.sleep(int(sys.argv[1]))"]
+    if platform.system() == "Windows":
+        compilers_to_try = ["cl", "clang", "gcc", "cc"]
+    else:
+        compilers_to_try = ["clang", "gcc", "cc"]
+
+    @classmethod
+    def _compile(cls, in_path, out_path):
+        """Try to compile a source file using any available C/C++ compiler.
+
+        @type in_path: str
+        @param in_path: source file to compile from
+
+        @type out_path: str
+        @param out_path: executable file to compile to
+
+        @exception RuntimeError: if the compilation fails or compiler can't be found
+        """
+        assert os.path.isfile(in_path)
+        for compiler in cls.compilers_to_try:
+            try:
+                out_param = "/Fe" if compiler == "cl" else "-o"
+                out = subprocess.check_output([compiler, out_param + out_path, in_path], stderr=subprocess.STDOUT)
+                for line in out.splitlines():
+                    log.debug("%s: %s", compiler, line)
+                cls.compilers_to_try = [compiler]  # this compiler worked, never try any others
+                return
+            except OSError:
+                log.debug("%s not found", compiler)
+            except subprocess.CalledProcessError as exc:
+                for line in exc.output.splitlines():
+                    log.debug("%s: %s", compiler, line)
+        # all of compilers we tried have failed :(
+        raise RuntimeError("Compile failed")
+
+    def test_crashes(self):
+        """Tests for the 'crashes' interestingness test"""
+        l = lithium.Lithium()
+        with open("temp.js", "w"):
+            pass
+
+        # check that `ls` doesn't crash
+        result = l.main(["crashes"] + self.ls_cmd + ["temp.js"])
+        self.assertEqual(result, 1)
+
+        # check that --timeout works
+        start_time = time.time()
+        result = l.main(["--testcase", "temp.js", "crashes", "--timeout", "1"] + self.sleep_cmd + ["3"])
+        elapsed = time.time() - start_time
+        self.assertEqual(result, 1)
+        self.assertGreaterEqual(elapsed, 1)
+
+        # if a compiler is available, compile a simple crashing test program
+        try:
+            src = os.path.join(os.path.dirname(__file__), os.pardir, "src", "lithium", "docs", "examples", "crash.c")
+            exe = "crash.exe" if platform.system() == "Windows" else "./crash"
+            self._compile(src, exe)
+            with DisableWER():
+                result = l.main(["crashes", exe, "temp.js"])
+            self.assertEqual(result, 0)
+        except RuntimeError as exc:
+            log.warning(exc)
+
+    def test_hangs(self):
+        """Tests for the 'hangs' interestingness test"""
+        l = lithium.Lithium()
+        with open("temp.js", "w"):
+            pass
+
+        # test that `sleep 3` hangs over 1s
+        result = l.main(["--testcase", "temp.js", "hangs", "1"] + self.sleep_cmd + ["3"])
+        self.assertEqual(result, 0)
+
+        # test that `ls temp.js` does not hang over 1s
+        result = l.main(["hangs", "1"] + self.ls_cmd + ["temp.js"])
+        self.assertEqual(result, 1)
+
+    def test_outputs(self):
+        """Tests for the 'hangs' interestingness test"""
+        l = lithium.Lithium()
+        with open("temp.js", "w"):
+            pass
+
+        # test that `ls temp.js` contains "temp.js"
+        result = l.main(["outputs", "temp.js"] + self.ls_cmd + ["temp.js"])
+        self.assertEqual(result, 0)
+
+        # test that `ls temp.js` does not contain "blah"
+        result = l.main(["outputs", "blah"] + self.ls_cmd + ["temp.js"])
+        self.assertEqual(result, 1)
+
+        # check that --timeout works
+        start_time = time.time()
+        result = l.main(["--testcase", "temp.js", "outputs", "--timeout", "1", "blah"] + self.sleep_cmd + ["3"])
+        elapsed = time.time() - start_time
+        self.assertEqual(result, 1)
+        self.assertGreaterEqual(elapsed, 1)
+
+        # test that regex matches work too
+        result = l.main(["outputs", "--regex", r"^.*js\s?$"] + self.ls_cmd + ["temp.js"])
+        self.assertEqual(result, 0)
+
+    def test_range(self):
+        """Tests for the 'range' interestingness test"""
+        l = lithium.Lithium()
+        with open("temp.js", "w") as tempf:
+            tempf.write("hello")
+
+        # check for a known string, twice
+        with self.assertLogs("lithium") as test_logs:
+            result = l.main(["range", "0", "2", "outputs", "hello"] + self.cat_cmd + ["temp.js"])
+            self.assertEqual(result, 0)
+            found_rec = False
+            # scan the log output to see how many tests were performed
+            for rec in test_logs.records:
+                if "Tests performed:" in rec.msg:
+                    self.assertEqual(rec.args[0], 2)  # should have run 2x
+                    found_rec = True
+            self.assertTrue(found_rec)  # check that we hit the check ;)
 
 
 class LithiumTests(TestCase):
