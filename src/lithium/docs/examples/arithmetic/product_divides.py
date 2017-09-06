@@ -19,7 +19,6 @@ def interesting(args, _temp_prefix):
 
     Returns:
         bool: True if successful, False otherwise.
-
     """
     mod = int(args[0])
     filename = args[1]

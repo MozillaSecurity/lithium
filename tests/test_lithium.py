@@ -374,7 +374,7 @@ class InterestingnessTests(TestCase):
         self.assertEqual(result, 1)
 
     def test_outputs(self):
-        """Tests for the 'hangs' interestingness test"""
+        """Tests for the 'outputs' interestingness test"""
         l = lithium.Lithium()
         with open("temp.js", "w"):
             pass
