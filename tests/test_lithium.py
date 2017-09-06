@@ -306,13 +306,12 @@ class InterestingnessTests(TestCase):
     def _compile(cls, in_path, out_path):
         """Try to compile a source file using any available C/C++ compiler.
 
-        @type in_path: str
-        @param in_path: source file to compile from
+        Args:
+            in_path (str): Source file to compile from
+            out_path (str): Executable file to compile to
 
-        @type out_path: str
-        @param out_path: executable file to compile to
-
-        @exception RuntimeError: if the compilation fails or compiler can't be found
+        Raises:
+            RuntimeError: Raises this exception if the compilation fails or if the compiler cannot be found
         """
         assert os.path.isfile(in_path)
         for compiler in cls.compilers_to_try:
