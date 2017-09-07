@@ -32,6 +32,7 @@ import lithium  # noqa pylint: disable=wrong-import-position
 log = logging.getLogger("lithium_test")
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger("flake8").setLevel(logging.WARNING)
+log_handler = logging.StreamHandler()
 
 
 # python 3 has unlimited precision integers
@@ -234,6 +235,7 @@ class HelperTests(TestCase):
                 self.assertEqual(2, lithium.divideRoundingUp(n + 1, n))
             except Exception:
                 log.debug("n = %d, d = %d", n, d)
+                log_handler.flush()
                 raise
 
     def test_isPowerOfTwo(self):
@@ -244,6 +246,7 @@ class HelperTests(TestCase):
                 self.assertEqual(ispow2(i), lithium.isPowerOfTwo(i))
             except Exception:
                 log.debug("i = %d", i)
+                log_handler.flush()
                 raise
         # try 10000 random integers >= 10000
         for _ in range(10000):
@@ -252,6 +255,7 @@ class HelperTests(TestCase):
                 self.assertEqual(ispow2(r), lithium.isPowerOfTwo(r))
             except Exception:
                 log.debug("r = %d", r)
+                log_handler.flush()
                 raise
 
     def test_largestPowerOfTwoSmallerThan(self):
@@ -271,6 +275,7 @@ class HelperTests(TestCase):
                 check_result(lithium.largestPowerOfTwoSmallerThan(i), i)
             except Exception:
                 log.debug("i = %d", i)
+                log_handler.flush()
                 raise
         # try 10000 random integers >= 10000
         for _ in range(10000):
@@ -279,6 +284,7 @@ class HelperTests(TestCase):
                 check_result(lithium.largestPowerOfTwoSmallerThan(r), r)
             except Exception:
                 log.debug("r = %d", r)
+                log_handler.flush()
                 raise
 
 
@@ -320,13 +326,16 @@ class InterestingnessTests(TestCase):
                 out = subprocess.check_output([compiler, out_param + out_path, in_path], stderr=subprocess.STDOUT)
                 for line in out.splitlines():
                     log.debug("%s: %s", compiler, line)
+                    log_handler.flush()
                 cls.compilers_to_try = [compiler]  # this compiler worked, never try any others
                 return
             except OSError:
                 log.debug("%s not found", compiler)
+                log_handler.flush()
             except subprocess.CalledProcessError as exc:
                 for line in exc.output.splitlines():
                     log.debug("%s: %s", compiler, line)
+                    log_handler.flush()
         # all of compilers we tried have failed :(
         raise RuntimeError("Compile failed")
 
@@ -357,6 +366,7 @@ class InterestingnessTests(TestCase):
             self.assertEqual(result, 0)
         except RuntimeError as exc:
             log.warning(exc)
+            log_handler.flush()
 
     def test_hangs(self):
         """Tests for the 'hangs' interestingness test"""
@@ -504,6 +514,7 @@ class StrategyTests(TestCase):
         l.strategy = lithium.Minimize()
         for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
             log.info("Trying with testcase type %s:", testcaseType.__name__)
+            log_handler.flush()
             with open("a.txt", "wb") as f:
                 f.write(b"x\n\nx\nx\no\nx\nx\nx\n")
             l.testcase = testcaseType()
@@ -525,6 +536,7 @@ class StrategyTests(TestCase):
         l.strategy = lithium.MinimizeSurroundingPairs()
         for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
             log.info("Trying with testcase type %s:", testcaseType.__name__)
+            log_handler.flush()
             with open("a.txt", "wb") as f:
                 f.write(b"x\nx\nx\no\nx\nx\nx\n")
             l.testcase = testcaseType()
@@ -551,6 +563,7 @@ class StrategyTests(TestCase):
         l.strategy = lithium.MinimizeBalancedPairs()
         for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
             log.info("Trying with testcase type %s:", testcaseType.__name__)
+            log_handler.flush()
             with open("a.txt", "wb") as f:
                 f.write(b"[\n[\nxxx{\no\n}\n]\n]\n")
             l.testcase = testcaseType()
@@ -604,6 +617,7 @@ class StrategyTests(TestCase):
         l = lithium.Lithium()
         for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
             log.info("Trying with testcase type %s:", testcaseType.__name__)
+            log_handler.flush()
             with open("a.txt", "wb") as f:
                 f.write(valid_reductions[0])
             l.conditionScript = Interesting()
@@ -639,6 +653,7 @@ class StrategyTests(TestCase):
         l.strategy = lithium.ReplaceArgumentsByGlobals()
         for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
             log.info("Trying with testcase type %s:", testcaseType.__name__)
+            log_handler.flush()
             with open("a.txt", "wb") as f:
                 f.write(valid_reductions[0])
             l.testcase = testcaseType()
