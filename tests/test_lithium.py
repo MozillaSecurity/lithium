@@ -407,23 +407,50 @@ class InterestingnessTests(TestCase):
         result = l.main(["outputs", "--regex", r"^.*js\s?$"] + self.ls_cmd + ["temp.js"])
         self.assertEqual(result, 0)
 
-    def test_range(self):
-        """Tests for the 'range' interestingness test"""
+    def test_repeat(self):
+        """Tests for the 'repeat' interestingness test"""
         l = lithium.Lithium()
         with open("temp.js", "w") as tempf:
             tempf.write("hello")
 
-        # check for a known string, twice
+        logging.getLogger("lithium.interestingness.outputs")  # Grab the log from outputs
+        logging.getLogger("lithium.interestingness.repeat")  # Grab the log from repeat
+
+        # Check for a known string
+        result = l.main(["repeat", "5", "outputs", "hello"] + self.cat_cmd + ["temp.js"])
+        self.assertEqual(result, 0)
+
+        # Look for a non-existent string, so the "repeat" test tries looping the maximum number of iterations (5x)
         with self.assertLogs("lithium") as test_logs:
-            result = l.main(["range", "0", "2", "outputs", "hello"] + self.cat_cmd + ["temp.js"])
-            self.assertEqual(result, 0)
-            found_rec = False
+            result = l.main(["repeat", "5", "outputs", "notfound"] + self.cat_cmd + ["temp.js"])
+            self.assertEqual(result, 1)
+            found_count = 0
+            last_count = 0
             # scan the log output to see how many tests were performed
             for rec in test_logs.records:
-                if "Tests performed:" in rec.msg:
-                    self.assertEqual(rec.args[0], 2)  # should have run 2x
-                    found_rec = True
-            self.assertTrue(found_rec)  # check that we hit the check ;)
+                message = rec.getMessage()
+                if "Repeat number " in message:
+                    found_count += 1
+                    last_count = int(message.split()[-1][:1])
+            self.assertEqual(found_count, 5)  # Should have run 5x
+            self.assertEqual(found_count, last_count)  # We should have identical count outputs
+
+        # Check that replacements on the CLI work properly
+        with open("temp0.js", "w") as tempf0:
+            tempf0.write("num0")
+        result = l.main(["repeat", "1", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp0.js"])
+        self.assertEqual(result, 0)
+        result = l.main(["repeat", "1", "outputs", "--timeout=9", "num1"] + self.cat_cmd + ["temp0.js"])
+        self.assertEqual(result, 1)  # Should not be able to find num1 (it's not present in file)
+
+        with open("temp1.js", "w") as tempf1:
+            tempf1.write("num1")
+        result = l.main(["repeat", "2", "outputs", "--timeout=9", "num0"] + self.cat_cmd + ["temp1.js"])
+        self.assertEqual(result, 1)  # Should not be able to find num0 (it's not present in file)
+        result = l.main(["repeat", "2", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp1.js"])
+        self.assertEqual(result, 0)
+        result = l.main(["repeat", "2", "outputs", "--timeout=9", "num2"] + self.cat_cmd + ["temp1.js"])
+        self.assertEqual(result, 1)  # Should not be able to find num3 (it's not present in file)
 
 
 class LithiumTests(TestCase):

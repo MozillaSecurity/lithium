@@ -13,6 +13,6 @@ from . import crashes
 from . import diff_test
 from . import hangs
 from . import outputs
-from . import range  # pylint: disable=redefined-builtin
+from . import repeat
 from . import timed_run
 from . import utils
