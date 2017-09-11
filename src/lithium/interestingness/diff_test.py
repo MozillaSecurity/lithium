@@ -5,8 +5,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
-"""This test minimizes a test case by comparing a single binary with different command line arguments.
-This can be used to isolate and minimize differential behaviour test cases.
+"""Lithium's "diff_test" interestingness test to assess whether a binary shows a difference in output when different
+command line arguments are passed in. This can be used to isolate and minimize differential behaviour test cases.
+
+Example:
+    python -m lithium diff_test -a "--fuzzing-safe" -b "--fuzzing-safe --wasm-always-baseline" ./js testcase.js
+
+Example with autobisectjs, split into separate lines here for readability:
+    python -u -m funfuzz.autobisectjs.autobisectjs -b "--enable-debug --enable-more-deterministic" -p testcase.js
+      -i diff_test -a "--fuzzing-safe --no-threads --ion-eager"
+                   -b "--fuzzing-safe --no-threads --ion-eager --no-wasm-baseline"
 """
 
 # This file came from nbp's GitHub PR #2 for adding new Lithium reduction strategies.
@@ -14,35 +22,37 @@ This can be used to isolate and minimize differential behaviour test cases.
 
 from __future__ import absolute_import, print_function
 
+import argparse
 import filecmp
-import optparse  # pylint: disable=deprecated-module
 
 from . import timed_run
 
 
-def parse_options(arguments):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
-    parser = optparse.OptionParser()
-    parser.disable_interspersed_args()
-    parser.add_option("-t", "--timeout", type="int", action="store", dest="condTimeout",
-                      default=120,
-                      help="Optionally set the timeout. Defaults to '%default' seconds.")
-    parser.add_option("-a", "--a-arg", type="string", action="append", dest="aArgs",
-                      default=[],
-                      help="Set of extra arguments given to first run.")
-    parser.add_option("-b", "--b-arg", type="string", action="append", dest="bArgs",
-                      default=[],
-                      help="Set of extra arguments given to second run.")
+def interesting(cli_args, temp_prefix):
+    """Interesting if the binary shows a difference in output when different command line arguments are passed in.
 
-    options, args = parser.parse_args(arguments)
+    Args:
+        cli_args (list): List of input arguments.
+        temp_prefix (str): Temporary directory prefix, e.g. tmp1/1 or tmp4/1
 
-    return options.condTimeout, options.aArgs, options.bArgs, args
+    Returns:
+        bool: True if a difference in output appears, False otherwise.
+    """
+    parser = argparse.ArgumentParser(prog="diff_test",
+                                     usage="python -m lithium %(prog)s [options] binary testcase.js")
+    parser.add_argument("-t", "--timeout", default=120, dest="timeout", type=int,
+                        help="Set the timeout. Defaults to '%(default)s' seconds.")
+    parser.add_argument("-a", "--a-args", dest="a_args", help="Set of extra arguments given to first run.")
+    parser.add_argument("-b", "--b-args", dest="b_args", help="Set of extra arguments given to second run.")
+    parser.add_argument("cmd_with_flags", nargs=argparse.REMAINDER)
+    args = parser.parse_args(cli_args)
 
-
-def interesting(cli_args, temp_prefix):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
-    (timeout, a_args, b_args, args) = parse_options(cli_args)
-
-    a_runinfo = timed_run.timed_run(args[:1] + a_args + args[1:], timeout, temp_prefix + "-a")
-    b_runinfo = timed_run.timed_run(args[:1] + b_args + args[1:], timeout, temp_prefix + "-b")
+    a_runinfo = timed_run.timed_run(args.cmd_with_flags[:1] + args.a_args.split() + args.cmd_with_flags[1:],
+                                    args.timeout,
+                                    temp_prefix + "-a")
+    b_runinfo = timed_run.timed_run(args.cmd_with_flags[:1] + args.b_args.split() + args.cmd_with_flags[1:],
+                                    args.timeout,
+                                    temp_prefix + "-b")
     time_str = " (1st Run: %.3f seconds) (2nd Run: %.3f seconds)" % (a_runinfo.elapsedtime, b_runinfo.elapsedtime)
 
     if a_runinfo.sta != timed_run.TIMED_OUT and b_runinfo.sta != timed_run.TIMED_OUT:
