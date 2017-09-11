@@ -368,6 +368,20 @@ class InterestingnessTests(TestCase):
             log.warning(exc)
             log_handler.flush()
 
+    def test_diff_test(self):
+        """Tests for the 'diff_test' interestingness test"""
+        l = lithium.Lithium()
+        with open("temp.js", "w"):
+            pass
+
+        # test that the parameters "-a" and "-b" of diff_test work
+        result = l.main(["diff_test", "--timeout", "99", "-a", "flags_one",
+                         "-b", "flags_two_a flags_two_b"] + self.ls_cmd + ["temp.js"])
+        self.assertEqual(result, 0)
+        result = l.main(["diff_test", "--a-args", "flags_one_a flags_one_b",
+                         "--b-args", "flags_two"] + self.ls_cmd + ["temp.js"])
+        self.assertEqual(result, 0)
+
     def test_hangs(self):
         """Tests for the 'hangs' interestingness test"""
         l = lithium.Lithium()
