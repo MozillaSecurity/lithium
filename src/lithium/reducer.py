@@ -682,85 +682,95 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 # move the chunks outside the braces.
                 log.info("Removing %s made the file 'uninteresting'.", description)
 
+                # ###  MOVING-CHUNKS-SUBSTITUTE-START  ###
+                chunkStart += chunkSize
+                lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
+                continue
+                # ###  MOVING-CHUNKS-SUBSTITUTE-END  ###
+
                 # Moving chunks is still a bit experimental, and it can introduce reducing loops.
-                # If you want to try it, just replace this True by a False.
-                if True:  # pylint: disable=using-constant-test
-                    chunkStart += chunkSize
-                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
-                    continue
+                # If you want to try it, simply:
+                #   (1) Comment out the section above:
+                #         (between MOVING-CHUNKS-SUBSTITUTE-START and MOVING-CHUNKS-SUBSTITUTE-END)
+                #   (2) Uncomment the following section:
+                #         (between MOVING-CHUNKS-START and MOVING-CHUNKS-END)
 
-                origChunkIdx = lhsChunkIdx
-                stayOnSameChunk = False
-                chunkMidStart = chunkLhsEnd
-                midChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
-                while chunkMidStart < chunkRhsStart:
-                    assert summary[:midChunkIdx].count("S") * chunkSize == chunkMidStart, (
-                        "the chunkMidStart should correspond to the midChunkIdx modulo the removed chunks.")
-                    description = "chunk #%d%s of %d chunks of size %d" % (
-                        midChunkIdx, "".join(" " for i in range(len(str(lhsChunkIdx)) + 4)), numChunks, chunkSize)
+                # ###  MOVING-CHUNKS-START  ###
 
-                    p = self.list_fiveParts(testcase.parts, chunkSize, chunkLhsStart, chunkMidStart, chunkRhsStart)
+                # origChunkIdx = lhsChunkIdx
+                # stayOnSameChunk = False
+                # chunkMidStart = chunkLhsEnd
+                # midChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
+                # while chunkMidStart < chunkRhsStart:
+                #     assert summary[:midChunkIdx].count("S") * chunkSize == chunkMidStart, (
+                #         "the chunkMidStart should correspond to the midChunkIdx modulo the removed chunks.")
+                #     description = "chunk #%d%s of %d chunks of size %d" % (
+                #         midChunkIdx, "".join(" " for i in range(len(str(lhsChunkIdx)) + 4)), numChunks, chunkSize)
 
-                    nCurly = curly[midChunkIdx]
-                    nSquare = square[midChunkIdx]
-                    nNormal = normal[midChunkIdx]
-                    if nCurly or nSquare or nNormal:
-                        log.info("Keeping %s because it is 'uninteresting'.", description)
-                        chunkMidStart += chunkSize
-                        midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
-                        continue
+                #     p = self.list_fiveParts(testcase.parts, chunkSize, chunkLhsStart, chunkMidStart, chunkRhsStart)
 
-                    # Try moving the chunk after.
-                    testcaseSuggestion = testcase.copy()
-                    testcaseSuggestion.parts = p[0] + p[1] + p[3] + p[2] + p[4]
-                    if interesting(testcaseSuggestion):
-                        testcase = testcaseSuggestion
-                        log.info("->Moving %s kept the file 'interesting'.", description)
-                        chunkRhsStart -= chunkSize
-                        chunkRhsEnd -= chunkSize
-                        # pylint: disable=bad-whitespace
-                        tS = self.list_fiveParts(summary, 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
-                        tc = self.list_fiveParts(curly  , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
-                        ts = self.list_fiveParts(square , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
-                        tn = self.list_fiveParts(normal , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
-                        summary = tS[0] + tS[1] + tS[3] + tS[2] + tS[4]
-                        curly =   tc[0] + tc[1] + tc[3] + tc[2] + tc[4]  # noqa
-                        square =  ts[0] + ts[1] + ts[3] + ts[2] + ts[4]  # noqa
-                        normal =  tn[0] + tn[1] + tn[3] + tn[2] + tn[4]  # noqa
-                        rhsChunkIdx -= 1
-                        midChunkIdx = summary[midChunkIdx:].index("S") + midChunkIdx
-                        continue
+                #     nCurly = curly[midChunkIdx]
+                #     nSquare = square[midChunkIdx]
+                #     nNormal = normal[midChunkIdx]
+                #     if nCurly or nSquare or nNormal:
+                #         log.info("Keeping %s because it is 'uninteresting'.", description)
+                #         chunkMidStart += chunkSize
+                #         midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
+                #         continue
 
-                    # Try moving the chunk before.
-                    testcaseSuggestion.parts = p[0] + p[2] + p[1] + p[3] + p[4]
-                    if interesting(testcaseSuggestion):
-                        testcase = testcaseSuggestion
-                        log.info("<-Moving %s kept the file 'interesting'.", description)
-                        chunkLhsStart += chunkSize
-                        chunkLhsEnd += chunkSize
-                        chunkMidStart += chunkSize
-                        # pylint: disable=bad-whitespace
-                        tS = self.list_fiveParts(summary, 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
-                        tc = self.list_fiveParts(curly  , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
-                        ts = self.list_fiveParts(square , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
-                        tn = self.list_fiveParts(normal , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
-                        summary = tS[0] + tS[2] + tS[1] + tS[3] + tS[4]
-                        curly =   tc[0] + tc[2] + tc[1] + tc[3] + tc[4]  # noqa
-                        square =  ts[0] + ts[2] + ts[1] + ts[3] + ts[4]  # noqa
-                        normal =  tn[0] + tn[2] + tn[1] + tn[3] + tn[4]  # noqa
-                        lhsChunkIdx += 1
-                        midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
-                        stayOnSameChunk = True
-                        continue
+                #     # Try moving the chunk after.
+                #     testcaseSuggestion = testcase.copy()
+                #     testcaseSuggestion.parts = p[0] + p[1] + p[3] + p[2] + p[4]
+                #     if interesting(testcaseSuggestion):
+                #         testcase = testcaseSuggestion
+                #         log.info("->Moving %s kept the file 'interesting'.", description)
+                #         chunkRhsStart -= chunkSize
+                #         chunkRhsEnd -= chunkSize
+                #         # pylint: disable=bad-whitespace
+                #         tS = self.list_fiveParts(summary, 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
+                #         tc = self.list_fiveParts(curly  , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
+                #         ts = self.list_fiveParts(square , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
+                #         tn = self.list_fiveParts(normal , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
+                #         summary = tS[0] + tS[1] + tS[3] + tS[2] + tS[4]
+                #         curly =   tc[0] + tc[1] + tc[3] + tc[2] + tc[4]  # noqa
+                #         square =  ts[0] + ts[1] + ts[3] + ts[2] + ts[4]  # noqa
+                #         normal =  tn[0] + tn[1] + tn[3] + tn[2] + tn[4]  # noqa
+                #         rhsChunkIdx -= 1
+                #         midChunkIdx = summary[midChunkIdx:].index("S") + midChunkIdx
+                #         continue
 
-                    log.info("..Moving %s made the file 'uninteresting'.", description)
-                    chunkMidStart += chunkSize
-                    midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
+                #     # Try moving the chunk before.
+                #     testcaseSuggestion.parts = p[0] + p[2] + p[1] + p[3] + p[4]
+                #     if interesting(testcaseSuggestion):
+                #         testcase = testcaseSuggestion
+                #         log.info("<-Moving %s kept the file 'interesting'.", description)
+                #         chunkLhsStart += chunkSize
+                #         chunkLhsEnd += chunkSize
+                #         chunkMidStart += chunkSize
+                #         # pylint: disable=bad-whitespace
+                #         tS = self.list_fiveParts(summary, 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)
+                #         tc = self.list_fiveParts(curly  , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
+                #         ts = self.list_fiveParts(square , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
+                #         tn = self.list_fiveParts(normal , 1, lhsChunkIdx, midChunkIdx, rhsChunkIdx)  # noqa
+                #         summary = tS[0] + tS[2] + tS[1] + tS[3] + tS[4]
+                #         curly =   tc[0] + tc[2] + tc[1] + tc[3] + tc[4]  # noqa
+                #         square =  ts[0] + ts[2] + ts[1] + ts[3] + ts[4]  # noqa
+                #         normal =  tn[0] + tn[2] + tn[1] + tn[3] + tn[4]  # noqa
+                #         lhsChunkIdx += 1
+                #         midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
+                #         stayOnSameChunk = True
+                #         continue
 
-                lhsChunkIdx = origChunkIdx
-                if not stayOnSameChunk:
-                    chunkStart += chunkSize
-                    lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
+                #     log.info("..Moving %s made the file 'uninteresting'.", description)
+                #     chunkMidStart += chunkSize
+                #     midChunkIdx = self.list_nindex(summary, midChunkIdx, "S")
+
+                # lhsChunkIdx = origChunkIdx
+                # if not stayOnSameChunk:
+                #     chunkStart += chunkSize
+                #     lhsChunkIdx = self.list_nindex(summary, lhsChunkIdx, "S")
+
+                # ###  MOVING-CHUNKS-END  ###
 
         except ValueError:
             # This is a valid loop exit point.
