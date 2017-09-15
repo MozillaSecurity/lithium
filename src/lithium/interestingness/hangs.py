@@ -7,11 +7,12 @@
 """Lithium's "hangs" interestingness test to assess whether a binary hangs.
 
 Example:
-    python -m lithium hangs 3 <binary> --fuzzing-safe <testcase>
+    python -m lithium hangs --timeout=3 <binary> --fuzzing-safe <testcase>
 """
 
 from __future__ import absolute_import
 
+import argparse
 import logging
 import sys
 
@@ -28,13 +29,18 @@ def interesting(cli_args, temp_prefix):
     Returns:
         bool: True if binary causes a hang, False otherwise.
     """
+    parser = argparse.ArgumentParser(prog="hangs",
+                                     usage="python -m lithium %(prog)s [options] binary [flags] testcase.ext")
+    parser.add_argument("-t", "--timeout", default=120, dest="timeout", type=int,
+                        help="Set the timeout. Defaults to '%(default)s' seconds.")
+    parser.add_argument("cmd_with_flags", nargs=argparse.REMAINDER)
+    args = parser.parse_args(cli_args)
+
     logger = logging.getLogger(__name__)  # __name__ should be lithium.interestingness.hangs
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     logging.getLogger("flake8").setLevel(logging.WARNING)
 
-    timeout = int(cli_args[0])
-    runinfo = timed_run.timed_run(cli_args[1:], timeout, temp_prefix)
-
+    runinfo = timed_run.timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
     if runinfo.sta == timed_run.TIMED_OUT:
         return True
 

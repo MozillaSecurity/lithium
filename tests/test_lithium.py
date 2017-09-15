@@ -379,11 +379,11 @@ class InterestingnessTests(TestCase):
             pass
 
         # test that `sleep 3` hangs over 1s
-        result = l.main(["--testcase", "temp.js", "hangs", "1"] + self.sleep_cmd + ["3"])
+        result = l.main(["--testcase", "temp.js", "hangs", "--timeout", "1"] + self.sleep_cmd + ["3"])
         self.assertEqual(result, 0)
 
         # test that `ls temp.js` does not hang over 1s
-        result = l.main(["hangs", "1"] + self.ls_cmd + ["temp.js"])
+        result = l.main(["hangs", "--timeout", "1"] + self.ls_cmd + ["temp.js"])
         self.assertEqual(result, 1)
 
     def test_outputs(self):
