@@ -63,10 +63,10 @@ def interesting(cli_args, temp_prefix):
         condition_script.init(condition_args)
 
     # Run the program over as many iterations as intended, with desired flags, replacing REPEATNUM where necessary.
-    for i in range(loop_num):
+    for i in range(1, loop_num + 1):
         # This doesn't do anything if REPEATNUM is not found.
         replaced_condition_args = [s.replace("REPEATNUM", str(i)) for s in condition_args]
-        log.info("Repeat number %d:", i + 1)
+        log.info("Repeat number %d:", i)
         if condition_script.interesting(replaced_condition_args, temp_prefix):
             return True
 

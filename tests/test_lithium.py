@@ -436,22 +436,30 @@ class InterestingnessTests(TestCase):
             self.assertEqual(found_count, 5)  # Should have run 5x
             self.assertEqual(found_count, last_count)  # We should have identical count outputs
 
-        # Check that replacements on the CLI work properly
-        with open("temp0.js", "w") as tempf0:
-            tempf0.write("num0")
-        result = l.main(["repeat", "1", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp0.js"])
-        self.assertEqual(result, 0)
-        result = l.main(["repeat", "1", "outputs", "--timeout=9", "num1"] + self.cat_cmd + ["temp0.js"])
-        self.assertEqual(result, 1)  # Should not be able to find num1 (it's not present in file)
+            # Check that replacements on the CLI work properly
+            # Lower boundary - check that 0 (just outside [1]) is not found
+            with open("temp1a.js", "w") as tempf1a:
+                tempf1a.write("num0")
+            result = l.main(["repeat", "1", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp1a.js"])
+            self.assertEqual(result, 1)
 
-        with open("temp1.js", "w") as tempf1:
-            tempf1.write("num1")
-        result = l.main(["repeat", "2", "outputs", "--timeout=9", "num0"] + self.cat_cmd + ["temp1.js"])
-        self.assertEqual(result, 1)  # Should not be able to find num0 (it's not present in file)
-        result = l.main(["repeat", "2", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp1.js"])
-        self.assertEqual(result, 0)
-        result = l.main(["repeat", "2", "outputs", "--timeout=9", "num2"] + self.cat_cmd + ["temp1.js"])
-        self.assertEqual(result, 1)  # Should not be able to find num3 (it's not present in file)
+            # Upper boundary - check that 2 (just outside [1]) is not found
+            with open("temp1b.js", "w") as tempf1b:
+                tempf1b.write("num2")
+            result = l.main(["repeat", "1", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp1b.js"])
+            self.assertEqual(result, 1)
+
+            # Lower boundary - check that 0 (just outside [1,2]) is not found
+            with open("temp2a.js", "w") as tempf2a:
+                tempf2a.write("num0")
+            result = l.main(["repeat", "2", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp2a.js"])
+            self.assertEqual(result, 1)
+
+            # Upper boundary - check that 3 (just outside [1,2]) is not found
+            with open("temp2b.js", "w") as tempf2b:
+                tempf2b.write("num3")
+            result = l.main(["repeat", "2", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp2b.js"])
+            self.assertEqual(result, 1)
 
 
 class LithiumTests(TestCase):
