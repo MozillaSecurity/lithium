@@ -14,7 +14,6 @@ from __future__ import absolute_import
 
 import argparse
 import logging
-import sys
 
 from . import timed_run
 
@@ -36,16 +35,14 @@ def interesting(cli_args, temp_prefix):
     parser.add_argument("cmd_with_flags", nargs=argparse.REMAINDER)
     args = parser.parse_args(cli_args)
 
-    logger = logging.getLogger(__name__)  # __name__ should be lithium.interestingness.crashes
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    logging.getLogger("flake8").setLevel(logging.WARNING)
-
+    log = logging.getLogger(__name__)
     # Run the program with desired flags and look out for crashes.
     runinfo = timed_run.timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
+
     time_str = " (%.3f seconds)" % runinfo.elapsedtime
     if runinfo.sta == timed_run.CRASHED:
-        logger.info("Exit status: " + runinfo.msg + time_str)
+        log.info("Exit status: " + runinfo.msg + time_str)
         return True
 
-    logger.info("[Uninteresting] It didn't crash: " + runinfo.msg + time_str)
+    log.info("[Uninteresting] It didn't crash: " + runinfo.msg + time_str)
     return False

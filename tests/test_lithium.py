@@ -417,9 +417,6 @@ class InterestingnessTests(TestCase):
         with open("temp.js", "w") as tempf:
             tempf.write("hello")
 
-        logging.getLogger("lithium.interestingness.outputs")  # Grab the log from outputs
-        logging.getLogger("lithium.interestingness.repeat")  # Grab the log from repeat
-
         # Check for a known string
         result = l.main(["repeat", "5", "outputs", "hello"] + self.cat_cmd + ["temp.js"])
         self.assertEqual(result, 0)

@@ -23,6 +23,7 @@ from __future__ import absolute_import, print_function
 
 import argparse
 import filecmp
+import logging
 
 from . import timed_run
 
@@ -52,22 +53,23 @@ def interesting(cli_args, temp_prefix):
     b_runinfo = timed_run.timed_run(args.cmd_with_flags[:1] + args.b_args.split() + args.cmd_with_flags[1:],
                                     args.timeout,
                                     temp_prefix + "-b")
-    time_str = " (1st Run: %.3f seconds) (2nd Run: %.3f seconds)" % (a_runinfo.elapsedtime, b_runinfo.elapsedtime)
+    log = logging.getLogger(__name__)
+    time_str = "(1st Run: %.3f seconds) (2nd Run: %.3f seconds)" % (a_runinfo.elapsedtime, b_runinfo.elapsedtime)
 
     if a_runinfo.sta != timed_run.TIMED_OUT and b_runinfo.sta != timed_run.TIMED_OUT:
         if a_runinfo.return_code != b_runinfo.return_code:
-            print("[Interesting] Different return code. (%d, %d)%s" %
-                  (a_runinfo.return_code, b_runinfo.return_code, time_str))
+            log.info("[Interesting] Different return code (%d, %d). %s",
+                     a_runinfo.return_code, b_runinfo.return_code, time_str)
             return True
         if not filecmp.cmp(a_runinfo.out, b_runinfo.out):
-            print("[Interesting] Different output.%s" % time_str)
+            log.info("[Interesting] Different output. %s", time_str)
             return True
         if not filecmp.cmp(a_runinfo.err, b_runinfo.err):
-            print("[Interesting] Different error output.%s" % time_str)
+            log.info("[Interesting] Different error output. %s", time_str)
             return True
     else:
-        print("[Uninteresting] At least one test timed out.%s" % time_str)
+        log.info("[Uninteresting] At least one test timed out. %s", time_str)
         return False
 
-    print("[Uninteresting] Identical behaviour.%s" % time_str)
+    log.info("[Uninteresting] Identical behaviour. %s", time_str)
     return False

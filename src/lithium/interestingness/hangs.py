@@ -14,7 +14,6 @@ from __future__ import absolute_import
 
 import argparse
 import logging
-import sys
 
 from . import timed_run
 
@@ -36,13 +35,12 @@ def interesting(cli_args, temp_prefix):
     parser.add_argument("cmd_with_flags", nargs=argparse.REMAINDER)
     args = parser.parse_args(cli_args)
 
-    logger = logging.getLogger(__name__)  # __name__ should be lithium.interestingness.hangs
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    logging.getLogger("flake8").setLevel(logging.WARNING)
-
+    log = logging.getLogger(__name__)
     runinfo = timed_run.timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
+
     if runinfo.sta == timed_run.TIMED_OUT:
+        log.info("Timed out after %.3f seconds", args.timeout)
         return True
 
-    logger.info("Exited in %.3f seconds", runinfo.elapsedtime)
+    log.info("Exited in %.3f seconds", runinfo.elapsedtime)
     return False

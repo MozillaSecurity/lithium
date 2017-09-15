@@ -40,9 +40,7 @@ def interesting(cli_args, temp_prefix):
     parser.add_argument("cmd_with_flags", nargs=argparse.REMAINDER)
     args = parser.parse_args(cli_args)
 
-    logger = logging.getLogger(__name__)  # __name__ should be lithium.interestingness.outputs
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    logging.getLogger("flake8").setLevel(logging.WARNING)
+    log = logging.getLogger(__name__)
 
     search_for = args.cmd_with_flags[0]
     if not isinstance(search_for, bytes):
@@ -55,5 +53,5 @@ def interesting(cli_args, temp_prefix):
         utils.file_contains(temp_prefix + "-err.txt", search_for, args.regex_enabled)[0]
     )
 
-    logger.info("Exit status: %s (%.3f seconds)", runinfo.msg, runinfo.elapsedtime)
+    log.info("Exit status: %s (%.3f seconds)", runinfo.msg, runinfo.elapsedtime)
     return result

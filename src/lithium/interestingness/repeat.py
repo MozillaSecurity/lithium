@@ -31,7 +31,6 @@ from __future__ import absolute_import
 
 import argparse
 import logging
-import sys
 
 from .utils import rel_or_abs_import
 
@@ -52,13 +51,7 @@ def interesting(cli_args, temp_prefix):
     parser.add_argument("cmd_with_flags", nargs=argparse.REMAINDER)
     args = parser.parse_args(cli_args)
 
-    logger = logging.getLogger(__name__)  # __name__ should be lithium.interestingness.repeat
-    logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    logging.getLogger("flake8").setLevel(logging.WARNING)
-    # logger_handler = logging.StreamHandler(sys.stdout)
-    # logger_handler.setLevel(logging.DEBUG)
-    # logger_handler.terminator = ""  # We cannot yet suppress the ending newline yet, until Python 2.7 is deprecated
-    # logger.addHandler(logger_handler)
+    log = logging.getLogger(__name__)
 
     loop_num = int(args.cmd_with_flags[0])
     assert loop_num > 0, "Minimum number of iterations should be at least 1"
@@ -73,7 +66,7 @@ def interesting(cli_args, temp_prefix):
     for i in range(loop_num):
         # This doesn't do anything if REPEATNUM is not found.
         replaced_condition_args = [s.replace("REPEATNUM", str(i)) for s in condition_args]
-        logger.info("Repeat number %d:", i + 1)  # Ending newline not suppressed yet until Python 2.7 is deprecated
+        log.info("Repeat number %d:", i + 1)
         if condition_script.interesting(replaced_condition_args, temp_prefix):
             return True
 
