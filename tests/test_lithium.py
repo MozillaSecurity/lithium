@@ -432,7 +432,7 @@ class InterestingnessTests(TestCase):
                 message = rec.getMessage()
                 if "Repeat number " in message:
                     found_count += 1
-                    last_count = int(message.split()[-1][:1])
+                    last_count = rec.args[0]
             self.assertEqual(found_count, 5)  # Should have run 5x
             self.assertEqual(found_count, last_count)  # We should have identical count outputs
 
