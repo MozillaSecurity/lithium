@@ -8,7 +8,7 @@
 """Lithium's "crashes" interestingness test to assess whether a binary crashes.
 
 Example:
-    python -m lithium crashes --timeout=9 ./js --fuzzing-safe testcase.js
+    python -m lithium crashes --timeout=9 <binary> --fuzzing-safe <testcase>
 """
 
 from __future__ import absolute_import
@@ -31,7 +31,7 @@ def interesting(cli_args, temp_prefix):
         bool: True if binary crashes, False otherwise.
     """
     parser = argparse.ArgumentParser(prog="crashes",
-                                     usage="python -m lithium %(prog)s [options] binary [flags] testcase.js")
+                                     usage="python -m lithium %(prog)s [options] binary [flags] testcase.ext")
     parser.add_argument("-t", "--timeout", default=120, dest="timeout", type=int,
                         help="Set the timeout. Defaults to '%(default)s' seconds.")
     parser.add_argument("cmd_with_flags", nargs=argparse.REMAINDER)

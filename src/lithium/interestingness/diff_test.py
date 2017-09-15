@@ -9,7 +9,7 @@
 command line arguments are passed in. This can be used to isolate and minimize differential behaviour test cases.
 
 Example:
-    python -m lithium diff_test -a "--fuzzing-safe" -b "--fuzzing-safe --wasm-always-baseline" ./js testcase.js
+    python -m lithium diff_test -a "--fuzzing-safe" -b "--fuzzing-safe --wasm-always-baseline" <binary> <testcase>
 
 Example with autobisectjs, split into separate lines here for readability:
     python -u -m funfuzz.autobisectjs.autobisectjs -b "--enable-debug --enable-more-deterministic" -p testcase.js
@@ -39,7 +39,7 @@ def interesting(cli_args, temp_prefix):
         bool: True if a difference in output appears, False otherwise.
     """
     parser = argparse.ArgumentParser(prog="diff_test",
-                                     usage="python -m lithium %(prog)s [options] binary testcase.js")
+                                     usage="python -m lithium %(prog)s [options] binary testcase.ext")
     parser.add_argument("-t", "--timeout", default=120, dest="timeout", type=int,
                         help="Set the timeout. Defaults to '%(default)s' seconds.")
     parser.add_argument("-a", "--a-args", dest="a_args", help="Set of extra arguments given to first run.")

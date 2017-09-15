@@ -14,7 +14,7 @@ Use for:
 
    Repeating the test can make the bug occur often enough for Lithium to make progress.
 
-    python -m lithium repeat 20 crashes --timeout=9 ./js --fuzzing-safe testcase.js
+    python -m lithium repeat 20 crashes --timeout=9 <binary> --fuzzing-safe <testcase>
 
 2. Unstable testcases.
 
@@ -24,7 +24,7 @@ Use for:
    In the testcase:
      schedulegc(n);
 
-   On the command line:
+   On the command line: (SpiderMonkey-specific example)
      python -m lithium repeat 20 crashes --timeout=9 ./js --fuzzing-safe -e "n=REPEATNUM;" testcase.js
 """
 
@@ -62,7 +62,7 @@ def interesting(cli_args, temp_prefix):
     # logger.addHandler(logger_handler)
 
     loop_num = int(args.cmd_with_flags[0])
-    assert loop_num > 0, "Mininum number of iterations should be at least 1"
+    assert loop_num > 0, "Minimum number of iterations should be at least 1"
 
     condition_script = rel_or_abs_import(args.cmd_with_flags[1])
     condition_args = args.cmd_with_flags[2:]

@@ -8,7 +8,7 @@
 """Lithium's "outputs" interestingness test to assess whether an intended message shows up.
 
 Example:
-    python -m lithium outputs --timeout=9 FOO ./js --fuzzing-safe testcase.js
+    python -m lithium outputs --timeout=9 FOO <binary> --fuzzing-safe <testcase>
 """
 
 from __future__ import absolute_import
@@ -33,7 +33,7 @@ def interesting(cli_args, temp_prefix):
     """
     parser = argparse.ArgumentParser(prog="outputs",
                                      usage="python -m lithium %(prog)s [options] output_message binary [flags] "
-                                     "testcase.js")
+                                     "testcase.ext")
     parser.add_argument("-r", "--regex", action="store_true", default=False, dest="regex_enabled",
                         help="Allow search for regular expressions instead of strings.")
     parser.add_argument("-t", "--timeout", default=120, dest="timeout", type=int,

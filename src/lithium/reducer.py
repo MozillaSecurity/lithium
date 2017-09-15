@@ -1250,14 +1250,9 @@ class Lithium(object):  # pylint: disable=missing-docstring,too-many-instance-at
         self.strategy = strategies.get(args[0].strategy if args else None, strategies[defaultStrategy])()
 
         parser = argparse.ArgumentParser(
-            description="Lithium, an automated testcase reduction tool by Jesse Ruderman.",
-            epilog="See doc/using.html for more information.",
-            usage="python -m lithium [options] condition [condition options] file-to-reduce\n\n"
-                  "Example: "
-                  "python -m lithium crashes --timeout=120 ./js --fuzzing-safe --no-threads --ion-eager a.js\n"
-                  "    Lithium will reduce a.js subject to the condition that the following\n"
-                  "    crashes in 120 seconds:\n"
-                  "    ./js --fuzzing-safe --no-threads --ion-eager a.js")
+            description="Lithium, an automated testcase reduction tool",
+            epilog="See docs/using-for-firefox.md for more information.",
+            usage="python -m lithium [options] condition [condition options] file-to-reduce")
         grp_opt = parser.add_argument_group(description="Lithium options")
         grp_opt.add_argument(
             "--testcase",

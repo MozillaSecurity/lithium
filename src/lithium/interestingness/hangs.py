@@ -8,7 +8,7 @@
 """Lithium's "hangs" interestingness test to assess whether a binary hangs.
 
 Example:
-    python -m lithium hangs 3 ./js --fuzzing-safe testcase.js
+    python -m lithium hangs 3 <binary> --fuzzing-safe <testcase>
 """
 
 from __future__ import absolute_import
