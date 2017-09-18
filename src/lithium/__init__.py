@@ -10,3 +10,6 @@
 from __future__ import absolute_import
 
 from .reducer import *  # pylint: disable=wildcard-import
+
+__author__ = "Jesse Ruderman, Gary Kwong and Jesse Schwartzentruber"
+__maintainer__ = "Gary Kwong and Jesse Schwartzentruber"

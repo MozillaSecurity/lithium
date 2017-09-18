@@ -10,9 +10,9 @@
 from __future__ import absolute_import
 
 from . import crashes
-# from . import diff_test  # diff_test is not used outside of Lithium
+from . import diff_test
 from . import hangs
 from . import outputs
-from . import range  # pylint: disable=redefined-builtin
+from . import repeat
 from . import timed_run
 from . import utils

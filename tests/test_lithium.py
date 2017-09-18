@@ -306,13 +306,12 @@ class InterestingnessTests(TestCase):
     def _compile(cls, in_path, out_path):
         """Try to compile a source file using any available C/C++ compiler.
 
-        @type in_path: str
-        @param in_path: source file to compile from
+        Args:
+            in_path (str): Source file to compile from
+            out_path (str): Executable file to compile to
 
-        @type out_path: str
-        @param out_path: executable file to compile to
-
-        @exception RuntimeError: if the compilation fails or compiler can't be found
+        Raises:
+            RuntimeError: Raises this exception if the compilation fails or if the compiler cannot be found
         """
         assert os.path.isfile(in_path)
         for compiler in cls.compilers_to_try:
@@ -359,6 +358,20 @@ class InterestingnessTests(TestCase):
         except RuntimeError as exc:
             log.warning(exc)
 
+    def test_diff_test(self):
+        """Tests for the 'diff_test' interestingness test"""
+        l = lithium.Lithium()
+        with open("temp.js", "w"):
+            pass
+
+        # test that the parameters "-a" and "-b" of diff_test work
+        result = l.main(["diff_test", "--timeout", "99", "-a", "flags_one",
+                         "-b", "flags_two_a flags_two_b"] + self.ls_cmd + ["temp.js"])
+        self.assertEqual(result, 0)
+        result = l.main(["diff_test", "--a-args", "flags_one_a flags_one_b",
+                         "--b-args", "flags_two"] + self.ls_cmd + ["temp.js"])
+        self.assertEqual(result, 0)
+
     def test_hangs(self):
         """Tests for the 'hangs' interestingness test"""
         l = lithium.Lithium()
@@ -366,15 +379,15 @@ class InterestingnessTests(TestCase):
             pass
 
         # test that `sleep 3` hangs over 1s
-        result = l.main(["--testcase", "temp.js", "hangs", "1"] + self.sleep_cmd + ["3"])
+        result = l.main(["--testcase", "temp.js", "hangs", "--timeout", "1"] + self.sleep_cmd + ["3"])
         self.assertEqual(result, 0)
 
         # test that `ls temp.js` does not hang over 1s
-        result = l.main(["hangs", "1"] + self.ls_cmd + ["temp.js"])
+        result = l.main(["hangs", "--timeout", "1"] + self.ls_cmd + ["temp.js"])
         self.assertEqual(result, 1)
 
     def test_outputs(self):
-        """Tests for the 'hangs' interestingness test"""
+        """Tests for the 'outputs' interestingness test"""
         l = lithium.Lithium()
         with open("temp.js", "w"):
             pass
@@ -398,23 +411,55 @@ class InterestingnessTests(TestCase):
         result = l.main(["outputs", "--regex", r"^.*js\s?$"] + self.ls_cmd + ["temp.js"])
         self.assertEqual(result, 0)
 
-    def test_range(self):
-        """Tests for the 'range' interestingness test"""
+    def test_repeat(self):
+        """Tests for the 'repeat' interestingness test"""
         l = lithium.Lithium()
         with open("temp.js", "w") as tempf:
             tempf.write("hello")
 
-        # check for a known string, twice
+        # Check for a known string
+        result = l.main(["repeat", "5", "outputs", "hello"] + self.cat_cmd + ["temp.js"])
+        self.assertEqual(result, 0)
+
+        # Look for a non-existent string, so the "repeat" test tries looping the maximum number of iterations (5x)
         with self.assertLogs("lithium") as test_logs:
-            result = l.main(["range", "0", "2", "outputs", "hello"] + self.cat_cmd + ["temp.js"])
-            self.assertEqual(result, 0)
-            found_rec = False
+            result = l.main(["repeat", "5", "outputs", "notfound"] + self.cat_cmd + ["temp.js"])
+            self.assertEqual(result, 1)
+            found_count = 0
+            last_count = 0
             # scan the log output to see how many tests were performed
             for rec in test_logs.records:
-                if "Tests performed:" in rec.msg:
-                    self.assertEqual(rec.args[0], 2)  # should have run 2x
-                    found_rec = True
-            self.assertTrue(found_rec)  # check that we hit the check ;)
+                message = rec.getMessage()
+                if "Repeat number " in message:
+                    found_count += 1
+                    last_count = rec.args[0]
+            self.assertEqual(found_count, 5)  # Should have run 5x
+            self.assertEqual(found_count, last_count)  # We should have identical count outputs
+
+            # Check that replacements on the CLI work properly
+            # Lower boundary - check that 0 (just outside [1]) is not found
+            with open("temp1a.js", "w") as tempf1a:
+                tempf1a.write("num0")
+            result = l.main(["repeat", "1", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp1a.js"])
+            self.assertEqual(result, 1)
+
+            # Upper boundary - check that 2 (just outside [1]) is not found
+            with open("temp1b.js", "w") as tempf1b:
+                tempf1b.write("num2")
+            result = l.main(["repeat", "1", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp1b.js"])
+            self.assertEqual(result, 1)
+
+            # Lower boundary - check that 0 (just outside [1,2]) is not found
+            with open("temp2a.js", "w") as tempf2a:
+                tempf2a.write("num0")
+            result = l.main(["repeat", "2", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp2a.js"])
+            self.assertEqual(result, 1)
+
+            # Upper boundary - check that 3 (just outside [1,2]) is not found
+            with open("temp2b.js", "w") as tempf2b:
+                tempf2b.write("num3")
+            result = l.main(["repeat", "2", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp2b.js"])
+            self.assertEqual(result, 1)
 
 
 class LithiumTests(TestCase):
