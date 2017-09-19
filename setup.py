@@ -10,6 +10,9 @@ from setuptools import setup
 
 if __name__ == "__main__":
     setup(name="lithium",
+          maintainer="Mozilla Fuzzing Team",
+          maintainer_email="fuzzing@mozilla.com",
+          url="https://github.com/MozillaSecurity/lithium",
           version="0.2.0",
           entry_points={
               "console_scripts": ["lithium = lithium.reducer:main"]
