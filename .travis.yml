@@ -20,3 +20,10 @@ script:
     - python -m pytest
 after_success:
     - codecov
+deploy:
+    provider: pypi
+    user: truber
+    password:
+        secure: iRxOIcWQgCJPXBVlpGuBuhXYrbDCR76W/s4vaBp7X7/HTC1CwygOVOC0IZKRqvBEJoma8eiYnwbNLzWhgExdkTCujX0+xAD9KlbNvYIEh4y1fCFWFuV25hnj7a8bEJpDAf6QCk7r04Q7oauB4MWiIXhLoTzzJAic71V+tha87swDxRDHqzJU1NTzv0p0TZAYRmbWYNIQ2NqkV7+M+q6Qh6IQTgowNbbDSb+SldLPmYU0IgFqq2kKm0Xghfyq+/wGrU3nxn+bob/NzHx7ab+D0uKUVuGn2jC+Wqo0/u2D9qoq2WqoFVs9no9grOGIlIh0dWeMIulhMbOKXkXmwJ8oD41VpLip11SnzMvO0ybFXgIV/hK7ge9deP8+RF9KLzkZ8/tIROgp9dLh0co8BtjiuHLHMVvorfWT2x1/lfHCRm8NNHasFcsCLcRpCdvbBPBT03ZQflFOPZtRJWrdQ4IchDp6Sg+rLATKmaXAKAmpaTJMW1DBBi4r9wCsKHJ3qyVVo5EvuLxtGe5BZaCbzOgBKmXYT3xDA3jevlIf08iPO7FW/i+5KEC7aa63JVc/3qcMGo2DJRkivtjUdKo4l7iXXdswsN5Dl4oAJ4GBf2SauB5vatrkbucW/rXZdxNVsOCFczm1iNKAXRY7qpxsi9CF9sujb9KYcqGzLnXMqRUaWqU=
+    on:
+        tags: true
