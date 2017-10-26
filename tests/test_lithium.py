@@ -332,7 +332,7 @@ class InterestingnessTests(TestCase):
 
     def test_crashes(self):
         """Tests for the 'crashes' interestingness test"""
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         with open("temp.js", "w"):
             pass
 
@@ -360,7 +360,7 @@ class InterestingnessTests(TestCase):
 
     def test_diff_test(self):
         """Tests for the 'diff_test' interestingness test"""
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         with open("temp.js", "w"):
             pass
 
@@ -374,7 +374,7 @@ class InterestingnessTests(TestCase):
 
     def test_hangs(self):
         """Tests for the 'hangs' interestingness test"""
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         with open("temp.js", "w"):
             pass
 
@@ -388,7 +388,7 @@ class InterestingnessTests(TestCase):
 
     def test_outputs(self):
         """Tests for the 'outputs' interestingness test"""
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         with open("temp.js", "w"):
             pass
 
@@ -413,7 +413,7 @@ class InterestingnessTests(TestCase):
 
     def test_repeat(self):
         """Tests for the 'repeat' interestingness test"""
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         with open("temp.js", "w") as tempf:
             tempf.write("hello")
 
@@ -469,7 +469,7 @@ class LithiumTests(TestCase):
             lithium.Lithium().main(["-h"])
 
     def test_class(self):
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         with open("empty.txt", "w"):
             pass
 
@@ -500,7 +500,7 @@ class LithiumTests(TestCase):
         self.assertTrue(inter.cleanup_called)
 
     def test_empty(self):
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         with open("empty.txt", "w"):
             pass
 
@@ -545,7 +545,7 @@ class StrategyTests(TestCase):
                 # pylint: disable=missing-return-doc,missing-return-type-doc
                 with open("a.txt", "rb") as f:
                     return b"o\n" in f.read()
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         l.conditionScript = Interesting()
         l.strategy = lithium.Minimize()
         for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
@@ -566,7 +566,7 @@ class StrategyTests(TestCase):
                 with open("a.txt", "rb") as f:
                     data = f.read()
                     return b"o\n" in data and len(set(data.split(b"o\n"))) == 1
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         l.conditionScript = Interesting()
         l.strategy = lithium.MinimizeSurroundingPairs()
         for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
@@ -592,7 +592,7 @@ class StrategyTests(TestCase):
                                (a.count(b"(") == b.count(b")")) and \
                                (a.count(b"[") == b.count(b"]"))
                     return False
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         l.conditionScript = Interesting()
         l.strategy = lithium.MinimizeBalancedPairs()
         for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
@@ -647,7 +647,7 @@ class StrategyTests(TestCase):
                 # pylint: disable=missing-return-doc,missing-return-type-doc
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
             log.info("Trying with testcase type %s:", testcaseType.__name__)
             with open("a.txt", "wb") as f:
@@ -680,7 +680,7 @@ class StrategyTests(TestCase):
                 # pylint: disable=missing-return-doc,missing-return-type-doc
                 with open("a.txt", "rb") as f:
                     return f.read() in valid_reductions
-        l = lithium.Lithium()
+        l = lithium.Lithium()  # noqa: E741
         l.conditionScript = Interesting()
         l.strategy = lithium.ReplaceArgumentsByGlobals()
         for testcaseType in (lithium.TestcaseChar, lithium.TestcaseLine, lithium.TestcaseSymbol):
