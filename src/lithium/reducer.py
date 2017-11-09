@@ -379,8 +379,13 @@ class Minimize(Strategy):
                     break
                 else:
                     chunkStart = 0
-                    chunkSize >>= 1
-                    log.info("Halving chunk size to %d", chunkSize)
+                    while chunkSize > 1: # smallest valid chunk size is 1
+                        chunkSize >>= 1 # Cut chunk size in half
+                        # To avoid testing with an empty testcase (wasting cycles) only break when
+                        # chunkSize is less than the number of testcase parts available.
+                        if chunkSize < len(testcase.parts):
+                            break
+                    log.info("Reducing chunk size to %d", chunkSize)
                 anyChunksRemoved = False
 
             chunkEnd = min(len(testcase.parts), chunkStart + chunkSize)
