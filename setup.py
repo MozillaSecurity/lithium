@@ -42,5 +42,5 @@ if __name__ == "__main__":
             "lithium.interestingness",
         ],
         url="https://github.com/MozillaSecurity/lithium",
-        version="0.2.0",
+        version="0.2.1",
         zip_safe=False)
