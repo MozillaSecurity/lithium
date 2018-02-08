@@ -400,7 +400,11 @@ class Minimize(Strategy):
                 # leave chunkStart the same
             else:
                 log.info("%s made the file 'uninteresting'.", description)
-                chunkStart += chunkSize
+                # To ensure file is fully reduce, increment chunkStart by 1 when chunkSize <= 2
+                if chunkSize <= 2:
+                    chunkStart += 1
+                else:
+                    chunkStart += chunkSize
 
         return 0, (chunkSize == 1 and not anyChunksRemoved and self.minimizeRepeat != "never"), testcase
 
