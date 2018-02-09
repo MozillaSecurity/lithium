@@ -323,6 +323,14 @@ class Minimize(Strategy):
         if not isPowerOfTwo(self.minimizeMin) or not isPowerOfTwo(self.minimizeMax):
             parser.error("Min/Max must be powers of two.")
 
+    @staticmethod
+    def postRoundCallBack(testcase):  # pylint: disable=invalid-name,missing-param-doc,missing-type-doc,unused-argument
+        """ Operation to be performed at the end of each round
+        :return: Result of applied operation
+        :rtype: bool
+        """
+        return False
+
     def main(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
         log.info("The original testcase has %s.", quantity(len(testcase.parts), testcase.atom))
         log.info("Checking that the original testcase is 'interesting'...")
@@ -379,14 +387,23 @@ class Minimize(Strategy):
                     break
                 else:
                     chunkStart = 0
+
                     while chunkSize > 1:  # smallest valid chunk size is 1
                         chunkSize >>= 1
                         # To avoid testing with an empty testcase (wasting cycles) only break when
                         # chunkSize is less than the number of testcase parts available.
                         if chunkSize < len(testcase.parts):
                             break
+
                     log.info("Reducing chunk size to %d", chunkSize)
                 anyChunksRemoved = False
+
+                # Perform post round clean-up if defined
+                testcaseCopy = testcase.copy()
+                if self.postRoundCallBack(testcaseCopy):
+                    log.info("Attempting to apply post round operations to testcase.")
+                    if interesting(testcaseCopy):
+                        testcase = testcaseCopy
 
             chunkEnd = min(len(testcase.parts), chunkStart + chunkSize)
             description = "Removing a chunk of size %d starting at %d of %d" % (
