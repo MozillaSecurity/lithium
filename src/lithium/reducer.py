@@ -1187,6 +1187,38 @@ class ReplaceArgumentsByGlobals(Minimize):
         return numMovedArguments, testcase
 
 
+class CollapseEmptyBraces(Minimize):
+    """ Perform standard line based reduction but collapse empty braces at the end of each round
+    This ensures that empty braces are reduced in a single pass of the reduction strategy
+
+    Example:
+        // Original
+        function foo() {
+        }
+
+        // Post-processed
+        function foo() { }
+    """
+    name = "minimize-collapse-brace"
+
+    @staticmethod
+    def postRoundCallBack(testcase):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
+        raw = "".join(testcase.parts)
+        modified = re.sub(r'{\s+}', r'{ }', raw)
+
+        # Don't update the testcase if no changes were applied
+        if raw != modified:
+            with open(testcase.filename, 'w') as f:
+                f.write(modified)
+
+            # Re-parse the modified testcase
+            testcase.readTestcase(testcase.filename)
+
+            return True
+
+        return False
+
+
 class Lithium(object):  # pylint: disable=missing-docstring,too-many-instance-attributes
 
     def __init__(self):
