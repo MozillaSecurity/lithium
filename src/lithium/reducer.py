@@ -412,22 +412,22 @@ class Minimize(Strategy):
                 # Perform post round clean-up if defined
                 temp_testcase = testcase.copy()
                 if self.post_round_cb(temp_testcase):
-                    log.info("Attempting to apply post round operations to testcase.")
+                    log.info("Attempting to apply post round operations to testcase")
                     if interesting(temp_testcase):
                         testcase = temp_testcase
 
             chunk_start = max(0, chunk_end - chunk_size)
-            status = "Removing chunk [%d:%d] of %d" % (chunk_start, chunk_end, testcase.length)
+            status = "Removing chunk from %d to %d of %d" % (chunk_start, chunk_end, testcase.length)
             temp_testcase = testcase.copy()
             temp_testcase.parts = temp_testcase.parts[:chunk_start] + temp_testcase.parts[chunk_end:]
 
             if interesting(temp_testcase):
                 testcase = temp_testcase
-                log.info("%s was a successful.", status)
+                log.info("%s was successful", status)
                 removed_chunks = True
                 chunk_end = chunk_start
             else:
-                log.info("%s made the file uninteresting.", status)
+                log.info("%s made the file uninteresting", status)
                 # Decrement chunk_size
                 # To ensure file is fully reduce, decrement chunk_end by 1 when chunk_size <= 2
                 if chunk_size <= 2:
