@@ -36,6 +36,10 @@ class Testcase(object):
         self.filename = None
         self.extension = None
 
+    @property
+    def length(self):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
+        return len(self.parts)
+
     def copy(self):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
         new = type(self)()
 
@@ -332,7 +336,7 @@ class Minimize(Strategy):
         return False
 
     def main(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
-        log.info("The original testcase has %s.", quantity(len(testcase.parts), testcase.atom))
+        log.info("The original testcase has %s.", quantity(testcase.length, testcase.atom))
         log.info("Checking that the original testcase is 'interesting'...")
         if not interesting(testcase, writeIt=False):
             log.info("Lithium result: the original testcase is not 'interesting'!")
@@ -343,7 +347,7 @@ class Minimize(Strategy):
 
         testcase.writeTestcase(tempFilename("original", False))
 
-        origNumParts = len(testcase.parts)  # pylint: disable=invalid-name
+        origNumParts = testcase.length  # pylint: disable=invalid-name
         result, anySingle, testcase = self.run(testcase, interesting, tempFilename)  # pylint: disable=invalid-name
 
         testcase.writeTestcase()
@@ -354,15 +358,15 @@ class Minimize(Strategy):
             log.info("  Removing any single %s from the final file makes it uninteresting!", testcase.atom)
 
         log.info("  Initial size: %s", quantity(origNumParts, testcase.atom))
-        log.info("  Final size: %s", quantity(len(testcase.parts), testcase.atom))
+        log.info("  Final size: %s", quantity(testcase.length, testcase.atom))
 
         return result
 
     def run(self, testcase, interesting, tempFilename):  # pylint: disable=invalid-name,missing-docstring
         # pylint: disable=missing-return-doc,missing-return-type-doc
-        chunk_size = min(self.minimizeMax, largestPowerOfTwoSmallerThan(len(testcase.parts)))
+        chunk_size = min(self.minimizeMax, largestPowerOfTwoSmallerThan(testcase.length))
         min_chunk_size = min(chunk_size, max(self.minimizeMin, 1))
-        chunk_end = len(testcase.parts)
+        chunk_end = testcase.length
         removed_chunks = self.minimizeRepeatFirstRound
 
         while True:
@@ -377,8 +381,8 @@ class Minimize(Strategy):
                 log.info("")
 
                 # If the testcase is empty, end minimization
-                if len(testcase.parts) == 0:
-                    log.info("Lithium result: succeeded, reduced to: %s", quantity(len(testcase.parts), testcase.atom))
+                if testcase.length == 0:
+                    log.info("Lithium result: succeeded, reduced to: %s", quantity(testcase.length, testcase.atom))
                     break
 
                 # If the chunk_size equals or exceeds the minimum and
@@ -386,19 +390,19 @@ class Minimize(Strategy):
                     # Repeat mode is last or always and atleast one chunk was removed during the last round, repeat
                     if removed_chunks and (self.minimizeRepeat == "always" or self.minimizeRepeat == "last"):
                         log.info("Starting another round of chunk size %d", chunk_size)
-                        chunk_end = len(testcase.parts)
+                        chunk_end = testcase.length
                     # Otherwise, end minimization
                     else:
-                        log.info("Lithium result: succeeded, reduced to: %s", quantity(len(testcase.parts), testcase.atom))
+                        log.info("Lithium result: succeeded, reduced to: %s", quantity(testcase.length, testcase.atom))
                         break
                 # If none of the conditions apply, reduce the chunk_size and continue
                 else:
-                    chunk_end = len(testcase.parts)
+                    chunk_end = testcase.length
                     while chunk_size > 1:  # smallest valid chunk size is 1
                         chunk_size >>= 1
                         # To avoid testing with an empty testcase (wasting cycles) only break when
                         # chunkSize is less than the number of testcase parts available.
-                        if chunk_size < len(testcase.parts):
+                        if chunk_size < testcase.length:
                             break
 
                     log.info("Reducing chunk size to %d", chunk_size)
@@ -412,7 +416,7 @@ class Minimize(Strategy):
                         testcase = temp_testcase
 
             chunk_start = max(0, chunk_end - chunk_size)
-            status = "Removing chunk [%d:%d] of %d" % (chunk_start, chunk_end, len(testcase.parts))
+            status = "Removing chunk [%d:%d] of %d" % (chunk_start, chunk_end, testcase.length)
             temp_testcase = testcase.copy()
             temp_testcase.parts = temp_testcase.parts[:chunk_start] + temp_testcase.parts[chunk_end:]
 
@@ -449,7 +453,7 @@ class MinimizeSurroundingPairs(Minimize):
 
     def run(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
         # pylint: disable=invalid-name
-        chunkSize = min(self.minimizeMax, largestPowerOfTwoSmallerThan(len(testcase.parts)))
+        chunkSize = min(self.minimizeMax, largestPowerOfTwoSmallerThan(testcase.length))
         finalChunkSize = max(self.minimizeMin, 1)  # pylint: disable=invalid-name
 
         while 1:
@@ -498,8 +502,8 @@ class MinimizeSurroundingPairs(Minimize):
         chunksRemoved = 0  # pylint: disable=invalid-name
         atomsRemoved = 0  # pylint: disable=invalid-name
 
-        atomsInitial = len(testcase.parts)  # pylint: disable=invalid-name
-        numChunks = divideRoundingUp(len(testcase.parts), chunkSize)  # pylint: disable=invalid-name
+        atomsInitial = testcase.length  # pylint: disable=invalid-name
+        numChunks = divideRoundingUp(testcase.length, chunkSize)  # pylint: disable=invalid-name
 
         # Not enough chunks to remove surrounding blocks.
         if numChunks < 3:
@@ -514,11 +518,11 @@ class MinimizeSurroundingPairs(Minimize):
         afterChunkIdx = 2  # pylint: disable=invalid-name
 
         try:
-            while chunkStart + chunkSize < len(testcase.parts):
+            while chunkStart + chunkSize < testcase.length:
                 chunkBefStart = max(0, chunkStart - chunkSize)  # pylint: disable=invalid-name
                 chunkBefEnd = chunkStart  # pylint: disable=invalid-name
-                chunkAftStart = min(len(testcase.parts), chunkStart + chunkSize)  # pylint: disable=invalid-name
-                chunkAftEnd = min(len(testcase.parts), chunkAftStart + chunkSize)  # pylint: disable=invalid-name
+                chunkAftStart = min(testcase.length, chunkStart + chunkSize)  # pylint: disable=invalid-name
+                chunkAftEnd = min(testcase.length, chunkAftStart + chunkSize)  # pylint: disable=invalid-name
                 description = "chunk #%d & #%d of %d chunks of size %d" % (
                     beforeChunkIdx, afterChunkIdx, numChunks, chunkSize)
 
@@ -559,7 +563,7 @@ class MinimizeSurroundingPairs(Minimize):
 
         except ValueError:
             # This is a valid loop exit point.
-            chunkStart = len(testcase.parts)  # pylint: disable=invalid-name
+            chunkStart = testcase.length  # pylint: disable=invalid-name
 
         atomsSurviving = atomsInitial - atomsRemoved  # pylint: disable=invalid-name
         printableSummary = " ".join(  # pylint: disable=invalid-name
@@ -615,8 +619,8 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
         chunksRemoved = 0  # pylint: disable=invalid-name
         atomsRemoved = 0  # pylint: disable=invalid-name
 
-        atomsInitial = len(testcase.parts)  # pylint: disable=invalid-name
-        numChunks = divideRoundingUp(len(testcase.parts), chunkSize)  # pylint: disable=invalid-name
+        atomsInitial = testcase.length  # pylint: disable=invalid-name
+        numChunks = divideRoundingUp(testcase.length, chunkSize)  # pylint: disable=invalid-name
 
         # Not enough chunks to remove surrounding blocks.
         if numChunks < 2:
@@ -632,7 +636,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
         lhsChunkIdx = 0  # pylint: disable=invalid-name
 
         try:
-            while chunkStart < len(testcase.parts):
+            while chunkStart < testcase.length:
 
                 description = "chunk #%d%s of %d chunks of size %d" % (
                     lhsChunkIdx, "".join(" " for i in range(len(str(lhsChunkIdx)) + 4)), numChunks, chunkSize)
@@ -641,7 +645,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     "the chunkStart should correspond to the lhsChunkIdx modulo the removed chunks.")
 
                 chunkLhsStart = chunkStart  # pylint: disable=invalid-name
-                chunkLhsEnd = min(len(testcase.parts), chunkLhsStart + chunkSize)  # pylint: disable=invalid-name
+                chunkLhsEnd = min(testcase.length, chunkLhsStart + chunkSize)  # pylint: disable=invalid-name
 
                 nCurly = curly[lhsChunkIdx]  # pylint: disable=invalid-name
                 nSquare = square[lhsChunkIdx]  # pylint: disable=invalid-name
@@ -688,8 +692,8 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 # Otherwise we do have a match and we check if this is interesting to remove both.
                 # pylint: disable=invalid-name
                 chunkRhsStart = chunkLhsStart + chunkSize * summary[lhsChunkIdx:rhsChunkIdx].count("S")
-                chunkRhsStart = min(len(testcase.parts), chunkRhsStart)  # pylint: disable=invalid-name
-                chunkRhsEnd = min(len(testcase.parts), chunkRhsStart + chunkSize)  # pylint: disable=invalid-name
+                chunkRhsStart = min(testcase.length, chunkRhsStart)  # pylint: disable=invalid-name
+                chunkRhsEnd = min(testcase.length, chunkRhsStart + chunkSize)  # pylint: disable=invalid-name
 
                 description = "chunk #%d & #%d of %d chunks of size %d" % (
                     lhsChunkIdx, rhsChunkIdx, numChunks, chunkSize)
@@ -797,7 +801,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
         except ValueError:
             # This is a valid loop exit point.
-            chunkStart = len(testcase.parts)  # pylint: disable=invalid-name
+            chunkStart = testcase.length  # pylint: disable=invalid-name
 
         atomsSurviving = atomsInitial - atomsRemoved  # pylint: disable=invalid-name
         printableSummary = " ".join(  # pylint: disable=invalid-name
@@ -850,7 +854,7 @@ class ReplacePropertiesByGlobals(Minimize):
 
     def run(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
         # pylint: disable=invalid-name
-        chunkSize = min(self.minimizeMax, 2 * largestPowerOfTwoSmallerThan(len(testcase.parts)))
+        chunkSize = min(self.minimizeMax, 2 * largestPowerOfTwoSmallerThan(testcase.length))
         finalChunkSize = max(self.minimizeMin, 1)
 
         origNumChars = 0
@@ -887,7 +891,7 @@ class ReplacePropertiesByGlobals(Minimize):
         Returns True iff any chunks were removed."""
 
         numRemovedChars = 0
-        numChunks = divideRoundingUp(len(testcase.parts), chunkSize)
+        numChunks = divideRoundingUp(testcase.length, chunkSize)
         finalChunkSize = max(self.minimizeMin, 1)
 
         # Map words to the chunk indexes in which they are present.
