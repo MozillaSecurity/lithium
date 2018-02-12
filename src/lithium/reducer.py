@@ -328,7 +328,7 @@ class Minimize(Strategy):
             parser.error("Min/Max must be powers of two.")
 
     @staticmethod
-    def postRoundCallBack(testcase):  # pylint: disable=invalid-name,missing-param-doc,missing-type-doc,unused-argument
+    def post_round_cb(testcase):  # pylint: disable=invalid-name,missing-param-doc,missing-type-doc,unused-argument
         """ Operation to be performed at the end of each round
         :return: Result of applied operation
         :rtype: bool
@@ -411,7 +411,7 @@ class Minimize(Strategy):
 
                 # Perform post round clean-up if defined
                 temp_testcase = testcase.copy()
-                if self.postRoundCallBack(temp_testcase):
+                if self.post_round_cb(temp_testcase):
                     log.info("Attempting to apply post round operations to testcase.")
                     if interesting(temp_testcase):
                         testcase = temp_testcase
@@ -1214,7 +1214,7 @@ class CollapseEmptyBraces(Minimize):
     name = "minimize-collapse-brace"
 
     @staticmethod
-    def postRoundCallBack(testcase):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
+    def post_round_cb(testcase):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
         raw = "".join(testcase.parts)
         modified = re.sub(r'{\s+}', r'{ }', raw)
 
