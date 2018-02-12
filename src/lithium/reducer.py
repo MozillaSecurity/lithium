@@ -360,11 +360,10 @@ class Minimize(Strategy):
 
     def run(self, testcase, interesting, tempFilename):  # pylint: disable=invalid-name,missing-docstring
         # pylint: disable=missing-return-doc,missing-return-type-doc
-        # pylint: disable=invalid-name
-        chunkSize = min(self.minimizeMax, largestPowerOfTwoSmallerThan(len(testcase.parts)))
-        finalChunkSize = min(chunkSize, max(self.minimizeMin, 1))  # pylint: disable=invalid-name
-        chunkStart = self.minimizeChunkStart  # pylint: disable=invalid-name
-        anyChunksRemoved = self.minimizeRepeatFirstRound  # pylint: disable=invalid-name
+        chunk_size = min(self.minimizeMax, largestPowerOfTwoSmallerThan(len(testcase.parts)))
+        min_chunk_size = min(chunk_size, max(self.minimizeMin, 1))
+        chunk_end = len(testcase.parts)
+        removed_chunks = self.minimizeRepeatFirstRound
 
         while True:
             if self.stopAfterTime and time.time() > self.stopAfterTime:
@@ -373,57 +372,65 @@ class Minimize(Strategy):
                 log.info("Lithium result: please perform another pass using the same arguments")
                 break
 
-            if chunkStart >= len(testcase.parts):
-                testcase.writeTestcase(tempFilename("did-round-%d" % chunkSize))
-                last = (chunkSize <= finalChunkSize)
-                empty = not testcase.parts
+            if chunk_end - chunk_size < 0:
+                testcase.writeTestcase(tempFilename("did-round-%d" % chunk_size))
                 log.info("")
-                if not empty and anyChunksRemoved and (self.minimizeRepeat == "always" or
-                                                       (self.minimizeRepeat == "last" and last)):
-                    chunkStart = 0
-                    log.info("Starting another round of chunk size %d", chunkSize)
-                elif empty or last:
+
+                # If the testcase is empty, end minimization
+                if len(testcase.parts) == 0:
                     log.info("Lithium result: succeeded, reduced to: %s", quantity(len(testcase.parts), testcase.atom))
                     break
-                else:
-                    chunkStart = 0
 
-                    while chunkSize > 1:  # smallest valid chunk size is 1
-                        chunkSize >>= 1
+                # If the chunk_size equals or exceeds the minimum and
+                if chunk_size <= min_chunk_size:
+                    # Repeat mode is last or always and atleast one chunk was removed during the last round, repeat
+                    if removed_chunks and (self.minimizeRepeat == "always" or self.minimizeRepeat == "last"):
+                        log.info("Starting another round of chunk size %d", chunk_size)
+                        chunk_end = len(testcase.parts)
+                    # Otherwise, end minimization
+                    else:
+                        log.info("Lithium result: succeeded, reduced to: %s", quantity(len(testcase.parts), testcase.atom))
+                        break
+                # If none of the conditions apply, reduce the chunk_size and continue
+                else:
+                    chunk_end = len(testcase.parts)
+                    while chunk_size > 1:  # smallest valid chunk size is 1
+                        chunk_size >>= 1
                         # To avoid testing with an empty testcase (wasting cycles) only break when
                         # chunkSize is less than the number of testcase parts available.
-                        if chunkSize < len(testcase.parts):
+                        if chunk_size < len(testcase.parts):
                             break
 
-                    log.info("Reducing chunk size to %d", chunkSize)
-                anyChunksRemoved = False
+                    log.info("Reducing chunk size to %d", chunk_size)
+                removed_chunks = False
 
                 # Perform post round clean-up if defined
-                testcaseCopy = testcase.copy()
-                if self.postRoundCallBack(testcaseCopy):
+                temp_testcase = testcase.copy()
+                if self.postRoundCallBack(temp_testcase):
                     log.info("Attempting to apply post round operations to testcase.")
-                    if interesting(testcaseCopy):
-                        testcase = testcaseCopy
+                    if interesting(temp_testcase):
+                        testcase = temp_testcase
 
-            chunkEnd = min(len(testcase.parts), chunkStart + chunkSize)
-            description = "Removing a chunk of size %d starting at %d of %d" % (
-                chunkSize, chunkStart, len(testcase.parts))
-            testcaseSuggestion = testcase.copy()
-            testcaseSuggestion.parts = testcaseSuggestion.parts[:chunkStart] + testcaseSuggestion.parts[chunkEnd:]
-            if interesting(testcaseSuggestion):
-                testcase = testcaseSuggestion
-                log.info("%s was a successful reduction :)", description)
-                anyChunksRemoved = True
-                # leave chunkStart the same
+            chunk_start = max(0, chunk_end - chunk_size)
+            status = "Removing chunk [%d:%d] of %d" % (chunk_start, chunk_end, len(testcase.parts))
+            temp_testcase = testcase.copy()
+            temp_testcase.parts = temp_testcase.parts[:chunk_start] + temp_testcase.parts[chunk_end:]
+
+            if interesting(temp_testcase):
+                testcase = temp_testcase
+                log.info("%s was a successful.", status)
+                removed_chunks = True
+                chunk_end = chunk_start
             else:
-                log.info("%s made the file 'uninteresting'.", description)
-                # To ensure file is fully reduce, increment chunkStart by 1 when chunkSize <= 2
-                if chunkSize <= 2:
-                    chunkStart += 1
+                log.info("%s made the file uninteresting.", status)
+                # Decrement chunk_size
+                # To ensure file is fully reduce, decrement chunk_end by 1 when chunk_size <= 2
+                if chunk_size <= 2:
+                    chunk_end -= 1
                 else:
-                    chunkStart += chunkSize
+                    chunk_end -= chunk_size
 
-        return 0, (chunkSize == 1 and not anyChunksRemoved and self.minimizeRepeat != "never"), testcase
+        return 0, (chunk_size == 1 and not removed_chunks and self.minimizeRepeat != "never"), testcase
 
 
 class MinimizeSurroundingPairs(Minimize):
