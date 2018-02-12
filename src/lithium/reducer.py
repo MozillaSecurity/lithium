@@ -328,7 +328,7 @@ class Minimize(Strategy):
             parser.error("Min/Max must be powers of two.")
 
     @staticmethod
-    def post_round_cb(testcase):  # pylint: disable=invalid-name,missing-param-doc,missing-type-doc,unused-argument
+    def post_round_cb(testcase):  # pylint: missing-param-doc,missing-type-doc,unused-argument
         """ Operation to be performed at the end of each round
         :return: Result of applied operation
         :rtype: bool
