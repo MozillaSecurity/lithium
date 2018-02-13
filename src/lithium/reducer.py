@@ -328,10 +328,12 @@ class Minimize(Strategy):
             parser.error("Min/Max must be powers of two.")
 
     @staticmethod
-    def post_round_cb(testcase):  # pylint: missing-param-doc,missing-type-doc,unused-argument
-        """ Operation to be performed at the end of each round
-        :return: Result of applied operation
-        :rtype: bool
+    def post_round_cb(testcase):
+        """ Callback function to be performed after the round ends.
+        Args:
+            testcase (Testcase): Testcase to be reduced.
+        Returns:
+            bool: True if callback was performed successfully, False otherwise.
         """
         return False
 
@@ -386,9 +388,9 @@ class Minimize(Strategy):
                     log.info("Lithium result: succeeded, reduced to: %s", quantity(testcase.length, testcase.atom))
                     break
 
-                # If the chunk_size equals or exceeds the minimum and
+                # If the chunk_size is less than or equal to the min_chunk_size and...
                 if chunk_size <= min_chunk_size:
-                    # Repeat mode is last or always and atleast one chunk was removed during the last round, repeat
+                    # Repeat mode is last or always and at least one chunk was removed during the last round, repeat
                     if removed_chunks and (self.minimizeRepeat == "always" or self.minimizeRepeat == "last"):
                         log.info("Starting another round of chunk size %d", chunk_size)
                         chunk_end = testcase.length
@@ -429,7 +431,7 @@ class Minimize(Strategy):
             else:
                 log.info("%s made the file uninteresting", status)
                 # Decrement chunk_size
-                # To ensure file is fully reduce, decrement chunk_end by 1 when chunk_size <= 2
+                # To ensure the file is fully reduced, decrement chunk_end by 1 when chunk_size <= 2
                 if chunk_size <= 2:
                     chunk_end -= 1
                 else:
@@ -1214,7 +1216,13 @@ class CollapseEmptyBraces(Minimize):
     name = "minimize-collapse-brace"
 
     @staticmethod
-    def post_round_cb(testcase):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
+    def post_round_cb(testcase):
+        """ Collapse braces separated by whitespace
+        Args:
+            testcase (Testcase): Testcase to be reduced.
+        Returns:
+            bool: True if callback was performed successfully, False otherwise.
+        """
         raw = "".join(testcase.parts)
         modified = re.sub(r'{\s+}', r'{ }', raw)
 
