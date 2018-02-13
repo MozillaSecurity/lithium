@@ -416,7 +416,10 @@ class Minimize(Strategy):
                 if self.post_round_cb(test_to_try):
                     log.info("Attempting to apply post round operations to testcase")
                     if interesting(test_to_try):
+                        log.info("Post round operations were successful")
                         testcase = test_to_try
+                    else:
+                        log.info("Post round operations made the file uninteresting")
 
             chunk_start = max(0, chunk_end - chunk_size)
             status = "Removing chunk from %d to %d of %d" % (chunk_start, chunk_end, testcase.length)
