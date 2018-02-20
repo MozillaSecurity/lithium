@@ -1231,7 +1231,9 @@ class CollapseEmptyBraces(Minimize):
         # Don't update the testcase if no changes were applied
         if raw != modified:
             with open(testcase.filename, 'w') as f:
+                f.write(testcase.before)
                 f.write(modified)
+                f.write(testcase.after)
 
             # Re-parse the modified testcase
             testcase.readTestcase(testcase.filename)
