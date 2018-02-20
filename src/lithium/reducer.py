@@ -1226,11 +1226,11 @@ class CollapseEmptyBraces(Minimize):
             bool: True if callback was performed successfully, False otherwise.
         """
         raw = b"".join(testcase.parts)
-        modified = re.sub(r'{\s+}', r'{ }', raw)
+        modified = re.sub(b'{\s+}', b'{ }', raw)
 
         # Don't update the testcase if no changes were applied
         if raw != modified:
-            with open(testcase.filename, 'w') as f:
+            with open(testcase.filename, 'wb') as f:
                 f.write(testcase.before)
                 f.write(modified)
                 f.write(testcase.after)
