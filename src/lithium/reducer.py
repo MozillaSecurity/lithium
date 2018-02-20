@@ -1226,7 +1226,7 @@ class CollapseEmptyBraces(Minimize):
             bool: True if callback was performed successfully, False otherwise.
         """
         raw = b"".join(testcase.parts)
-        modified = re.sub(b'{\s+}', b'{ }', raw)
+        modified = re.sub(b'{\s+}', b'{ }', raw)  # pylint: disable=anomalous-backslash-in-string
 
         # Don't update the testcase if no changes were applied
         if raw != modified:
