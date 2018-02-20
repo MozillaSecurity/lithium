@@ -365,7 +365,7 @@ class Minimize(Strategy):
 
     def run(self, testcase, interesting, tempFilename):  # pylint: disable=invalid-name,missing-docstring
         # pylint: disable=missing-return-doc,missing-return-type-doc
-        # pylint: disable=too-many-branches,too-complex
+        # pylint: disable=too-many-branches,too-complex,too-many-statements
         chunk_size = min(self.minimizeMax, largestPowerOfTwoSmallerThan(len(testcase)))
         min_chunk_size = min(chunk_size, max(self.minimizeMin, 1))
         chunk_end = len(testcase)
