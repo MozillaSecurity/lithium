@@ -327,7 +327,7 @@ class Minimize(Strategy):
             parser.error("Min/Max must be powers of two.")
 
     @staticmethod
-    def apply_post_round_op(testcase):
+    def apply_post_round_op(testcase):  # pylint: disable=unused-argument
         """ Operations to be performed after each round
         Args:
             testcase (Testcase): Testcase to be reduced.
