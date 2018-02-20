@@ -327,8 +327,8 @@ class Minimize(Strategy):
             parser.error("Min/Max must be powers of two.")
 
     @staticmethod
-    def apply_post_round_op_cb(testcase):
-        """ Callback function to be performed after the round ends.
+    def apply_post_round_op(testcase):
+        """ Operations to be performed after each round
         Args:
             testcase (Testcase): Testcase to be reduced.
         Returns:
@@ -412,7 +412,7 @@ class Minimize(Strategy):
 
                 # Perform post round clean-up if defined
                 test_to_try = testcase.copy()
-                if self.apply_post_round_op_cb(test_to_try):
+                if self.apply_post_round_op(test_to_try):
                     log.info("Attempting to apply post round operations to testcase")
                     if interesting(test_to_try):
                         log.info("Post round operations were successful")
@@ -1218,7 +1218,7 @@ class CollapseEmptyBraces(Minimize):
     name = "minimize-collapse-brace"
 
     @staticmethod
-    def apply_post_round_op_cb(testcase):
+    def apply_post_round_op(testcase):
         """ Collapse braces separated by whitespace
         Args:
             testcase (Testcase): Testcase to be reduced.
