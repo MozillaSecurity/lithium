@@ -697,6 +697,30 @@ class StrategyTests(TestCase):
                 else:
                     self.assertEqual(f.read(), valid_reductions[-1])
 
+    def test_minimize_collapse_braces(self):
+        class Interesting(DummyInteresting):
+
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
+                # pylint: disable=missing-return-doc,missing-return-type-doc
+                with open("a.txt", "rb") as f:
+                    data = f.read()
+                    if b"o\n" in data:
+                        return data.count(b"{") == data.count(b"}")
+                    return False
+        l = lithium.Lithium()  # noqa: E741
+        l.conditionScript = Interesting()
+        l.strategy = lithium.CollapseEmptyBraces()
+        # CollapseEmptyBraces only applies to line-based reduction
+        log.info("Trying with testcase type %s:", lithium.TestcaseLine.__name__)
+        with open("a.txt", "wb") as f:
+            f.write(b"x\nxxx{\nx\n}\no\n")
+        l.testcase = lithium.TestcaseLine()
+        l.testcase.readTestcase("a.txt")
+        self.assertEqual(l.run(), 0)
+        self.assertEqual(l.testCount, 16)
+        with open("a.txt", "rb") as f:
+            self.assertEqual(f.read(), b"o\n")
+
 
 class TestcaseTests(TestCase):
 
