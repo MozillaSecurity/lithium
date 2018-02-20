@@ -1225,7 +1225,7 @@ class CollapseEmptyBraces(Minimize):
         Returns:
             bool: True if callback was performed successfully, False otherwise.
         """
-        raw = "".join(testcase.parts)
+        raw = b"".join(testcase.parts)
         modified = re.sub(r'{\s+}', r'{ }', raw)
 
         # Don't update the testcase if no changes were applied
