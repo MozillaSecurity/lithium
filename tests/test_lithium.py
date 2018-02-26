@@ -123,8 +123,8 @@ class TestCase(unittest.TestCase):
                     self.logger.propagate = False
                     return handler.watcher
 
-                def __exit__(self, exc_type, exc_value, tb):  # pylint: disable=missing-return-doc
-                    # pylint: disable=missing-return-type-doc
+                def __exit__(self, exc_type, exc_value, tb):  # pylint: disable=inconsistent-return-statements
+                    # pylint: disable=missing-return-doc,missing-return-type-doc
                     self.logger.handlers, self.logger.propagate = self.old[:2]
                     self.logger.setLevel(self.old[2])
                     if exc_type is not None:

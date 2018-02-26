@@ -82,7 +82,7 @@ def file_contains_regex(file_, regex, verbose=True):
     return found, matched_str
 
 
-def find_llvm_bin_path():  # pylint: disable=missing-return-doc,missing-return-type-doc
+def find_llvm_bin_path():  # pylint: disable=missing-return-doc,missing-return-type-doc,inconsistent-return-statements
     """Return the path to compiled LLVM binaries, which differs depending on compilation method."""
     if platform.system() == "Linux":
         # Assumes clang was installed through apt-get. Works with version 3.6.2,
@@ -137,8 +137,8 @@ def rel_or_abs_import(module):
     except ImportError:
         # only raise if path was given, otherwise we also try under 'interestingness'
         if path:
-            log.error("Failed to import: " + orig_arg)
-            log.error("From: " + __file__)
+            log.error("Failed to import: %s", orig_arg)
+            log.error("From: %s", __file__)
             raise
     finally:
         sys.path.pop()
@@ -147,6 +147,6 @@ def rel_or_abs_import(module):
     try:
         return importlib.import_module(".interestingness." + module, package="lithium")
     except ImportError:
-        log.error("Failed to import: .interestingness." + module)
-        log.error("From: " + __file__)
+        log.error("Failed to import: .interestingness.%s", module)
+        log.error("From: %s", __file__)
         raise
