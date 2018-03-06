@@ -88,6 +88,5 @@ Interestingly, Lithium doesn't know what *m* is going in, and yet its running ti
 
 It would be interesting to experiment and determine what effect each of these changes has on the running time.  (I wouldn't expect asymptotic changes, just constant-factor changes.)
 
-- Try removing chunks from the end first.
 - Use an initial chunk sizes as close as possible to half the size of the file, instead of always using power-of-2 chunk sizes.
 - Give users an option to use the "binary search for the last line" algorithm, which might be faster when application startup time dominates.

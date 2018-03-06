@@ -123,8 +123,8 @@ class TestCase(unittest.TestCase):
                     self.logger.propagate = False
                     return handler.watcher
 
-                def __exit__(self, exc_type, exc_value, tb):  # pylint: disable=missing-return-doc
-                    # pylint: disable=missing-return-type-doc
+                def __exit__(self, exc_type, exc_value, tb):  # pylint: disable=inconsistent-return-statements
+                    # pylint: disable=missing-return-doc,missing-return-type-doc
                     self.logger.handlers, self.logger.propagate = self.old[:2]
                     self.logger.setLevel(self.old[2])
                     if exc_type is not None:
@@ -696,6 +696,40 @@ class StrategyTests(TestCase):
                     self.assertEqual(f.read(), valid_reductions[0])
                 else:
                     self.assertEqual(f.read(), valid_reductions[-1])
+
+    def test_minimize_collapse_braces(self):
+        class Interesting(DummyInteresting):
+
+            def interesting(sub, conditionArgs, tempPrefix):  # pylint: disable=no-self-argument
+                # pylint: disable=missing-return-doc,missing-return-type-doc
+                with open("a.txt", "rb") as f:
+                    data = f.read()
+                    if conditionArgs == 'NEEDS_BRACE':
+                        return data.count(b"{") == 1 and data.count(b"{") == data.count(b"}")
+                    elif conditionArgs == 'NO_BRACE':
+                        if b"o\n" in data:
+                            return data.count(b"{") == data.count(b"}")
+                    return False
+        # CollapseEmptyBraces only applies to line-based reduction
+        log.info("Trying with testcase type %s:", lithium.TestcaseLine.__name__)
+        for test_type in ['NEEDS_BRACE', 'NO_BRACE']:
+            l = lithium.Lithium()  # noqa: E741
+            l.conditionScript = Interesting()
+            l.conditionArgs = test_type
+            l.strategy = lithium.CollapseEmptyBraces()
+            with open("a.txt", "wb") as f:
+                f.write(b"x\nxxx{\nx\n}\no\n")
+            l.testcase = lithium.TestcaseLine()
+            l.testcase.readTestcase("a.txt")
+            self.assertEqual(l.run(), 0)
+            if test_type == 'NEEDS_BRACE':
+                self.assertEqual(l.testCount, 15)
+                with open("a.txt", "rb") as f:
+                    self.assertEqual(f.read(), b"xxx{ }\n")
+            elif test_type == 'NO_BRACE':
+                self.assertEqual(l.testCount, 16)
+                with open("a.txt", "rb") as f:
+                    self.assertEqual(f.read(), b"o\n")
 
 
 class TestcaseTests(TestCase):
