@@ -13,10 +13,7 @@ python:
     - "pypy3.5-5.10.1"
 before_install:
   - pip install --upgrade setuptools pip
-  - pip install --upgrade virtualenv
 install:
-  - pip --version
-  - virtualenv --version
   - git --version
 before_script:
   - pip install --upgrade flake8 pylint codecov
