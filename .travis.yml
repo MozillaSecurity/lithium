@@ -19,6 +19,7 @@ before_install:
   - pip install --upgrade setuptools pip
 install:
   - git --version
+  - hg --version
 before_script:
   - pip install --upgrade "flake8==3.5.0" "pylint==1.8.4" "codecov==2.0.15"
   - pip install --upgrade "pytest-flake8==1.0.1" "pytest-pylint==0.9.0" "pytest-cov==2.5.1"
