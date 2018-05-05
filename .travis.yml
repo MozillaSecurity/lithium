@@ -1,13 +1,16 @@
 dist: trusty
 sudo: false
 language: python
-python:
-  - "2.7"
-  - "3.4"
-  - "3.5"
-  - "3.6"
-  - "3.7-dev"
-  - "pypy3.5-5.10.1"
+matrix:
+  fast_finish: true
+  include:
+    python:
+      - "2.7"
+      - "3.4"
+      - "3.5"
+      - "3.6"
+      - "3.7-dev"
+      - "pypy3.5-5.10.1"
   allow_failures:
     - "3.7-dev"
     - "pypy3.5-5.10.1"
