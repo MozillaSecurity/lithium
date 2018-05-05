@@ -1,27 +1,27 @@
 image:
-    - Visual Studio 2017
+  - Visual Studio 2017
 environment:
-    matrix:
-        - PYTHON: "C:\\Python27"
-        - PYTHON: "C:\\Python34"
-        - PYTHON: "C:\\Python35"
-        - PYTHON: "C:\\Python36"
-        - PYTHON: "C:\\Python27-x64"
-        - PYTHON: "C:\\Python34-x64"
-        - PYTHON: "C:\\Python35-x64"
-        - PYTHON: "C:\\Python36-x64"
+  matrix:
+    - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python27-x64"
+    - PYTHON: "C:\\Python34-x64"
+    - PYTHON: "C:\\Python35-x64"
+    - PYTHON: "C:\\Python36-x64"
 install:
-    - "%PYTHON%\\python.exe -m pip install --upgrade setuptools pip"
-    - "%PYTHON%\\python.exe -m pip install --upgrade virtualenv"
-    - "%PYTHON%\\python.exe -m pip --version"
-    - "%PYTHON%\\python.exe -m virtualenv --version"
-    - "git --version"
-    - "%PYTHON%\\python.exe -m pip install --upgrade flake8 pylint codecov"
-    - "%PYTHON%\\python.exe -m pip install --upgrade pytest-flake8 pytest-pylint pytest-cov"
-    - "choco install codecov"
+  - "%PYTHON%\\python.exe -m pip install --upgrade setuptools pip"
+  - "%PYTHON%\\python.exe -m pip install --upgrade virtualenv"
+  - "%PYTHON%\\python.exe -m pip --version"
+  - "%PYTHON%\\python.exe -m virtualenv --version"
+  - "git --version"
+  - "%PYTHON%\\python.exe -m pip install --upgrade flake8 pylint codecov"
+  - "%PYTHON%\\python.exe -m pip install --upgrade pytest-flake8 pytest-pylint pytest-cov"
+  - "choco install codecov"
 build: off
 test_script:
-    - "%PYTHON%\\python.exe -m pytest --cov-report xml"
+  - "%PYTHON%\\python.exe -m pytest --cov-report xml"
 on_success:
-    - "codecov -f coverage.xml"
+  - "codecov -f coverage.xml"
 skip_branch_with_pr: true
