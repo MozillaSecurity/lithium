@@ -1,6 +1,7 @@
 dist: trusty
 sudo: false
 language: python
+cache: pip
 matrix:
   fast_finish: true
   include:
