@@ -12,10 +12,8 @@ environment:
     - PYTHON: "C:\\Python36-x64"
 install:
   - "%PYTHON%\\python.exe -m pip install --upgrade setuptools pip"
-  - "%PYTHON%\\python.exe -m pip install --upgrade virtualenv"
-  - "%PYTHON%\\python.exe -m pip --version"
-  - "%PYTHON%\\python.exe -m virtualenv --version"
   - "git --version"
+  - "hg --version"
   - "%PYTHON%\\python.exe -m pip install --upgrade \"flake8==3.5.0\" \"pylint==1.8.4\" \"codecov==2.0.15\""
   - "%PYTHON%\\python.exe -m pip install --upgrade \"pytest-flake8==1.0.1\" \"pytest-pylint==0.9.0\""
   - "%PYTHON%\\python.exe -m pip install --upgrade \"pytest-cov==2.5.1\""
