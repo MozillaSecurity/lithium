@@ -61,15 +61,10 @@ def xpkill(p):  # pylint: disable=invalid-name,missing-param-doc,missing-type-do
                     p.kill()  # Re-verify that the process is really killed.
 
 
-def make_env(bin_path):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
-    is_shell_deterministic = "-dm-" in bin_path
-    # Total hack to make this not rely on queryBuildConfiguration in the funfuzz repository.
-    # We need this so releng machines (which work off downloaded shells that are in build/dist/js),
-    # do not compile LLVM.
-    if not is_shell_deterministic:
-        return None
+def make_env(bin_path, curr_env=None):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
+    curr_env = curr_env or os.environ
+    env = utils.env_with_path(os.path.abspath(os.path.dirname(bin_path)), curr_env=curr_env)
 
-    env = utils.env_with_path(os.path.abspath(os.path.dirname(bin_path)))
     env["ASAN_OPTIONS"] = "exitcode=" + str(ASAN_EXIT_CODE)
     symbolizer_path = utils.find_llvm_bin_path()
     if symbolizer_path is not None:
@@ -77,7 +72,7 @@ def make_env(bin_path):  # pylint: disable=missing-docstring,missing-return-doc,
     return env
 
 
-def timed_run(cmd_with_args, timeout, log_prefix, inp=None, preexec_fn=None):
+def timed_run(cmd_with_args, timeout, log_prefix, env=None, inp=None, preexec_fn=None):
     # pylint: disable=missing-param-doc,missing-raises-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
     # pylint: disable=too-complex,too-many-branches,too-many-locals,too-many-statements
     """If log_prefix is None, uses pipes instead of files for all output."""
@@ -97,6 +92,7 @@ def timed_run(cmd_with_args, timeout, log_prefix, inp=None, preexec_fn=None):
         childStdOut = open(log_prefix + "-out.txt", "w")  # pylint: disable=invalid-name
         childStdErr = open(log_prefix + "-err.txt", "w")  # pylint: disable=invalid-name
 
+
     try:
         child = subprocess.Popen(
             cmd_with_args,
@@ -104,7 +100,7 @@ def timed_run(cmd_with_args, timeout, log_prefix, inp=None, preexec_fn=None):
             stderr=(childStdErr if useLogFiles else subprocess.PIPE),
             stdout=(childStdOut if useLogFiles else subprocess.PIPE),
             close_fds=(os.name == "posix"),  # close_fds should not be changed on Windows
-            env=make_env(cmd_with_args[0]),
+            env=(env or make_env(cmd_with_args[0], os.environ)),
             preexec_fn=preexec_fn
         )
     except OSError as e:  # pylint: disable=invalid-name
