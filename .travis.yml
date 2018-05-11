@@ -1,32 +1,37 @@
 dist: trusty
 sudo: false
 language: python
-python:
-    - "2.7"
-    - "3.4"
-    - "3.5"
-    - "3.6"
-    - "pypy"
-    - "pypy3"
+cache: pip
+matrix:
+  fast_finish: true
+  include:
+    python:
+      - "2.7"
+      - "3.4"
+      - "3.5"
+      - "3.6"
+      - "3.7-dev"
+      - "pypy3.5-5.10.1"
+  allow_failures:
+    - "3.7-dev"
+    - "pypy3.5-5.10.1"
 before_install:
-    - pip install --upgrade setuptools pip
-    - pip install --upgrade virtualenv
+  - pip install --upgrade setuptools pip
 install:
-    - pip --version
-    - virtualenv --version
-    - git --version
+  - git --version
+  - hg --version
 before_script:
-    - pip install --upgrade flake8 pylint codecov
-    - pip install --upgrade pytest-flake8 pytest-pylint pytest-cov
+  - pip install --upgrade "flake8==3.5.0" "pylint==1.8.4" "codecov==2.0.15"
+  - pip install --upgrade "pytest-flake8==1.0.1" "pytest-pylint==0.9.0" "pytest-cov==2.5.1"
 script:
-    - python -m pytest
+  - python -m pytest
 after_success:
-    - codecov
+  - codecov
 deploy:
-    provider: pypi
-    distributions: sdist bdist_wheel
-    user: mozillasecurity
-    password:
-      secure: QaZQq+EgPexvXYH+QJ4S5w2zdQgJ+AL4h75XDtat5NKZxdNiGvXV+glGMWnRqG/x3RLYERZI1ZlQS/k88zdlgorfjAzUFad7mXfCxTX34/sF6WSMLUB50FddhjvBgtV2PaIGfRUgi/j1+DqI3g3akJd6BaRHTUO+UHn3GVyzAUkdoLBt6REwklTq44exzrEFmfRh0Pp2NTMUs9CoVekyrtvEHNcMAxTeRAJBbmv1C2LkBpx+nvIBfDmMzfhY4kuhpLheFfIoniNsz9cYKO21itVBnHwvFAGCm9plVRv27batX8CpbiqpAJrVJSZEmzaG2c+k3goM62i+o8BF8t/NUmRMcZ8D35EdIX0/5LrvEWrQll8PPkFboAVNQ3OnYddFypuDPtNzf54JXWDejqKT/kqCTUD+aSaSAivo+yljP9B9T7r5dFawIbLVYeJFVy1CxE4CwAxRsjtzrXGHOefUmfKUYMh8BcLjMxAAPfhHDQFOwOAwiex4E381OKjwTozrkGpeVQyrq8hy7OnMRBMVUfzH0gQJiH5iCzdQ+GoQJP55O+MaLNotIpLoPdvxR68A7eE3PqTvGXL2Aj3npZf59+79MpsHOHxVS52SqOnCOpvQhBG8Ssx7MUiaaDGg+wSVsbTg2i8mcEY5kR2JKWucrvbCa/OFqD//Ut8Lc7fIj5s=
-    on:
-      tags: true
+  provider: pypi
+  distributions: sdist bdist_wheel
+  user: mozillasecurity
+  password:
+    secure: QaZQq+EgPexvXYH+QJ4S5w2zdQgJ+AL4h75XDtat5NKZxdNiGvXV+glGMWnRqG/x3RLYERZI1ZlQS/k88zdlgorfjAzUFad7mXfCxTX34/sF6WSMLUB50FddhjvBgtV2PaIGfRUgi/j1+DqI3g3akJd6BaRHTUO+UHn3GVyzAUkdoLBt6REwklTq44exzrEFmfRh0Pp2NTMUs9CoVekyrtvEHNcMAxTeRAJBbmv1C2LkBpx+nvIBfDmMzfhY4kuhpLheFfIoniNsz9cYKO21itVBnHwvFAGCm9plVRv27batX8CpbiqpAJrVJSZEmzaG2c+k3goM62i+o8BF8t/NUmRMcZ8D35EdIX0/5LrvEWrQll8PPkFboAVNQ3OnYddFypuDPtNzf54JXWDejqKT/kqCTUD+aSaSAivo+yljP9B9T7r5dFawIbLVYeJFVy1CxE4CwAxRsjtzrXGHOefUmfKUYMh8BcLjMxAAPfhHDQFOwOAwiex4E381OKjwTozrkGpeVQyrq8hy7OnMRBMVUfzH0gQJiH5iCzdQ+GoQJP55O+MaLNotIpLoPdvxR68A7eE3PqTvGXL2Aj3npZf59+79MpsHOHxVS52SqOnCOpvQhBG8Ssx7MUiaaDGg+wSVsbTg2i8mcEY5kR2JKWucrvbCa/OFqD//Ut8Lc7fIj5s=
+  on:
+    tags: true
