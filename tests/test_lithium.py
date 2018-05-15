@@ -804,6 +804,12 @@ class TestcaseTests(TestCase):
                                    b"\"\nData\xFF\n\"",
                                    b"x", b"\xFF"])  # last JS str
         self.assertEqual(t.after, b"\" something\nDDEND\npost\n")
+        with open("a.txt", "wb") as f:
+            f.write(b"'xabcx'")
+        t.readTestcase("a.txt")
+        assert t.before == b"'"
+        assert t.parts == [b"x", b"a", b"b", b"c", b"x"]
+        assert t.after == b"'"
 
     def test_symbol(self):
         t = lithium.TestcaseSymbol()

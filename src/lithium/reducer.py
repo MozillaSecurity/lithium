@@ -170,19 +170,33 @@ class TestcaseJsStr(TestcaseChar):
 
         # beginning and end are special because we can put them in self.before/self.after
         if chars:
-            off = -chars[0]
-            if off:
-                header, self.parts = b"".join(self.parts[:-off]), self.parts[-off:]
+            # merge everything before first char (pre chars[0]) into self.before
+            offset = chars[0]
+            if offset:
+                header, self.parts = b"".join(self.parts[:offset]), self.parts[offset:]
                 self.before = self.before + header
-            if chars[-1] != len(self.parts) + off:
-                self.parts, footer = self.parts[:chars[-1] + 1 + off], b"".join(self.parts[chars[-1] + 1 + off:])
+                # update chars which is a list of offsets into self.parts
+                chars = [c - offset for c in chars]
+
+            # merge everything after last char (post chars[-1]) into self.after
+            offset = chars[-1] + 1
+            if offset < len(self.parts):
+                self.parts, footer = self.parts[:offset], b"".join(self.parts[offset:])
                 self.after = footer + self.after
 
         # now scan for chars with a gap > 2 between, which means we can merge
-        for char1, char2 in zip(chars, chars[1:]):
+        # the goal is to take a string like this:
+        #   parts = [a x x x b c]
+        #   chars = [0       4 5]
+        # and merge it into this:
+        #   parts = [a xxx b c]
+        #   chars = [0     2 3]
+        for i in range(len(chars) - 1):
+            char1, char2 = chars[i], chars[i + 1]
             if (char2 - char1) > 2:
-                self.parts[off + char1 + 1:off + char2] = [b"".join(self.parts[off + char1 + 1:off + char2])]
-                off += char1 - char2 + 2
+                self.parts[char1 + 1:char2] = [b"".join(self.parts[char1 + 1:char2])]
+                offset = char2 - char1 - 2  # num of parts we eliminated
+                chars[i + 1:] = [c - offset for c in chars[i + 1:]]
 
     def readTestcaseLine(self, line):
         last = 0
