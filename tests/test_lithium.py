@@ -810,6 +810,18 @@ class TestcaseTests(TestCase):
         assert t.before == b"'"
         assert t.parts == [b"x", b"a", b"b", b"c", b"x"]
         assert t.after == b"'"
+        with open("a.txt", "wb") as f:
+            f.write(b"'x'abcx'")
+        t.readTestcase("a.txt")
+        assert t.before == b"'"
+        assert t.parts == [b"x"]
+        assert t.after == b"'abcx'"
+        with open("a.txt", "wb") as f:
+            f.write(b"'x\"abc\"x")
+        t.readTestcase("a.txt")
+        assert t.before == b"'x\""
+        assert t.parts == [b"a", b"b", b"c"]
+        assert t.after == b"\"x"
 
     def test_symbol(self):
         t = lithium.TestcaseSymbol()
