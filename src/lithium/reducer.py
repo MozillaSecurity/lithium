@@ -162,14 +162,15 @@ class TestcaseJsStr(TestcaseChar):
         # if we hit EOF while looking for end of string, we need to rewind to the state before we matched on
         # that quote character and try again.
         while self._instr is not None:
-            for idx in reversed(range(len(self.parts))):
+            idx = None
+            for idx in reversed(range(len(self.parts))):  # pylint: disable=range-builtin-not-iterating
                 if self.parts[idx].endswith(self._instr) and idx not in self._chars:
                     break
             else:
                 raise RuntimeError("error while backtracking from unmatched %s" % (self._instr,))
             self.parts, rest = self.parts[:idx+1], b"".join(self.parts[idx+1:])
-            self._chars = [c for c in self._chars if c < idx]
-            self._instr = None
+            self._chars = [c for c in self._chars if c < idx]  # pylint: disable=attribute-defined-outside-init
+            self._instr = None  # pylint: disable=attribute-defined-outside-init
             self.readTestcaseLine(rest)
         del self._instr
 
