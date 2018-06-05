@@ -46,8 +46,12 @@ class rundata(object):  # pylint: disable=invalid-name,missing-param-doc,missing
         self.err = err
 
 
-def xpkill(proc):  # pylint: disable=missing-param-doc,missing-type-doc
-    """Based on mozilla-central/source/build/automation.py.in ."""
+def xpkill(proc):
+    """Based on mozilla-central/source/build/automation.py.in .
+
+    Args:
+        proc (process): Process to be killed
+    """
     try:
         proc.kill()
     except WindowsError:  # pylint: disable=undefined-variable
