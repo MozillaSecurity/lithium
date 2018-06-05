@@ -77,9 +77,24 @@ def make_env(bin_path, curr_env=None):  # pylint: disable=missing-docstring,miss
 
 
 def timed_run(cmd_with_args, timeout, log_prefix, env=None, inp=None, preexec_fn=None):
-    # pylint: disable=missing-param-doc,missing-raises-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
-    # pylint: disable=too-complex,too-many-branches,too-many-locals,too-many-statements
-    """If log_prefix is None, uses pipes instead of files for all output."""
+    # pylint: disable=too-complex,too-many-arguments,too-many-branches,too-many-locals,too-many-statements
+    """If log_prefix is None, uses pipes instead of files for all output.
+
+    Args:
+        cmd_with_args (list): List of command and parameters to be executed
+        timeout (int): Timeout for the command to be run, in seconds
+        log_prefix (str): Prefix string of the log files
+        env (dict): Environment for the commmand to be executed in
+        inp (str): stdin to be passed to the command
+        preexec_fn (function): preexec_fn to be passed to subprocess.Popen
+
+    Raises:
+        TypeError: Raises if input parameters are not of the desired types (e.g. cmd_with_args should be a list)
+        OSError: Raises if timed_run is attempted to be used with gdb
+
+    Returns:
+        class: A rundata instance containing run information
+    """
     if not isinstance(cmd_with_args, list):
         raise TypeError("cmd_with_args should be a list (of strings).")
     if not isinstance(timeout, int):
