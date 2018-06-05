@@ -107,26 +107,25 @@ def timed_run(cmd_with_args, timeout, log_prefix, env=None, inp=None, preexec_fn
 
     starttime = time.time()
 
-    if useLogFiles:
-        childStdOut = open(log_prefix + "-out.txt", "w")  # pylint: disable=invalid-name
-        childStdErr = open(log_prefix + "-err.txt", "w")  # pylint: disable=invalid-name
-
+    if use_logfiles:
+        child_stdout = open(log_prefix + "-out.txt", "w")
+        child_stderr = open(log_prefix + "-err.txt", "w")
 
     try:
         child = subprocess.Popen(
             cmd_with_args,
             stdin=(None if (inp is None) else subprocess.PIPE),
-            stderr=(childStdErr if useLogFiles else subprocess.PIPE),
-            stdout=(childStdOut if useLogFiles else subprocess.PIPE),
+            stderr=(child_stderr if use_logfiles else subprocess.PIPE),
+            stdout=(child_stdout if use_logfiles else subprocess.PIPE),
             close_fds=(os.name == "posix"),  # close_fds should not be changed on Windows
             env=(env or make_env(cmd_with_args[0], os.environ)),
             preexec_fn=preexec_fn
         )
-    except OSError as e:  # pylint: disable=invalid-name
+    except OSError as ex:
         print("Tried to run:")
         print("  %r" % cmd_with_args)
         print("but got this error:")
-        print("  %s" % e)
+        print("  %s" % ex)
         sys.exit(2)
 
     if inp is not None:
@@ -181,10 +180,10 @@ def timed_run(cmd_with_args, timeout, log_prefix, env=None, inp=None, preexec_fn
         msg = "CRASHED signal %d (%s)" % (signum, get_signal_name(signum, "Unknown signal"))
         sta = CRASHED
 
-    if useLogFiles:
+    if use_logfiles:
         # Am I supposed to do this?
-        childStdOut.close()
-        childStdErr.close()
+        child_stdout.close()
+        child_stderr.close()
 
     return rundata(
         sta,
@@ -193,6 +192,6 @@ def timed_run(cmd_with_args, timeout, log_prefix, env=None, inp=None, preexec_fn
         elapsedtime,
         killed,
         child.pid,
-        log_prefix + "-out.txt" if useLogFiles else child.stdout.read(),
-        log_prefix + "-err.txt" if useLogFiles else child.stderr.read()
+        log_prefix + "-out.txt" if use_logfiles else child.stdout.read(),
+        log_prefix + "-err.txt" if use_logfiles else child.stderr.read()
     )
