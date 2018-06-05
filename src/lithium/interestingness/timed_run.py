@@ -77,39 +77,39 @@ def make_env(bin_path):  # pylint: disable=missing-docstring,missing-return-doc,
     return env
 
 
-def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):  # pylint: disable=invalid-name
+def timed_run(cmd_with_args, timeout, log_prefix, inp=None, preexec_fn=None):
     # pylint: disable=missing-param-doc,missing-raises-doc,missing-return-doc,missing-return-type-doc,missing-type-doc
     # pylint: disable=too-complex,too-many-branches,too-many-locals,too-many-statements
-    """If logPrefix is None, uses pipes instead of files for all output."""
-    if not isinstance(commandWithArgs, list):
-        raise TypeError("commandWithArgs should be a list (of strings).")
+    """If log_prefix is None, uses pipes instead of files for all output."""
+    if not isinstance(cmd_with_args, list):
+        raise TypeError("cmd_with_args should be a list (of strings).")
     if not isinstance(timeout, int):
         raise TypeError("timeout should be an int.")
 
-    useLogFiles = isinstance(logPrefix, str)  # pylint: disable=invalid-name
+    useLogFiles = isinstance(log_prefix, str)  # pylint: disable=invalid-name
 
-    commandWithArgs[0] = os.path.expanduser(commandWithArgs[0])
-    progname = commandWithArgs[0].split(os.path.sep)[-1]
+    cmd_with_args[0] = os.path.expanduser(cmd_with_args[0])
+    progname = cmd_with_args[0].split(os.path.sep)[-1]
 
     starttime = time.time()
 
     if useLogFiles:
-        childStdOut = open(logPrefix + "-out.txt", "w")  # pylint: disable=invalid-name
-        childStdErr = open(logPrefix + "-err.txt", "w")  # pylint: disable=invalid-name
+        childStdOut = open(log_prefix + "-out.txt", "w")  # pylint: disable=invalid-name
+        childStdErr = open(log_prefix + "-err.txt", "w")  # pylint: disable=invalid-name
 
     try:
         child = subprocess.Popen(
-            commandWithArgs,
+            cmd_with_args,
             stdin=(None if (inp is None) else subprocess.PIPE),
             stderr=(childStdErr if useLogFiles else subprocess.PIPE),
             stdout=(childStdOut if useLogFiles else subprocess.PIPE),
             close_fds=(os.name == "posix"),  # close_fds should not be changed on Windows
-            env=make_env(commandWithArgs[0]),
+            env=make_env(cmd_with_args[0]),
             preexec_fn=preexec_fn
         )
     except OSError as e:  # pylint: disable=invalid-name
         print("Tried to run:")
-        print("  %r" % commandWithArgs)
+        print("  %r" % cmd_with_args)
         print("but got this error:")
         print("  %s" % e)
         sys.exit(2)
@@ -178,6 +178,6 @@ def timed_run(commandWithArgs, timeout, logPrefix, inp=None, preexec_fn=None):  
         elapsedtime,
         killed,
         child.pid,
-        logPrefix + "-out.txt" if useLogFiles else child.stdout.read(),
-        logPrefix + "-err.txt" if useLogFiles else child.stderr.read()
+        log_prefix + "-out.txt" if useLogFiles else child.stdout.read(),
+        log_prefix + "-err.txt" if useLogFiles else child.stderr.read()
     )
