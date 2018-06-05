@@ -46,19 +46,19 @@ class rundata(object):  # pylint: disable=invalid-name,missing-param-doc,missing
         self.err = err
 
 
-def xpkill(p):  # pylint: disable=invalid-name,missing-param-doc,missing-type-doc
+def xpkill(proc):  # pylint: disable=missing-param-doc,missing-type-doc
     """Based on mozilla-central/source/build/automation.py.in ."""
     try:
-        p.kill()
+        proc.kill()
     except WindowsError:  # pylint: disable=undefined-variable
-        if p.poll() == 0:
+        if proc.poll() == 0:
             try:
                 print("Trying to kill the process the first time...")
-                p.kill()  # Verify that the process is really killed.
+                proc.kill()  # Verify that the process is really killed.
             except WindowsError:  # pylint: disable=undefined-variable
-                if p.poll() == 0:
+                if proc.poll() == 0:
                     print("Trying to kill the process the second time...")
-                    p.kill()  # Re-verify that the process is really killed.
+                    proc.kill()  # Re-verify that the process is really killed.
 
 
 def make_env(bin_path, curr_env=None):  # pylint: disable=missing-docstring,missing-return-doc,missing-return-type-doc
