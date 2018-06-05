@@ -132,8 +132,8 @@ def timed_run(cmd_with_args, timeout, log_prefix, env=None, inp=None, preexec_fn
         if return_code is None:
             if elapsedtime > timeout and not killed:
                 if progname == "gdb":
-                    raise Exception("Do not use this with gdb, because xpkill in timed_run will "
-                                    "kill gdb but leave the process within gdb still running")
+                    raise OSError("Do not use this with gdb, because xpkill in timed_run will "
+                                  "kill gdb but leave the process within gdb still running")
                 xpkill(child)
                 # but continue looping, because maybe kill takes a few seconds or maybe it's busy crashing!
                 killed = True
