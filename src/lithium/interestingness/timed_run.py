@@ -81,7 +81,7 @@ def timed_run(cmd_with_args, timeout, log_prefix, env=None, inp=None, preexec_fn
     if not isinstance(timeout, int):
         raise TypeError("timeout should be an int.")
 
-    useLogFiles = isinstance(log_prefix, str)  # pylint: disable=invalid-name
+    use_logfiles = isinstance(log_prefix, ("".__class__, u"".__class__))
 
     cmd_with_args[0] = os.path.expanduser(cmd_with_args[0])
     progname = cmd_with_args[0].split(os.path.sep)[-1]
