@@ -276,7 +276,7 @@ class CheckOnly(Strategy):  # pylint: disable=missing-docstring
     def main(self, testcase, interesting, tempFilename):  # pylint: disable=missing-return-doc,missing-return-type-doc
         r = interesting(testcase, writeIt=False)  # pylint: disable=invalid-name
         log.info("Lithium result: %s", ("interesting." if r else "not interesting."))
-        return 0
+        return int(not r)
 
 
 class Minimize(Strategy):
