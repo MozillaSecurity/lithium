@@ -53,14 +53,11 @@ def file_contains(f, regex, is_regex, verbosity=True):  # pylint: disable=missin
 def file_contains_str(file_, regex, verbose=True):  # pylint: disable=missing-docstring
     # pylint: disable=missing-return-doc,missing-return-type-doc
     with open(file_, "rb") as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            if line.find(regex) != -1:
-                if verbose and regex != b"":
-                    print("[Found string in: '" + line.decode("utf-8", errors="replace") + "']", end=" ")
-                return True
+        file_contents = f.read()
+        if file_contents.find(regex) != -1:
+            if verbose and regex != b"":
+                print("[Found string in: '" + file_contents.decode("utf-8", errors="replace") + "']", end=" ")
+            return True
     return False
 
 
