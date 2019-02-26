@@ -18,10 +18,22 @@ install:
   - git --version
   - hg --version
 before_script:
-  - pip install --upgrade "flake8==3.5.0" "pylint==1.8.4" "codecov==2.0.15"
-  - pip install --upgrade "pytest-flake8==1.0.1" "pytest-pylint==0.9.0" "pytest-cov==2.5.1"
+  - pip install --upgrade "flake8==3.7.7" "pylint==1.9.4" "codecov==2.0.15"
+  - pip install --upgrade "pytest-flake8==1.0.4" "pytest-pylint==0.14.0" "pytest-cov==2.6.1"
 script:
-  - python -m pytest
+  # Compile-related tests are expected to fail at this stage (skip pylint with development Python versions)
+  - |
+    if [[ ($TRAVIS_OS_NAME == "linux") && ($TRAVIS_PYTHON_VERSION == "nightly") ]] ; then
+      # Work around astroid failing in Python nightly
+      python -m pip uninstall -y pylint astroid
+      python -m pytest
+    elif [[ ($TRAVIS_OS_NAME == "linux") && ($TRAVIS_PYTHON_VERSION == "3.7") ]] ; then
+      # Work around astroid failing in Python nightly
+      python -m pip uninstall -y pylint astroid  # Python 3.7 needs pylint 2.x, so skip for now
+      python -m pytest
+    else
+      python -m pytest --pylint
+    fi
 after_success:
   - codecov
 deploy:
