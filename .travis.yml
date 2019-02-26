@@ -1,20 +1,17 @@
-dist: trusty
-sudo: false
+dist: xenial
 language: python
 cache: pip
 matrix:
   fast_finish: true
   include:
-    python:
-      - "2.7"
-      - "3.4"
-      - "3.5"
-      - "3.6"
-      - "3.7-dev"
-      - "pypy3.5-5.10.1"
+    - python: "2.7"
+    - python: "3.4"
+    - python: "3.5"
+    - python: "3.6"
+    - python: "3.7"
+    - python: "nightly"
   allow_failures:
-    - "3.7-dev"
-    - "pypy3.5-5.10.1"
+    - "nightly"
 before_install:
   - pip install --upgrade setuptools pip
 install:
