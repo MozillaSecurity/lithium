@@ -60,13 +60,13 @@ If you find a non-deterministic bug, don't despair.  Lithium will do fine as lon
 
 ### Requirements
 
-Lithium is written in [Python](https://www.python.org/) and requires Python 2.7 or 3.4+.
+Lithium is written in [Python](https://www.python.org/) and requires Python 2.7 or 3.5+.
 
 Various versions of Lithium have been used successfully with:
 
-- Windows 7 / 10 via [MozillaBuild 3.0](https://wiki.mozilla.org/MozillaBuild) and up. This comes with 2.7 and 3.6.
+- Windows 10 via [MozillaBuild 3.2](https://wiki.mozilla.org/MozillaBuild) and up. This comes with 2.7 and 3.6.
 - macOS Sierra 10.12 + Python 2.7
-- Ubuntu Linux 14.04 / 16.04 + Python 2.7 / Python 3.4+
+- Ubuntu Linux 16.04 / 18.04 + Python 2.7 / Python 3.5+
 
 It may or may not work in Windows XP/Vista anymore.
 
