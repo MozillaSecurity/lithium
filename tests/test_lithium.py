@@ -20,6 +20,7 @@ import sys
 import tempfile
 import time
 import unittest
+import pytest
 if platform.system() != "Windows":
     winreg = None
 elif sys.version_info.major == 2:
@@ -38,6 +39,11 @@ logging.getLogger("flake8").setLevel(logging.WARNING)
 # restrict tests to 64-bit
 if not hasattr(sys, "maxint"):
     sys.maxint = (1 << 64) - 1
+
+if str is bytes:
+    TEXT_T = unicode  # noqa: F821
+else:
+    TEXT_T = str
 
 
 class TestCase(unittest.TestCase):
@@ -386,30 +392,48 @@ class InterestingnessTests(TestCase):
         result = l.main(["hangs", "--timeout", "1"] + self.ls_cmd + ["temp.js"])
         self.assertEqual(result, 1)
 
-    def test_outputs(self):
-        """Tests for the 'outputs' interestingness test"""
+    def test_outputs_true(self):
+        """interestingness 'outputs' positive test"""
         l = lithium.Lithium()  # noqa: E741
         with open("temp.js", "w"):
             pass
 
         # test that `ls temp.js` contains "temp.js"
         result = l.main(["outputs", "temp.js"] + self.ls_cmd + ["temp.js"])
-        self.assertEqual(result, 0)
+        assert result == 0
+
+    def test_outputs_false(self):
+        """interestingness 'outputs' negative test"""
+        l = lithium.Lithium()  # noqa: E741
+        with open("temp.js", "w"):
+            pass
 
         # test that `ls temp.js` does not contain "blah"
         result = l.main(["outputs", "blah"] + self.ls_cmd + ["temp.js"])
-        self.assertEqual(result, 1)
+        assert result == 1
+
+    def test_outputs_timeout(self):
+        """interestingness 'outputs' --timeout test"""
+        l = lithium.Lithium()  # noqa: E741
+        with open("temp.js", "w"):
+            pass
 
         # check that --timeout works
         start_time = time.time()
         result = l.main(["--testcase", "temp.js", "outputs", "--timeout", "1", "blah"] + self.sleep_cmd + ["3"])
         elapsed = time.time() - start_time
-        self.assertEqual(result, 1)
-        self.assertGreaterEqual(elapsed, 1)
+        assert result == 1
+        assert elapsed >= 1
+
+    def test_outputs_regex(self):
+        """interestingness 'outputs' --regex test"""
+        l = lithium.Lithium()  # noqa: E741
+        with open("temp.js", "w"):
+            pass
 
         # test that regex matches work too
         result = l.main(["outputs", "--regex", r"^.*js\s?$"] + self.ls_cmd + ["temp.js"])
-        self.assertEqual(result, 0)
+        assert result == 0
 
     def test_repeat(self):
         """Tests for the 'repeat' interestingness test"""
@@ -460,6 +484,29 @@ class InterestingnessTests(TestCase):
                 tempf2b.write("num3")
             result = l.main(["repeat", "2", "outputs", "--timeout=9", "numREPEATNUM"] + self.cat_cmd + ["temp2b.js"])
             self.assertEqual(result, 1)
+
+
+@pytest.mark.parametrize("pattern, expected", [("B\nline C", "line B\nline C"),
+                                               ("line B\nline C\n", "line B\nline C\n"),
+                                               ("line A\nline", "line A\nline B"),
+                                               ("\nline E\n", "\nline E\n"),
+                                               ("line A", "line A"),
+                                               ("line E", "line E"),
+                                               ("line B", "line B")])
+def test_interestingness_outputs_multiline(capsys, pattern, expected):
+    """Tests for the 'outputs' interestingness test with multiline pattern"""
+    l = lithium.Lithium()  # noqa: E741
+
+    with open("temp.js", "wb") as tmp_f:
+        tmp_f.write(b"line A\nline B\nline C\nline D\nline E\n")
+
+    capsys.readouterr()  # clear captured output buffers
+    expected = TEXT_T(expected)
+    result = l.main(["outputs", pattern] + InterestingnessTests.cat_cmd + ["temp.js"])
+    assert result == 0, "%r not found in %r" % (pattern, open("temp.js").read())
+    out, _ = capsys.readouterr()
+    expected = '[Found string in: %r]' % (expected,)
+    assert expected in out
 
 
 class LithiumTests(TestCase):
