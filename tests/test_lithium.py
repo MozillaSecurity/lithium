@@ -42,7 +42,7 @@ if not hasattr(sys, "maxint"):
     sys.maxint = (1 << 64) - 1
 
 if str is bytes:
-    TEXT_T = unicode  # noqa: F821 pylint: disable=unicode-builtin
+    TEXT_T = unicode  # noqa: F821 pylint: disable=unicode-builtin,undefined-variable
 else:
     TEXT_T = str
 
@@ -743,7 +743,7 @@ class StrategyTests(TestCase):
                     data = f.read()
                     if conditionArgs == 'NEEDS_BRACE':
                         return data.count(b"{") == 1 and data.count(b"{") == data.count(b"}")
-                    elif conditionArgs == 'NO_BRACE':
+                    if conditionArgs == 'NO_BRACE':
                         if b"o\n" in data:
                             return data.count(b"{") == data.count(b"}")
                     return False
