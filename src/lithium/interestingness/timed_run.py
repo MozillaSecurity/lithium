@@ -8,6 +8,7 @@
 from __future__ import absolute_import, print_function
 
 import os
+import platform
 import signal
 import subprocess
 import sys
@@ -69,7 +70,9 @@ def make_env(bin_path, curr_env=None):  # pylint: disable=missing-docstring,miss
     curr_env = curr_env or os.environ
     env = utils.env_with_path(os.path.abspath(os.path.dirname(bin_path)), curr_env=curr_env)
 
-    env["ASAN_OPTIONS"] = "detect_leaks=1,exitcode=" + str(ASAN_EXIT_CODE)
+    env["ASAN_OPTIONS"] = "exitcode=" + str(ASAN_EXIT_CODE)
+    if platform.system() != "Darwin":
+        env["ASAN_OPTIONS"] = "detect_leaks=1," + env["ASAN_OPTIONS"]
     symbolizer_path = utils.find_llvm_bin_path()
     if symbolizer_path is not None:
         env["ASAN_SYMBOLIZER_PATH"] = os.path.join(symbolizer_path, "llvm-symbolizer")
