@@ -10,7 +10,7 @@ matrix:
     - python: "3.7"
     - python: "nightly"
   allow_failures:
-    - "nightly"
+    - python: "nightly"
 before_install:
   - pip install --upgrade setuptools pip
 install:
