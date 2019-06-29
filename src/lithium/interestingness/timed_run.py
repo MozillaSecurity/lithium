@@ -73,6 +73,7 @@ def make_env(bin_path, curr_env=None):  # pylint: disable=missing-docstring,miss
     env["ASAN_OPTIONS"] = "exitcode=" + str(ASAN_EXIT_CODE)
     if platform.system() != "Darwin":
         env["ASAN_OPTIONS"] = "detect_leaks=1," + env["ASAN_OPTIONS"]
+        env["LSAN_OPTIONS"] = "max_leaks=1,"
     symbolizer_path = utils.find_llvm_bin_path()
     if symbolizer_path is not None:
         env["ASAN_SYMBOLIZER_PATH"] = os.path.join(symbolizer_path, "llvm-symbolizer")
