@@ -89,22 +89,22 @@ def file_contains_regex(file_, regex, verbose=True):
 def find_llvm_bin_path():  # pylint: disable=missing-return-doc,missing-return-type-doc,inconsistent-return-statements
     """Return the path to compiled LLVM binaries, which differs depending on compilation method."""
     if platform.system() == "Linux":
-        # Assumes clang was installed through apt-get. Works with version 3.6.2,
-        # assumed to work with clang 3.8.0.
-        # Create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8
-        if os.path.isfile("/usr/bin/llvm-symbolizer"):
-            return ""
+        # Assumes clang was installed through apt-get. Tested with LLVM 8
+        # Create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-8
+        linux_symbolizer_location = os.path.join(os.sep, "usr", "bin")
+        if os.path.isfile(os.path.join(linux_symbolizer_location, "llvm-symbolizer")):
+            return linux_symbolizer_location
 
         print("WARNING: Please install clang via `apt-get install clang` if using Ubuntu.")
-        print("then create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-3.8.")
-        print("Try: `ln -s /usr/bin/llvm-symbolizer-3.8 /usr/bin/llvm-symbolizer`")
+        print("then create a symlink at /usr/bin/llvm-symbolizer for: /usr/bin/llvm-symbolizer-8")
+        print("Try: `ln -s /usr/bin/llvm-symbolizer-8 /usr/bin/llvm-symbolizer`")
         return ""
 
     if platform.system() == "Darwin":
         # Assumes LLVM was installed through Homebrew. Works with at least version 3.6.2.
-        brewLLVMPath = "/usr/local/opt/llvm/bin"  # pylint: disable=invalid-name
-        if os.path.isdir(brewLLVMPath):
-            return brewLLVMPath
+        mac_symbolizer_location = os.path.join(os.sep, "usr", "local", "opt", "llvm", "bin")
+        if os.path.isfile(os.path.join(mac_symbolizer_location, "llvm-symbolizer")):
+            return mac_symbolizer_location
 
         print("WARNING: Please install llvm from Homebrew via `brew install llvm`.")
         print("ASan stacks will not have symbols as Xcode does not install llvm-symbolizer.")
@@ -112,7 +112,11 @@ def find_llvm_bin_path():  # pylint: disable=missing-return-doc,missing-return-t
 
     # https://developer.mozilla.org/en-US/docs/Building_Firefox_with_Address_Sanitizer#Manual_Build
     if platform.system() == "Windows":
-        return None  # The harness does not yet support Clang on Windows
+        win_symbolizer_location = os.path.join(os.path.expanduser("~"), ".mozbuild", "clang", "bin")
+        if os.path.isfile(os.path.join(win_symbolizer_location, "llvm-symbolizer.exe")):
+            return win_symbolizer_location
+
+        return None  # Cannot find llvm-symbolizer
 
 
 def rel_or_abs_import(module):

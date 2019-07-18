@@ -76,7 +76,10 @@ def make_env(bin_path, curr_env=None):  # pylint: disable=missing-docstring,miss
         env["LSAN_OPTIONS"] = "max_leaks=1,"
     symbolizer_path = utils.find_llvm_bin_path()
     if symbolizer_path is not None:
-        env["ASAN_SYMBOLIZER_PATH"] = os.path.join(symbolizer_path, "llvm-symbolizer")
+        symbolizer_name = "llvm-symbolizer"
+        if platform.system() == "Windows":
+            symbolizer_name += ".exe"
+        env["ASAN_SYMBOLIZER_PATH"] = os.path.join(symbolizer_path, symbolizer_name)
     return env
 
 
