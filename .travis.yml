@@ -1,38 +1,28 @@
-dist: xenial
+dist: bionic
 language: python
 cache: pip
-matrix:
-  fast_finish: true
+os: linux
+python:
+  - 3.5
+  - 3.6
+  - 3.7
+  - 3.8
+jobs:
   include:
-    - python: "2.7"
-    - python: "3.5"
-    - python: "3.6"
-    - python: "3.7"
-    - python: "nightly"
-  allow_failures:
-    - python: "nightly"
+    - os: osx
+      osx_image: xcode11.2
+      language: shell
+    - os: windows
+      language: shell
+      before_install:
+        - choco install python
+      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
 before_install:
-  - pip install --upgrade setuptools pip
-install:
-  - git --version
-  - hg --version
+  - pip3 install --upgrade setuptools pip
 before_script:
-  - pip install --upgrade "flake8==3.7.7" "pylint==1.9.4" "codecov==2.0.15"
-  - pip install --upgrade "pytest-flake8==1.0.4" "pytest-pylint==0.14.0" "pytest-cov==2.6.1"
+  - pip install --upgrade tox
 script:
-  # Compile-related tests are expected to fail at this stage (skip pylint with development Python versions)
-  - |
-    if [[ ($TRAVIS_OS_NAME == "linux") && ($TRAVIS_PYTHON_VERSION == "nightly") ]] ; then
-      # Work around astroid failing in Python nightly
-      python -m pip uninstall -y pylint astroid
-      python -m pytest
-    elif [[ ($TRAVIS_OS_NAME == "linux") && ($TRAVIS_PYTHON_VERSION == "3.7") ]] ; then
-      # Work around astroid failing in Python nightly
-      python -m pip uninstall -y pylint astroid  # Python 3.7 needs pylint 2.x, so skip for now
-      python -m pytest
-    else
-      python -m pytest --pylint
-    fi
+  - tox
 after_success:
   - codecov
 deploy:
@@ -42,6 +32,7 @@ deploy:
   password:
     secure: QaZQq+EgPexvXYH+QJ4S5w2zdQgJ+AL4h75XDtat5NKZxdNiGvXV+glGMWnRqG/x3RLYERZI1ZlQS/k88zdlgorfjAzUFad7mXfCxTX34/sF6WSMLUB50FddhjvBgtV2PaIGfRUgi/j1+DqI3g3akJd6BaRHTUO+UHn3GVyzAUkdoLBt6REwklTq44exzrEFmfRh0Pp2NTMUs9CoVekyrtvEHNcMAxTeRAJBbmv1C2LkBpx+nvIBfDmMzfhY4kuhpLheFfIoniNsz9cYKO21itVBnHwvFAGCm9plVRv27batX8CpbiqpAJrVJSZEmzaG2c+k3goM62i+o8BF8t/NUmRMcZ8D35EdIX0/5LrvEWrQll8PPkFboAVNQ3OnYddFypuDPtNzf54JXWDejqKT/kqCTUD+aSaSAivo+yljP9B9T7r5dFawIbLVYeJFVy1CxE4CwAxRsjtzrXGHOefUmfKUYMh8BcLjMxAAPfhHDQFOwOAwiex4E381OKjwTozrkGpeVQyrq8hy7OnMRBMVUfzH0gQJiH5iCzdQ+GoQJP55O+MaLNotIpLoPdvxR68A7eE3PqTvGXL2Aj3npZf59+79MpsHOHxVS52SqOnCOpvQhBG8Ssx7MUiaaDGg+wSVsbTg2i8mcEY5kR2JKWucrvbCa/OFqD//Ut8Lc7fIj5s=
   on:
+    branch: master
     tags: true
     os: linux
-    python: 2.7
+    python: 3.8
