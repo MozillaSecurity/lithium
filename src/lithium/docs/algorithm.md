@@ -18,7 +18,7 @@ Note that this condition doesn't require that there is a single, unique 1-minima
 | Monotonic | Normal | O(m &sdot; lg(n)) | O(m &sdot; n) |
 | Non-deterministic or "very non-monotonic" | Worst | O(n<sup>2</sup>) | O(n<sup>3</sup>) |
 
-Most testcases behave roughly monotonically while they're being reduced, as long as the bug is deterministic.  If you see "--" once or twice in Lithium's output, you know there was a minor violation of monotonicity: 
+Most testcases behave roughly monotonically while they're being reduced, as long as the bug is deterministic.  If you see "--" once or twice in Lithium's output, you know there was a minor violation of monotonicity:
 
 
 ### Normal-case analysis
@@ -30,8 +30,8 @@ Most testcases behave roughly monotonically while they're being reduced, as long
 An earlier version had a much stronger condition:
 XXX make sure the analysis still holds
   3. There is a (single) (minimal) subsequence (with size m) such that:
-  3a. If a testcase crashes Firefox, the testcase contains that subsequence.  
-  3b. If a testcase contains that subsequence, the testcase crashes Firefox.  
+  3a. If a testcase crashes Firefox, the testcase contains that subsequence.
+  3b. If a testcase contains that subsequence, the testcase crashes Firefox.
 -->
 
 For simplicity, assume *n* is a power of 2.
@@ -70,12 +70,12 @@ In the worst case, Lithium doesn't remove anything until it reaches chunk size 1
 <!--
 n is a power of 2
 file: 1 ... n
-test: other than powers of 2, 
+test: other than powers of 2,
 
 Lithium will go all the way down to chunk size 1 before being able to remove anything.  Then, it will keep chopping one line from the end of the file per round.
 -->
 
-Similarly slow behavior can easily show up if the test is non-deterministic, for example if a huge file causes Firefox to crash 2% of the time.  You can offset this kind of non-determinism 
+Similarly slow behavior can easily show up if the test is non-deterministic, for example if a huge file causes Firefox to crash 2% of the time.  You can offset this kind of non-determinism
 
 
 ## Comparison to other testcase reduction algorithms

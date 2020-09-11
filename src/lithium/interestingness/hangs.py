@@ -10,9 +10,6 @@ Example:
     python -m lithium hangs --timeout=3 <binary> --fuzzing-safe <testcase>
 """
 
-from __future__ import absolute_import
-
-import argparse
 import logging
 
 from . import timed_run
@@ -28,11 +25,10 @@ def interesting(cli_args, temp_prefix):
     Returns:
         bool: True if binary causes a hang, False otherwise.
     """
-    parser = argparse.ArgumentParser(prog="hangs",
-                                     usage="python -m lithium %(prog)s [options] binary [flags] testcase.ext")
-    parser.add_argument("-t", "--timeout", default=120, dest="timeout", type=int,
-                        help="Set the timeout. Defaults to '%(default)s' seconds.")
-    parser.add_argument("cmd_with_flags", nargs=argparse.REMAINDER)
+    parser = timed_run.ArgumentParser(
+        prog="hangs",
+        usage="python -m lithium %(prog)s [options] binary [flags] testcase.ext",
+    )
     args = parser.parse_args(cli_args)
 
     log = logging.getLogger(__name__)
