@@ -94,7 +94,7 @@ def test_empty(caplog):
 def test_arithmetic(examples_path, char):
     """test lithium arithmetic example"""
     path = examples_path / "arithmetic"
-    shutil.copyfile(path / "11.txt", "11.txt")
+    shutil.copyfile(str(path / "11.txt"), "11.txt")
     args = [str(path / "product_divides.py"), "35", "11.txt"]
     if char:
         args = ["-c"] + args

@@ -179,7 +179,9 @@ def test_crashes_2(examples_path):
 
     # if a compiler is available, compile a simple crashing test program
     src = examples_path / "crash.c"
-    exe = Path("crash.exe" if platform.system() == "Windows" else "crash").resolve()
+    exe = Path.cwd().resolve() / (
+        "crash.exe" if platform.system() == "Windows" else "crash"
+    )
     try:
         _compile(src, exe)
     except RuntimeError as exc:

@@ -47,8 +47,8 @@ To keep *m* small, make sure Lithium's smallest removals won't introduce fatal s
 <dt>--min=n. default: 1.</dt>
 <dd>What chunk sizes to test.  Must be powers of two.  --max is useful if you're restarting Lithium after it has already gone through a few rounds.  --min is useful if you're reducing HTML and want to do the final by hand.</dd>
 
-<dt>--chunksize=n</dt>
-<dd>Shortcut for "repeat=never, min=n, max=n".  --chunksize=1 is a quick way to determine whether a file is 1-minimal, for example after making a change that you think might make some lines unnecessary.</dd>
+<dt>--chunk-size=n</dt>
+<dd>Shortcut for "repeat=never, min=n, max=n".  --chunk-size=1 is a quick way to determine whether a file is 1-minimal, for example after making a change that you think might make some lines unnecessary.</dd>
 
 </dl>
 
@@ -60,16 +60,7 @@ If you find a non-deterministic bug, don't despair.  Lithium will do fine as lon
 
 ### Requirements
 
-Lithium is written in [Python](https://www.python.org/) and requires Python 2.7 or 3.5+.
-
-Various versions of Lithium have been used successfully with:
-
-- Windows 10 via [MozillaBuild 3.2](https://wiki.mozilla.org/MozillaBuild) and up. This comes with 2.7 and 3.6.
-- macOS Sierra 10.12 + Python 2.7
-- Ubuntu Linux 16.04 / 18.04 + Python 2.7 / Python 3.5+
-
-It may or may not work in Windows XP/Vista anymore.
-
+Lithium is written in [Python](https://www.python.org/) and requires Python 3.5+.
 
 ### Credits
 

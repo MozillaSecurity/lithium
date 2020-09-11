@@ -40,6 +40,26 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("cmd_with_flags", nargs=argparse.REMAINDER)
 
 
+def get_signal_name(signum, default="Unknown signal"):
+    """Stringify a signal number. The result will be something like "SIGSEGV",
+    or from Python 3.8, "Segmentation fault".
+
+    Args:
+        signum (int): Signal number to lookup
+        default (str): Default to return if signal isn't recognized.
+
+    Returns:
+        str: String description of the signal.
+    """
+    if sys.version_info[:2] >= (3, 8):
+        return signal.strsignal(signum) or default
+    for member in dir(signal):
+        if member.startswith("SIG") and not member.startswith("SIG_"):
+            if getattr(signal, member) == signum:
+                return member
+    return default
+
+
 def timed_run(cmd_with_args, timeout, log_prefix=None, env=None, inp=None):
     """If log_prefix is None, uses pipes instead of files for all output.
 
@@ -77,7 +97,7 @@ def timed_run(cmd_with_args, timeout, log_prefix=None, env=None, inp=None):
     sta = NONE
     msg = ""
 
-    child_stdout = child_stderr = None
+    child_stdout = child_stderr = subprocess.PIPE
     if log_prefix is not None:
         child_stdout = open(log_prefix + "-out.txt", "wb")
         child_stderr = open(log_prefix + "-err.txt", "wb")
@@ -86,7 +106,6 @@ def timed_run(cmd_with_args, timeout, log_prefix=None, env=None, inp=None):
     try:
         result = subprocess.run(
             cmd_with_args,
-            capture_output=log_prefix is None,
             env=env,
             input=inp,
             stderr=child_stderr,
@@ -102,6 +121,10 @@ def timed_run(cmd_with_args, timeout, log_prefix=None, env=None, inp=None):
             sys.exit(2)
         sta = TIMED_OUT
         result = exc  # needed for stdout/stderr
+    finally:
+        if log_prefix is not None:
+            child_stdout.close()
+            child_stderr.close()
     elapsed_time = time.time() - start_time
 
     if sta == TIMED_OUT:
@@ -119,7 +142,7 @@ def timed_run(cmd_with_args, timeout, log_prefix=None, env=None, inp=None):
         signum = -result.returncode
         msg = "CRASHED signal %d (%s)" % (
             signum,
-            signal.strsignal(signum) or "Unknown signal",
+            get_signal_name(signum),
         )
         sta = CRASHED
 
