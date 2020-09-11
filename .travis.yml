@@ -2,27 +2,36 @@ dist: bionic
 language: python
 cache: pip
 os: linux
-python:
-  - 3.5
-  - 3.6
-  - 3.7
-  - 3.8
 jobs:
   include:
-    - os: osx
+    - python: 3.5
+      env: TOXENV=py35
+    - python: 3.6
+      env: TOXENV=py36
+    - python: 3.7
+      env: TOXENV=py37
+    - python: 3.8
+      env: TOXENV=py38
+    - name: Python 3.7 (macOS)
+      os: osx
       osx_image: xcode11.2
       language: shell
-    - os: windows
+      env: TOXENV=py37
+    - name: Python 3.8 (Windows)
+      os: windows
       language: shell
       before_install:
-        - choco install python
-      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH
+        - choco install python --version 3.8
+      env: PATH=/c/Python38:/c/Python38/Scripts:$PATH TOXENV=py38
+    - name: Linters
+      python: 3.8
+      env: TOXENV=lint
 before_install:
   - pip3 install --upgrade setuptools pip
 before_script:
-  - pip install --upgrade tox
+  - pip3 install --upgrade tox
 script:
-  - tox
+  - tox -e "$TOXENV"
 after_success:
   - codecov
 deploy:
@@ -35,4 +44,4 @@ deploy:
     branch: master
     tags: true
     os: linux
-    python: 3.8
+    python: 3.7
