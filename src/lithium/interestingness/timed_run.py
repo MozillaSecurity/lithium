@@ -8,6 +8,7 @@
 
 import argparse
 import collections
+import platform
 import signal
 import subprocess
 import sys
@@ -51,7 +52,7 @@ def get_signal_name(signum, default="Unknown signal"):
     Returns:
         str: String description of the signal.
     """
-    if sys.version_info[:2] >= (3, 8):
+    if sys.version_info[:2] >= (3, 8) and platform.system() != "Windows":
         return signal.strsignal(signum) or default
     for member in dir(signal):
         if member.startswith("SIG") and not member.startswith("SIG_"):
@@ -136,10 +137,14 @@ def timed_run(cmd_with_args, timeout, log_prefix=None, env=None, inp=None):
         msg = "ABNORMAL exit code " + str(result.returncode)
         sta = ABNORMAL
     else:
-        # return_code < 0 (or > 0x80000000 in Windows+py3)
+        # return_code < 0 (or > 0x80000000 in Windows)
         # The program was terminated by a signal, which usually indicates a crash.
         # Mac/Linux only!
-        signum = -result.returncode
+        # XXX: this doesn't work on Windows
+        if result.returncode < 0:
+            signum = -result.returncode
+        else:
+            signum = result.returncode
         msg = "CRASHED signal %d (%s)" % (
             signum,
             get_signal_name(signum),

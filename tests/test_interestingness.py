@@ -15,21 +15,15 @@ import pytest
 
 import lithium
 
-if platform.system() != "Windows":
-    winreg = None  # pylint: disable=invalid-name
-else:
-    import winreg
-
-
 CAT_CMD = [
     sys.executable,
     "-c",
     (
         "import sys;"
-        "[sys.stdout.write(f.read())"
+        "[sys.stdout.buffer.write(f.read())"
         " for f in"
-        "     ([open(a) for a in sys.argv[1:]] or"
-        "      [sys.stdin])"
+        "     ([open(a, 'rb') for a in sys.argv[1:]] or"
+        "      [sys.stdin.buffer])"
         "]"
     ),
 ]
@@ -38,7 +32,7 @@ LS_CMD = [
     "-c",
     (
         "import glob,itertools,os,sys;"
-        "[sys.stdout.write(p+'\\n')"
+        "[print(p)"
         " for p in"
         "     (itertools.chain.from_iterable(glob.glob(d) for d in sys.argv[1:])"
         "      if len(sys.argv) > 1"
@@ -95,49 +89,6 @@ def _compile(in_path, out_path):
     raise RuntimeError("Compile failed")
 
 
-class DisableWER:
-    """Disable Windows Error Reporting for the duration of the context manager.
-
-    ref: https://msdn.microsoft.com/en-us/library/bb513638.aspx
-    """
-
-    def __init__(self):
-        self.wer_disabled = None
-        self.wer_dont_show_ui = None
-
-    def __enter__(self):
-        if winreg is not None:
-            wer = winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER,
-                r"Software\Microsoft\Windows\Windows Error Reporting",
-                0,
-                winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE,
-            )
-            # disable reporting to microsoft
-            # this might disable dump generation altogether, which is not what we want
-            self.wer_disabled = bool(winreg.QueryValueEx(wer, "Disabled")[0])
-            if not self.wer_disabled:
-                winreg.SetValueEx(wer, "Disabled", 0, winreg.REG_DWORD, 1)
-            # don't show the crash UI (Debug/Close Application)
-            self.wer_dont_show_ui = bool(winreg.QueryValueEx(wer, "DontShowUI")[0])
-            if not self.wer_dont_show_ui:
-                winreg.SetValueEx(wer, "DontShowUI", 0, winreg.REG_DWORD, 1)
-
-    def __exit__(self, *args, **kwds):
-        # restore previous settings
-        if winreg is not None:
-            wer = winreg.OpenKey(
-                winreg.HKEY_CURRENT_USER,
-                r"Software\Microsoft\Windows\Windows Error Reporting",
-                0,
-                winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE,
-            )
-            if not self.wer_disabled:
-                winreg.SetValueEx(wer, "Disabled", 0, winreg.REG_DWORD, 0)
-            if not self.wer_dont_show_ui:
-                winreg.SetValueEx(wer, "DontShowUI", 0, winreg.REG_DWORD, 0)
-
-
 def test_crashes_0():
     """simple positive test for the 'crashes' interestingness test"""
     lith = lithium.Lithium()
@@ -187,8 +138,7 @@ def test_crashes_2(examples_path):
     except RuntimeError as exc:
         LOG.warning(exc)
         pytest.skip("compile 'crash.c' failed")
-    with DisableWER():
-        result = lith.main(["--strategy", "check-only", "crashes", str(exe), "temp.js"])
+    result = lith.main(["--strategy", "check-only", "crashes", str(exe), "temp.js"])
     assert result == 0
     assert lith.test_count == 1
 
@@ -467,7 +417,6 @@ def test_interestingness_outputs_multiline(capsys, pattern, expected):
     capsys.readouterr()  # clear captured output buffers
     result = lith.main(
         [
-            #       "--strategy", "check-only",
             "outputs",
             pattern,
         ]

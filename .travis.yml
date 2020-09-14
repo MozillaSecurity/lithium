@@ -21,7 +21,7 @@ jobs:
       os: windows
       language: shell
       before_install:
-        - choco install python --version 3.8
+        - choco install python --version 3.8.5
       env: PATH=/c/Python38:/c/Python38/Scripts:$PATH TOXENV=py38
     - name: Linters
       python: 3.8
