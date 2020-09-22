@@ -171,10 +171,10 @@ class Lithium:
         early_parser.add_argument(
             "--strategy", default=DEFAULT_STRATEGY, choices=strategies.keys()
         )
-        args = early_parser.parse_known_args(argv)[0]
-        atom = args.atom if args else DEFAULT_TESTCASE
+        args = early_parser.parse_known_args(argv)
+        atom = args[0].atom if args else DEFAULT_TESTCASE
         self.strategy = strategies.get(
-            args.strategy if args else None, strategies[DEFAULT_STRATEGY]
+            args[0].strategy if args else None, strategies[DEFAULT_STRATEGY]
         )()
 
         grp_opt.add_argument(

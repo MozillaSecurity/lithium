@@ -6,7 +6,12 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """Lithium setup script"""
 
+import site
+
 from setuptools import setup
+
+site.ENABLE_USER_SITE = True
+
 
 if __name__ == "__main__":
     setup()
