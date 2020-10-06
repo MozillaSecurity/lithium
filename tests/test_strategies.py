@@ -212,8 +212,8 @@ def test_replace_arguments(testcase_cls):
 @pytest.mark.parametrize(
     "test_type, test_count, expected",
     [
-        ("NEEDS_BRACE", 13, b"xxx{ }\n"),
-        ("NO_BRACE", 15, b"o\n"),
+        ("NEEDS_BRACE", 11, b"xxx{ }\n"),
+        ("NO_BRACE", 13, b"o\n"),
     ],
 )
 def test_minimize_collapse_braces(test_type, test_count, expected):

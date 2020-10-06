@@ -6,6 +6,7 @@
 
 import abc
 import functools
+import hashlib
 import logging
 import re
 import time
@@ -36,6 +37,7 @@ class ReductionIterator(abc.ABC):
         self._any_success = False
         self._last_success = None
         self._description = "Reduction"
+        self._tried = set()
 
     @property
     def last_feedback(self):
@@ -67,14 +69,21 @@ class ReductionIterator(abc.ABC):
         Args:
             testcase (Testcase): The testcase to try.
 
-        Returns:
+        Yields:
             Testcase: same as argument
         """
         assert self._testcase_attempt is None, "Already attempting a testcase"
-        self._last_success = None
-        self._testcase_attempt = testcase
-        self._description = description
-        return self._testcase_attempt
+        # de-dupe the testcase
+        parts_hash = hashlib.sha512()
+        for part in testcase.parts:
+            parts_hash.update(part)
+        parts_hash = parts_hash.digest()
+        if parts_hash not in self._tried:
+            self._tried.add(parts_hash)
+            self._last_success = None
+            self._testcase_attempt = testcase
+            self._description = description
+            yield self._testcase_attempt
 
     @property
     def testcase(self):
@@ -253,7 +262,7 @@ class CheckOnly(Strategy):
     @ReductionIterator.wrap
     def reduce(self, iterator):  # pylint: disable=arguments-differ
         # check doesn't reduce, only checks
-        yield iterator.try_testcase(iterator.testcase, "Check")
+        yield from iterator.try_testcase(iterator.testcase, "Check")
 
     def main(self, testcase, interesting, temp_filename):
         result = interesting(testcase, write_it=False)
@@ -420,10 +429,12 @@ class Minimize(Strategy):
             test_to_try.parts = (
                 test_to_try.parts[:chunk_start] + test_to_try.parts[chunk_end:]
             )
-            yield iterator.try_testcase(test_to_try, status)
-            if iterator.last_feedback:
-                removed_chunks = True
-                chunk_end = chunk_start
+            for test in iterator.try_testcase(test_to_try, status):
+                yield test
+                if iterator.last_feedback:
+                    removed_chunks = True
+                    chunk_end = chunk_start
+                    break
             else:
                 # Decrement chunk_size
                 # To ensure the file is fully reduced, decrement chunk_end by 1 when
@@ -557,33 +568,37 @@ class MinimizeSurroundingPairs(Minimize):
                     + testcase_suggestion.parts[chunk_bef_end:chunk_aft_start]
                     + testcase_suggestion.parts[chunk_aft_end:]
                 )
-                yield iterator.try_testcase(testcase_suggestion, description)
-                if iterator.last_feedback:
-                    chunks_removed += 2
-                    atoms_removed += chunk_bef_end - chunk_bef_start
-                    atoms_removed += chunk_aft_end - chunk_aft_start
-                    summary = (
-                        summary[:before_chunk_idx]
-                        + "-"
-                        + summary[before_chunk_idx + 1 :]
-                    )
-                    summary = (
-                        summary[:after_chunk_idx] + "-" + summary[after_chunk_idx + 1 :]
-                    )
-                    # The start is now sooner since we remove the chunk which was before
-                    # this one.
-                    chunk_start -= chunk_size
-                    try:
-                        # Try to keep removing surrounding chunks of the same part.
-                        before_chunk_idx = summary.rindex("S", 0, keep_chunk_idx)
-                    except ValueError:
-                        # There is no more survinving block on the left-hand-side of
-                        # the current chunk, shift everything by one surviving
-                        # block. Any ValueError from here means that there is no
-                        # longer enough chunk.
-                        before_chunk_idx = keep_chunk_idx
-                        keep_chunk_idx = summary.index("S", keep_chunk_idx + 1)
-                        chunk_start += chunk_size
+                for test in iterator.try_testcase(testcase_suggestion, description):
+                    yield test
+                    if iterator.last_feedback:
+                        chunks_removed += 2
+                        atoms_removed += chunk_bef_end - chunk_bef_start
+                        atoms_removed += chunk_aft_end - chunk_aft_start
+                        summary = (
+                            summary[:before_chunk_idx]
+                            + "-"
+                            + summary[before_chunk_idx + 1 :]
+                        )
+                        summary = (
+                            summary[:after_chunk_idx]
+                            + "-"
+                            + summary[after_chunk_idx + 1 :]
+                        )
+                        # The start is now sooner since we remove the chunk which was
+                        # before this one.
+                        chunk_start -= chunk_size
+                        try:
+                            # Try to keep removing surrounding chunks of the same part.
+                            before_chunk_idx = summary.rindex("S", 0, keep_chunk_idx)
+                        except ValueError:
+                            # There is no more survinving block on the left-hand-side of
+                            # the current chunk, shift everything by one surviving
+                            # block. Any ValueError from here means that there is no
+                            # longer enough chunk.
+                            before_chunk_idx = keep_chunk_idx
+                            keep_chunk_idx = summary.index("S", keep_chunk_idx + 1)
+                            chunk_start += chunk_size
+                        break
                 else:
                     # Shift chunk indexes, and seek the next surviving chunk. ValueError
                     # from here means that there is no longer enough chunks.
@@ -726,15 +741,19 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         testcase_suggestion.parts[:chunk_lhs_start]
                         + testcase_suggestion.parts[chunk_lhs_end:]
                     )
-                    yield iterator.try_testcase(
+                    for test in iterator.try_testcase(
                         testcase_suggestion, "Removing " + description
-                    )
-                    if iterator.last_feedback:
-                        chunks_removed += 1
-                        atoms_removed += chunk_lhs_end - chunk_lhs_start
-                        summary = (
-                            summary[:lhs_chunk_idx] + "-" + summary[lhs_chunk_idx + 1 :]
-                        )
+                    ):
+                        yield test
+                        if iterator.last_feedback:
+                            chunks_removed += 1
+                            atoms_removed += chunk_lhs_end - chunk_lhs_start
+                            summary = (
+                                summary[:lhs_chunk_idx]
+                                + "-"
+                                + summary[lhs_chunk_idx + 1 :]
+                            )
+                            break
                     else:
                         chunk_start += chunk_size
                     lhs_chunk_idx = summary.index("S", lhs_chunk_idx + 1)
@@ -784,20 +803,24 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     + testcase_suggestion.parts[chunk_lhs_end:chunk_rhs_start]
                     + testcase_suggestion.parts[chunk_rhs_end:]
                 )
-                yield iterator.try_testcase(
+                worked = False
+                for test in iterator.try_testcase(
                     testcase_suggestion, "Removing " + description
-                )
-                if iterator.last_feedback:
-                    chunks_removed += 2
-                    atoms_removed += chunk_lhs_end - chunk_lhs_start
-                    atoms_removed += chunk_rhs_end - chunk_rhs_start
-                    summary = (
-                        summary[:lhs_chunk_idx] + "-" + summary[lhs_chunk_idx + 1 :]
-                    )
-                    summary = (
-                        summary[:rhs_chunk_idx] + "-" + summary[rhs_chunk_idx + 1 :]
-                    )
-                    lhs_chunk_idx = summary.index("S", lhs_chunk_idx + 1)
+                ):
+                    yield test
+                    if iterator.last_feedback:
+                        chunks_removed += 2
+                        atoms_removed += chunk_lhs_end - chunk_lhs_start
+                        atoms_removed += chunk_rhs_end - chunk_rhs_start
+                        summary = (
+                            summary[:lhs_chunk_idx] + "-" + summary[lhs_chunk_idx + 1 :]
+                        )
+                        summary = (
+                            summary[:rhs_chunk_idx] + "-" + summary[rhs_chunk_idx + 1 :]
+                        )
+                        lhs_chunk_idx = summary.index("S", lhs_chunk_idx + 1)
+                        worked = True
+                if worked:
                     continue
 
                 # Removing the braces make the failure disappear.  As we are looking
@@ -876,52 +899,60 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     # Try moving the chunk after.
                     testcase_suggestion = iterator.testcase.copy()
                     testcase_suggestion.parts = _parts_after(parts)
-                    yield iterator.try_testcase(
+                    worked = False
+                    for test in iterator.try_testcase(
                         testcase_suggestion, "->Moving " + description
-                    )
-                    if iterator.last_feedback:
-                        chunk_rhs_start -= chunk_size
-                        chunk_rhs_end -= chunk_size
-                        summary = _move_after(
-                            summary, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
-                        )
-                        curly = _move_after(
-                            curly, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
-                        )
-                        square = _move_after(
-                            square, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
-                        )
-                        normal = _move_after(
-                            normal, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
-                        )
-                        rhs_chunk_idx -= 1
-                        mid_chunk_idx = summary.index("S", mid_chunk_idx + 1)
+                    ):
+                        yield test
+                        if iterator.last_feedback:
+                            chunk_rhs_start -= chunk_size
+                            chunk_rhs_end -= chunk_size
+                            summary = _move_after(
+                                summary, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            )
+                            curly = _move_after(
+                                curly, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            )
+                            square = _move_after(
+                                square, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            )
+                            normal = _move_after(
+                                normal, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            )
+                            rhs_chunk_idx -= 1
+                            mid_chunk_idx = summary.index("S", mid_chunk_idx + 1)
+                            worked = True
+                    if worked:
                         continue
 
                     # Try moving the chunk before.
                     testcase_suggestion.parts = _parts_before(parts)
-                    yield iterator.try_testcase(
+                    worked = False
+                    for test in iterator.try_testcase(
                         testcase_suggestion, "<-Moving " + description
-                    )
-                    if iterator.last_feedback:
-                        chunk_lhs_start += chunk_size
-                        chunk_lhs_end += chunk_size
-                        chunk_mid_start += chunk_size
-                        summary = _move_before(
-                            summary, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
-                        )
-                        curly = _move_before(
-                            curly, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
-                        )
-                        square = _move_before(
-                            square, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
-                        )
-                        normal = _move_before(
-                            normal, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
-                        )
-                        lhs_chunk_idx += 1
-                        mid_chunk_idx = summary.index("S", mid_chunk_idx + 1)
-                        stay_on_same_chunk = True
+                    ):
+                        yield test
+                        if iterator.last_feedback:
+                            chunk_lhs_start += chunk_size
+                            chunk_lhs_end += chunk_size
+                            chunk_mid_start += chunk_size
+                            summary = _move_before(
+                                summary, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            )
+                            curly = _move_before(
+                                curly, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            )
+                            square = _move_before(
+                                square, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            )
+                            normal = _move_before(
+                                normal, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            )
+                            lhs_chunk_idx += 1
+                            mid_chunk_idx = summary.index("S", mid_chunk_idx + 1)
+                            stay_on_same_chunk = True
+                            worked = True
+                    if worked:
                         continue
 
                     chunk_mid_start += chunk_size
@@ -1101,15 +1132,16 @@ class ReplacePropertiesByGlobals(Minimize):
                         + new_tc.parts[(chunk_start + 1) :]
                     )
 
-                yield maybe_removed, iterator.try_testcase(
+                for test in iterator.try_testcase(
                     new_tc, "Removing prefixes of " + description
-                )
-                if iterator.last_feedback:
-                    num_removed_chars += maybe_removed
-                    summary = summary[:chunk_idx] + "s" + summary[chunk_idx + 1 :]
-                    words[word] = [c for c in chunks if c not in chunk_indexes]
-                    if not words[word]:
-                        del words[word]
+                ):
+                    yield maybe_removed, test
+                    if iterator.last_feedback:
+                        num_removed_chars += maybe_removed
+                        summary = summary[:chunk_idx] + "s" + summary[chunk_idx + 1 :]
+                        words[word] = [c for c in chunks if c not in chunk_indexes]
+                        if not words[word]:
+                            del words[word]
 
         num_surviving_chars = num_chars - num_removed_chars
         printable_summary = " ".join(
@@ -1298,11 +1330,11 @@ class ReplaceArgumentsByGlobals(Minimize):
                 )
             maybe_moved_arguments += len(arg_defs)
 
-            yield maybe_moved_arguments, iterator.try_testcase(
-                new_tc, "Removing " + description
-            )
-            if iterator.last_feedback:
-                num_moved_arguments += maybe_moved_arguments
+            for test in iterator.try_testcase(new_tc, "Removing " + description):
+                yield maybe_moved_arguments, test
+                if iterator.last_feedback:
+                    num_moved_arguments += maybe_moved_arguments
+                    break
             else:
                 num_survived_arguments += maybe_moved_arguments
 
@@ -1321,13 +1353,15 @@ class ReplaceArgumentsByGlobals(Minimize):
                 )
                 maybe_moved_arguments = len(values)
 
-                yield maybe_moved_arguments, iterator.try_testcase(
+                for test in iterator.try_testcase(
                     new_tc,
                     "Removing %s at %s #%d"
                     % (description, iterator.testcase.atom, chunk),
-                )
-                if iterator.last_feedback:
-                    num_moved_arguments += maybe_moved_arguments
+                ):
+                    yield maybe_moved_arguments, test
+                    if iterator.last_feedback:
+                        num_moved_arguments += maybe_moved_arguments
+                        break
                 else:
                     num_survived_arguments += maybe_moved_arguments
 
@@ -1376,11 +1410,11 @@ class ReplaceArgumentsByGlobals(Minimize):
             if noop_changes == 3:
                 continue
 
-            yield maybe_moved_arguments, iterator.try_testcase(
-                new_tc, "Removing " + description
-            )
-            if iterator.last_feedback:
-                num_moved_arguments += maybe_moved_arguments
+            for test in iterator.try_testcase(new_tc, "Removing " + description):
+                yield maybe_moved_arguments, test
+                if iterator.last_feedback:
+                    num_moved_arguments += maybe_moved_arguments
+                    break
             else:
                 num_survived_arguments += maybe_moved_arguments
 
@@ -1428,4 +1462,4 @@ class CollapseEmptyBraces(Minimize):
             new_tc = iterator.testcase.copy()
             new_tc.load(iterator.testcase.filename)
 
-            yield iterator.try_testcase(new_tc, "Collapse empty braces")
+            yield from iterator.try_testcase(new_tc, "Collapse empty braces")
