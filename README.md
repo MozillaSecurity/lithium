@@ -1,6 +1,7 @@
 [![Build Status](https://api.travis-ci.org/MozillaSecurity/lithium.svg?branch=master)](https://travis-ci.org/MozillaSecurity/lithium)
-[![Build Status](https://ci.appveyor.com/api/projects/status/69f2jn9f4kgjrffj/branch/master?svg=true)](https://ci.appveyor.com/project/MozillaSecurity/lithium/branch/master)
 [![codecov](https://codecov.io/gh/MozillaSecurity/lithium/branch/master/graph/badge.svg)](https://codecov.io/gh/MozillaSecurity/lithium)
+[![Matrix](https://img.shields.io/badge/dynamic/json?color=green&label=chat&query=%24.chunk[%3F(%40.canonical_alias%3D%3D%22%23fuzzing%3Amozilla.org%22)].num_joined_members&suffix=%20users&url=https%3A%2F%2Fmozilla.modular.im%2F_matrix%2Fclient%2Fr0%2FpublicRooms&style=flat&logo=matrix)](https://riot.im/app/#/room/#fuzzing:mozilla.org)
+[![PyPI](https://img.shields.io/pypi/v/lithium-reducer)](https://pypi.org/project/lithium-reducer)
 
 ## Using Lithium
 
