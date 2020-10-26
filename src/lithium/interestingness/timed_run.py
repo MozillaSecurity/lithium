@@ -61,7 +61,9 @@ def get_signal_name(signum, default="Unknown signal"):
     return default
 
 
-def timed_run(cmd_with_args, timeout, log_prefix=None, env=None, inp=None):
+def timed_run(
+    cmd_with_args, timeout, log_prefix=None, env=None, inp=None, preexec_fn=None
+):
     """If log_prefix is None, uses pipes instead of files for all output.
 
     Args:
@@ -70,6 +72,7 @@ def timed_run(cmd_with_args, timeout, log_prefix=None, env=None, inp=None):
         log_prefix (str): Prefix string of the log files
         env (dict): Environment for the command to be executed in
         inp (str): stdin to be passed to the command
+        preexec_fn (callable): called in child process after fork, prior to exec
 
     Raises:
         TypeError: Raises if input parameters are not of the desired types
@@ -85,6 +88,8 @@ def timed_run(cmd_with_args, timeout, log_prefix=None, env=None, inp=None):
         raise TypeError("timeout should be an int.")
     if log_prefix is not None and not isinstance(log_prefix, str):
         raise TypeError("log_prefix should be a string.")
+    if preexec_fn is not None and not hasattr(preexec_fn, "__call__"):
+        raise TypeError("preexec_fn should be callable.")
 
     prog = Path(cmd_with_args[0]).expanduser()
     cmd_with_args[0] = str(prog)
@@ -112,6 +117,7 @@ def timed_run(cmd_with_args, timeout, log_prefix=None, env=None, inp=None):
             stderr=child_stderr,
             stdout=child_stdout,
             timeout=timeout,
+            preexec_fn=preexec_fn,
         )
     except subprocess.SubprocessError as exc:
         if not isinstance(exc, subprocess.TimeoutExpired):
