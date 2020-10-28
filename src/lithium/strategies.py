@@ -441,6 +441,7 @@ class Minimize(Strategy):
                         if chunk_size < len(iterator.testcase):
                             break
 
+                    LOG.info("")
                     LOG.info("Reducing chunk size to %d", chunk_size)
                 removed_chunks = False
 
