@@ -21,7 +21,7 @@ from pathlib import Path
 # Define struct that contains data from a process that has already ended.
 RunData = collections.namedtuple(
     "RunData",
-    "sta, return_code, msg, elapsedtime, killed, out, err",
+    "sta, return_code, msg, elapsedtime, killed, out, err, pid",
 )
 
 
@@ -109,25 +109,28 @@ def timed_run(
         child_stderr = open(log_prefix + "-err.txt", "wb")
 
     start_time = time.time()
+    child = subprocess.Popen(  # pylint: disable=subprocess-popen-preexec-fn
+        cmd_with_args,
+        env=env,
+        stderr=child_stderr,
+        stdout=child_stdout,
+        preexec_fn=preexec_fn,
+    )
     try:
-        result = subprocess.run(
-            cmd_with_args,
-            env=env,
+        stdout, stderr = child.communicate(
             input=inp,
-            stderr=child_stderr,
-            stdout=child_stdout,
             timeout=timeout,
-            preexec_fn=preexec_fn,
         )
-    except subprocess.SubprocessError as exc:
-        if not isinstance(exc, subprocess.TimeoutExpired):
-            print("Tried to run:")
-            print("  %r" % cmd_with_args)
-            print("but got this error:")
-            print("  %s" % exc)
-            sys.exit(2)
+    except subprocess.TimeoutExpired:
+        child.kill()
+        stdout, stderr = child.communicate()
         sta = TIMED_OUT
-        result = exc  # needed for stdout/stderr
+    except Exception as exc:  # pylint: disable=broad-except
+        print("Tried to run:")
+        print("  %r" % cmd_with_args)
+        print("but got this error:")
+        print("  %s" % exc)
+        sys.exit(2)
     finally:
         if log_prefix is not None:
             child_stdout.close()
@@ -136,21 +139,21 @@ def timed_run(
 
     if sta == TIMED_OUT:
         msg = "TIMED OUT"
-    elif result.returncode == 0:
+    elif child.returncode == 0:
         msg = "NORMAL"
         sta = NORMAL
-    elif 0 < result.returncode < 0x80000000:
-        msg = "ABNORMAL exit code " + str(result.returncode)
+    elif 0 < child.returncode < 0x80000000:
+        msg = "ABNORMAL exit code " + str(child.returncode)
         sta = ABNORMAL
     else:
         # return_code < 0 (or > 0x80000000 in Windows)
         # The program was terminated by a signal, which usually indicates a crash.
         # Mac/Linux only!
         # XXX: this doesn't work on Windows
-        if result.returncode < 0:
-            signum = -result.returncode
+        if child.returncode < 0:
+            signum = -child.returncode
         else:
-            signum = result.returncode
+            signum = child.returncode
         msg = "CRASHED signal %d (%s)" % (
             signum,
             get_signal_name(signum),
@@ -159,10 +162,11 @@ def timed_run(
 
     return RunData(
         sta,
-        getattr(result, "returncode", None),  # result might be TimeoutExpired
+        child.returncode if sta != TIMED_OUT else None,
         msg,
         elapsed_time,
         sta == TIMED_OUT,
-        log_prefix + "-out.txt" if log_prefix is not None else result.stdout,
-        log_prefix + "-err.txt" if log_prefix is not None else result.stderr,
+        log_prefix + "-out.txt" if log_prefix is not None else stdout,
+        log_prefix + "-err.txt" if log_prefix is not None else stderr,
+        child.pid,
     )
