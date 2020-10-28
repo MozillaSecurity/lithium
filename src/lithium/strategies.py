@@ -49,6 +49,27 @@ class ReductionIterator(abc.ABC):
         assert self._last_success is not None, "No feedback received yet"
         return self._last_success
 
+    def update_tried(self, tried):
+        """Update the list of tried hashes. Testcases are hashed with SHA-512
+        and digested to bytes (`hashlib.sha512(testcase).digest()`)
+
+        Args:
+            tried (iterable(str)): Set of already tried testcase hashes.
+
+        Returns:
+            None
+        """
+        self._tried.update(frozenset(tried))
+
+    def get_tried(self):
+        """Return the set of tried testcase hashes. Testcases are hashed with SHA-512
+        and digested to bytes (`hashlib.sha512(testcase).digest()`)
+
+        Returns:
+            frozenset(str): Testcase hashes.
+        """
+        return frozenset(self._tried)
+
     def feedback(self, success):
         """Provide feedback on the current reduction attempt.
 
@@ -74,12 +95,16 @@ class ReductionIterator(abc.ABC):
         """
         assert self._testcase_attempt is None, "Already attempting a testcase"
         # de-dupe the testcase
-        parts_hash = hashlib.sha512()
+        # include before/after since different testcase types
+        #   may split them inconsistently.
+        tc_hash = hashlib.sha512()
+        tc_hash.update(testcase.before)
         for part in testcase.parts:
-            parts_hash.update(part)
-        parts_hash = parts_hash.digest()
-        if parts_hash not in self._tried:
-            self._tried.add(parts_hash)
+            tc_hash.update(part)
+        tc_hash.update(testcase.after)
+        tc_hash = tc_hash.hexdigest()
+        if tc_hash not in self._tried:
+            self._tried.add(tc_hash)
             self._last_success = None
             self._testcase_attempt = testcase
             self._description = description
@@ -436,7 +461,7 @@ class Minimize(Strategy):
                     chunk_end = chunk_start
                     break
             else:
-                # Decrement chunk_size
+                # Decrement chunk_end
                 # To ensure the file is fully reduced, decrement chunk_end by 1 when
                 # chunk_size <= 2
                 if chunk_size <= 2:
