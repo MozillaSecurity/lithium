@@ -163,6 +163,8 @@ class ReductionIterator(abc.ABC):
 
         @functools.wraps(method)
         def wrapped(inst, testcase):
+            inst.estimate_from_testcase(testcase)
+
             class _iter(cls):
                 def __iter__(self):
                     yield from method(inst, self)
@@ -184,6 +186,21 @@ class Strategy(abc.ABC):
 
         Args:
             parser (ArgumentParser): argparse instance to add arguments to.
+        """
+
+    @abc.abstractmethod
+    def estimate_from_testcase(self, testcase):
+        """Estimate the total # of reduction attempts given a testcase.
+        This is used to set the starting value for `estimated_remaining`.
+        """
+
+    @property
+    @abc.abstractmethod
+    def estimated_remaining(self):
+        """Return an estimate of the remaining # of reduction attempts.
+
+        Returns:
+            int: Estimated # of reduction attempts remaining.
         """
 
     def process_args(self, parser, args):
@@ -284,10 +301,22 @@ class CheckOnly(Strategy):
 
     name = "check-only"
 
+    def __init__(self):
+        super().__init__()
+        self._estimated_remaining = 0
+
+    def estimate_from_testcase(self, testcase):
+        self._estimated_remaining = 1
+
+    @property
+    def estimated_remaining(self):
+        return self._estimated_remaining
+
     @ReductionIterator.wrap
     def reduce(self, iterator):  # pylint: disable=arguments-differ
         # check doesn't reduce, only checks
         yield from iterator.try_testcase(iterator.testcase, "Check")
+        self._estimated_remaining = 0
 
     def main(self, testcase, interesting, temp_filename):
         result = interesting(testcase, write_it=False)
@@ -315,9 +344,37 @@ class Minimize(Strategy):
         self.minimize_repeat = "last"
         self.minimize_min = 1
         self.minimize_max = pow(2, 30)
-        self.minimize_chunk_size = None
         self.minimize_repeat_first_round = False
         self.stop_after_time = None
+        self._estimated_remaining = 0
+
+    def _chunk_iters(self, length, chunk_size):
+        """How many iterations does this chunk represent (recursively)?
+        ie. a chunk of length 2 and chunk_size 2 actually represents 3
+            iterations (2 + 1)
+
+        Arguments:
+            length (int): actual length of the chunk
+            chunk_size (int): chunk_size
+
+        Returns:
+            int: Total iterations from this chunk.
+        """
+        result = 0
+        while chunk_size >= max(self.minimize_min, 1):
+            result += divide_rounding_up(length, chunk_size)
+            chunk_size /= 2
+        return int(result)
+
+    def estimate_from_testcase(self, testcase):
+        length = len(testcase)
+        chunk_size = largest_power_of_two_smaller_than(length)
+        chunk_size = min(chunk_size, self.minimize_max)
+        self._estimated_remaining = self._chunk_iters(length, chunk_size * 2) - 1
+
+    @property
+    def estimated_remaining(self):
+        return self._estimated_remaining
 
     def add_args(self, parser):
         super().add_args(parser)
@@ -378,8 +435,7 @@ class Minimize(Strategy):
         if not is_power_of_two(self.minimize_max):
             parser.error("Max must be a power of two.")
 
-    @staticmethod
-    def _post_round_cb(iterator):
+    def _post_round_cb(self, iterator):  # pylint: disable=no-self-use
         return []
 
     @ReductionIterator.wrap
@@ -390,9 +446,15 @@ class Minimize(Strategy):
         min_chunk_size = min(chunk_size, max(self.minimize_min, 1))
         chunk_end = len(iterator.testcase)
         removed_chunks = self.minimize_repeat_first_round
+        added_for_repeat = 0
         stop_after_time = None
         if self.stop_after_time is not None:
             stop_after_time = time.time() + self.stop_after_time
+
+        if self.minimize_repeat_first_round:
+            self._estimated_remaining += divide_rounding_up(
+                len(iterator.testcase), chunk_size
+            )
 
         while True:
             if stop_after_time is not None and time.time() > stop_after_time:
@@ -400,6 +462,7 @@ class Minimize(Strategy):
                     "Lithium result: run time elapsed, please perform another pass "
                     "using the same arguments"
                 )
+                self._estimated_remaining = 0
                 return
 
             if chunk_end - chunk_size < 0:
@@ -430,6 +493,14 @@ class Minimize(Strategy):
                             quantity(len(iterator.testcase), iterator.testcase.atom),
                         )
                         break
+                # Repeat if anything was done in this round and repeat mode is always
+                elif (
+                    removed_chunks
+                    and self.minimize_repeat == "always"
+                    and chunk_size < len(iterator.testcase)
+                ):
+                    LOG.info("Starting another round of chunk size %d", chunk_size)
+                    chunk_end = len(iterator.testcase)
                 # If none of the conditions apply, reduce the chunk_size and continue
                 else:
                     chunk_end = len(iterator.testcase)
@@ -443,7 +514,13 @@ class Minimize(Strategy):
 
                     LOG.info("")
                     LOG.info("Reducing chunk size to %d", chunk_size)
+
+                    # we added another current round to the estimate, but didn't repeat
+                    # for some reason. remove it from the estimate
+                    self._estimated_remaining -= added_for_repeat
+
                 removed_chunks = False
+                added_for_repeat = 0
 
             chunk_start = max(0, chunk_end - chunk_size)
             status = "Removing chunk from %s to %s of %d" % (
@@ -456,8 +533,27 @@ class Minimize(Strategy):
                 test_to_try.parts[:chunk_start] + test_to_try.parts[chunk_end:]
             )
             for test in iterator.try_testcase(test_to_try, status):
+                self._estimated_remaining -= 1
                 yield test
                 if iterator.last_feedback:
+                    self._estimated_remaining -= (
+                        self._chunk_iters(chunk_end - chunk_start + 1, chunk_size) - 1
+                    )
+                    if not removed_chunks and (
+                        self.minimize_repeat == "always"
+                        or (
+                            self.minimize_repeat == "last"
+                            and chunk_size <= min_chunk_size
+                        )
+                    ):
+                        added_for_repeat = divide_rounding_up(
+                            len(test_to_try), chunk_size
+                        )
+                        self._estimated_remaining += added_for_repeat
+                    elif added_for_repeat:
+                        # we were planning to repeat, but the chunk was removed
+                        self._estimated_remaining -= 1
+                        added_for_repeat -= 1
                     removed_chunks = True
                     chunk_end = chunk_start
                     break
@@ -475,6 +571,7 @@ class Minimize(Strategy):
                 "  Removing any single %s from the final file makes it uninteresting!",
                 iterator.testcase.atom,
             )
+        self._estimated_remaining = 0
 
 
 class MinimizeSurroundingPairs(Minimize):
@@ -1466,8 +1563,12 @@ class CollapseEmptyBraces(Minimize):
 
     name = "minimize-collapse-brace"
 
-    @staticmethod
-    def _post_round_cb(iterator):
+    @property
+    def estimated_remaining(self):
+        # this may be off by one, but it's simple
+        return super().estimated_remaining * 2
+
+    def _post_round_cb(self, iterator):
         """Collapse braces separated by whitespace
         Args:
             testcase (Testcase): Testcase to be reduced.
