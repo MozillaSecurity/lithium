@@ -1,19 +1,8 @@
 dist: bionic
 language: python
 cache: pip
-os: linux
 jobs:
   include:
-    - python: 3.5
-      env: TOXENV=py35
-    - python: 3.6
-      env: TOXENV=py36
-    - python: 3.7
-      env: TOXENV=py37
-    - python: 3.8
-      env: TOXENV=py38
-    - python: 3.9
-      env: TOXENV=py39
     - name: "Python: 3.7 (macOS)"
       os: osx
       osx_image: xcode11.2
@@ -25,9 +14,6 @@ jobs:
       before_install:
         - choco install python --version 3.8.6
       env: PATH=/c/Python38:/c/Python38/Scripts:$PATH TOXENV=py38
-    - name: Linters
-      python: 3.8
-      env: TOXENV=lint
 before_install:
   - pip3 install --upgrade setuptools pip
 before_script:
@@ -36,16 +22,3 @@ script:
   - tox -e "$TOXENV"
 after_success:
   - codecov
-before_deploy:
-  - pip3 install --upgrade setuptools_scm[toml]
-deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: __token__
-  password:
-    secure: J2TqYJaBBZomQtIs22aSwyfQngoM2GTEZ+rzzpSZhLSgzxpCuskm83vm+iE1sbpL/znX1hsLrkV3dtzKAD71ooFZroGW+jvUOiCuNsYdiKeMCEpEKCrcDYjPOL4jN9uvHx+u0bHTOXax89ey0bCl7frAJ3HhlvDjYsyfow47bUyVKMaHMQFBziAHv8qp2Ci9CAtWrUEtbENp6UBpj7+yrfJYz9PZLQQ0b1lBTwvKmyhIet0PvCfhPhANtjo89KQSBE9pk7++AcFDVVJVpBFz9JMacaTiBSlJ6l4gCQdQ2IXvmcIVPA6pciu2papn3WbOo15eqKNp502vU6BAqbiek4rL0cpDBF/bBc/G8hMe8Lq6IGHpZugLJYbp0nCoqVb/GmyqTrOjjJ4l1IaYdYYzKW6fWLUIXdcd4Bdej6jOt/rhRzlyazzjQkGY78hWUbTAeq/WS1alaBimia1pwzNO4VyoKIYOnXkyCyB8tbDl9FMWwC9tkwvnDRLPqMQCMvAWO5VnRrAU4ZTa7DIlUVby2PqqKOYtOwAbGo6OrVTH7EyHGIL3GAgF3SfTFydvJLqDnPAPw5gTtq79kcPDVgwcMDcwvo6IiuRknweln2yECTdUkWX8wrN8hd5zRm1609QxWq2lkX4IV+eeISC8ohdkrT0e6b/nWsdbEsg6lQbNcMw=
-  on:
-    branch: master
-    tags: true
-    os: linux
-    python: 3.7
