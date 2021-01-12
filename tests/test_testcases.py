@@ -169,6 +169,55 @@ def test_symbol_1():
     assert test.reducible == [True] * 4
 
 
+def test_attrs_0():
+    """Test html attr splitting 0"""
+    test = lithium.testcases.TestcaseAttrs()
+    test_path = Path("a.txt")
+    test_path.write_bytes(b"<tag some attr=value>")
+    test.load(test_path)
+    assert test.before == b""
+    assert test.after == b""
+    assert test.parts == [b"<tag", b" some", b" attr=value", b">"]
+    assert test.reducible == [False, True, True, False]
+    assert len(test) == 2
+
+
+def test_attrs_1():
+    """Test html attr splitting 1"""
+    test = lithium.testcases.TestcaseAttrs()
+    test_path = Path("a.txt")
+    test_path.write_bytes(
+        b"<\n"
+        b"tag attr='value\n"
+        b'\'> <p color="blue"\n'
+        b' class="123 456" id=some no-term="blah > thing=not\n'
+    )
+    test.load(test_path)
+    assert test.before == b""
+    assert test.after == b""
+    assert test.parts == [
+        b"<\ntag",
+        b" attr='value\n'",
+        b">",
+        b" <p",
+        b' color="blue"',
+        b'\n class="123 456"',
+        b" id=some",
+        b' no-term="blah > thing=not\n',
+    ]
+    assert test.reducible == [
+        False,
+        True,
+        False,
+        False,
+        True,
+        True,
+        True,
+        False,
+    ]
+    assert len(test) == 4
+
+
 @pytest.mark.parametrize(
     "data,error",
     [

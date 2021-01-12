@@ -8,12 +8,14 @@ A testcase is a file to be reduced, split in a certain way (eg. bytes, lines).
 """
 
 import abc
+import logging
 import os.path
 import re
 
 from .util import LithiumError
 
 DEFAULT = "line"
+LOG = logging.getLogger(__name__)
 
 
 class Testcase(abc.ABC):
@@ -390,3 +392,80 @@ class TestcaseSymbol(Testcase):
             default=cls.DEFAULT_CUT_AFTER,
             help="See --symbol. default: " + cls.DEFAULT_CUT_AFTER.decode("ascii"),
         )
+
+
+class TestcaseAttrs(Testcase):
+    """Testcase file split by anything that looks like an XML attribute."""
+
+    atom = "attributes"
+    args = ("-a", "--attrs")
+    arg_help = "Delimit a file by XML attributes."
+    TAG_PATTERN = br"<\s*[A-Za-z][A-Za-z-]*"
+    ATTR_PATTERN = br"((\s+|^)[A-Za-z][A-Za-z0-9-]*(=|>|\s)|\s*>)"
+
+    def split_parts(self, data):
+        in_tag = False
+        while data:
+            if in_tag:
+                # we're in what looks like an element definition `<tag ...`
+                # look for attributes, or the end `>`
+                match = re.match(self.ATTR_PATTERN, data)
+                if match is None or match.group(0).strip() == b">":
+                    in_tag = False
+                    LOG.debug("no attribute found (%r), looking for other tags", match)
+                    if match is not None:
+                        self.parts.append(data[: match.end(0)])
+                        self.reducible.append(False)
+                        data = data[match.end(0) :]
+                    continue
+                # got an attribute
+                if not match.group(0).endswith(b"="):
+                    # value-less attribute, accept and continue
+                    #
+                    # only consume up to `match.end()-1` because we don't want the
+                    # `\s` or `>` that occurred after the attribute. we need to match
+                    # that for the next attribute / element end
+                    LOG.debug("value-less attribute")
+                    self.parts.append(data[: match.end(0) - 1])
+                    self.reducible.append(True)
+                    data = data[match.end(0) - 1 :]
+                    continue
+                # attribute has a value, need to find it's end
+                attr_parts = [match.group(0)]
+                data = data[match.end(0) :]
+                if data[0:1] in {b"'", b'"'}:
+                    # quote delimited string value, look for the end quote
+                    attr_parts.append(data[0:1])
+                    data = data[1:]
+                    end_match = re.search(attr_parts[-1], data)
+                    incl_end = True
+                else:
+                    end_match = re.search(br"(\s|>)", data)
+                    incl_end = False
+                if end_match is None:
+                    # EOF looking for end quote
+                    data = b"".join(attr_parts) + data
+                    LOG.debug("EOF looking for attr end quote")
+                    in_tag = False
+                    continue
+                end = end_match.end(0)
+                if not incl_end:
+                    end -= 1
+                attr_parts.append(data[:end])
+                data = data[end:]
+                self.parts.append(b"".join(attr_parts))
+                self.reducible.append(True)
+                LOG.debug("found attribute")
+            else:
+                match = re.search(self.TAG_PATTERN, data)
+                if match is None:
+                    break
+                LOG.debug("entering tag: %s", match.group(0))
+                in_tag = True
+                self.parts.append(data[: match.end(0)])
+                self.reducible.append(False)
+                data = data[match.end(0) :]
+        if data:
+            LOG.debug("remaining data: %s", match and match.group(0))
+            self.parts.append(data)
+            self.reducible.append(False)
