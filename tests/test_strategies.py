@@ -39,7 +39,7 @@ def test_minimize(testcase_cls):
 
 
 def test_minimize_around(testcase_cls):
-    """test that minimize around strategy work"""
+    """test that minimize around strategy works"""
     test_path = Path("a.txt")
 
     class _Interesting:
@@ -250,3 +250,36 @@ def test_minimize_collapse_braces(test_type, test_count, expected):
     assert obj.run() == 0
     assert test_path.read_bytes() == expected
     assert obj.test_count == test_count
+
+
+def test_minimize_reducible():
+    """test that minimize works around non-reducible parts in the testcase"""
+    test_path = Path("a.txt")
+
+    class _Interesting:
+        # pylint: disable=missing-function-docstring,no-self-use
+        def init(self, condition_args):
+            pass
+
+        def interesting(self, *_):
+            return b"o\n" in test_path.read_bytes()
+
+        def cleanup(self, condition_args):
+            pass
+
+    obj = lithium.Lithium()
+    obj.condition_script = _Interesting()
+    obj.strategy = lithium.strategies.Minimize()
+    test_path.write_bytes(b"x\n\nx\nx\no\nx\nx\nx\n")
+    obj.testcase = lithium.testcases.TestcaseLine()
+    obj.testcase.load(test_path)
+    obj.testcase.reducible[0] = False
+    assert obj.run() == 0
+    assert test_path.read_bytes() == b"x\no\n"
+
+    test_path.write_bytes(b"x\n\nx\nx\no\nx\nx\nx\n")
+    obj.testcase = lithium.testcases.TestcaseLine()
+    obj.testcase.load(test_path)
+    obj.testcase.reducible[-1] = False
+    assert obj.run() == 0
+    assert test_path.read_bytes() == b"o\nx\n"

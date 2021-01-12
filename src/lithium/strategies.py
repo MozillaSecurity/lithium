@@ -529,9 +529,7 @@ class Minimize(Strategy):
                 len(iterator.testcase),
             )
             test_to_try = iterator.testcase.copy()
-            test_to_try.parts = (
-                test_to_try.parts[:chunk_start] + test_to_try.parts[chunk_end:]
-            )
+            test_to_try.rmslice(chunk_start, chunk_end)
             for test in iterator.try_testcase(test_to_try, status):
                 self._estimated_remaining -= 1
                 yield test
@@ -686,11 +684,8 @@ class MinimizeSurroundingPairs(Minimize):
                 )
 
                 testcase_suggestion = iterator.testcase.copy()
-                testcase_suggestion.parts = (
-                    testcase_suggestion.parts[:chunk_bef_start]
-                    + testcase_suggestion.parts[chunk_bef_end:chunk_aft_start]
-                    + testcase_suggestion.parts[chunk_aft_end:]
-                )
+                testcase_suggestion.rmslice(chunk_aft_start, chunk_aft_end)
+                testcase_suggestion.rmslice(chunk_bef_start, chunk_bef_end)
                 for test in iterator.try_testcase(testcase_suggestion, description):
                     yield test
                     if iterator.last_feedback:
@@ -860,10 +855,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 # If the chunk is already balanced, try to remove it.
                 if not (n_curly or n_square or n_normal):
                     testcase_suggestion = iterator.testcase.copy()
-                    testcase_suggestion.parts = (
-                        testcase_suggestion.parts[:chunk_lhs_start]
-                        + testcase_suggestion.parts[chunk_lhs_end:]
-                    )
+                    testcase_suggestion.rmslice(chunk_lhs_start, chunk_lhs_end)
                     for test in iterator.try_testcase(
                         testcase_suggestion, "Removing " + description
                     ):
@@ -921,11 +913,8 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 )
 
                 testcase_suggestion = iterator.testcase.copy()
-                testcase_suggestion.parts = (
-                    testcase_suggestion.parts[:chunk_lhs_start]
-                    + testcase_suggestion.parts[chunk_lhs_end:chunk_rhs_start]
-                    + testcase_suggestion.parts[chunk_rhs_end:]
-                )
+                testcase_suggestion.rmslice(chunk_rhs_start, chunk_rhs_end)
+                testcase_suggestion.rmslice(chunk_lhs_start, chunk_lhs_end)
                 worked = False
                 for test in iterator.try_testcase(
                     testcase_suggestion, "Removing " + description
@@ -980,7 +969,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     return _parts_after(*_split_parts(*args))
 
                 def _move_before(*args):
-                    return _parts_after(*_split_parts(*args))
+                    return _parts_before(*_split_parts(*args))
 
                 orig_chunk_idx = lhs_chunk_idx
                 stay_on_same_chunk = False
@@ -1007,6 +996,13 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         chunk_mid_start,
                         chunk_rhs_start,
                     )
+                    reducible = _split_parts(
+                        iterator.testcase.reducible,
+                        chunk_size,
+                        chunk_lhs_start,
+                        chunk_mid_start,
+                        chunk_rhs_start,
+                    )
 
                     n_curly = curly[mid_chunk_idx]
                     n_square = square[mid_chunk_idx]
@@ -1022,6 +1018,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     # Try moving the chunk after.
                     testcase_suggestion = iterator.testcase.copy()
                     testcase_suggestion.parts = _parts_after(parts)
+                    testcase_suggestion.reducible = _parts_after(reducible)
                     worked = False
                     for test in iterator.try_testcase(
                         testcase_suggestion, "->Moving " + description
@@ -1050,6 +1047,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
                     # Try moving the chunk before.
                     testcase_suggestion.parts = _parts_before(parts)
+                    testcase_suggestion.reducible = _parts_before(reducible)
                     worked = False
                     for test in iterator.try_testcase(
                         testcase_suggestion, "<-Moving " + description
@@ -1145,7 +1143,7 @@ class ReplacePropertiesByGlobals(Minimize):
     def reduce(self, iterator):
         chunk_size = min(
             self.minimize_max,
-            2 * largest_power_of_two_smaller_than(len(iterator.testcase)),
+            2 * largest_power_of_two_smaller_than(len(iterator.testcase.parts)),
         )
         final_chunk_size = max(self.minimize_min, 1)
 
@@ -1196,12 +1194,14 @@ class ReplacePropertiesByGlobals(Minimize):
         Returns True iff any chunks were removed."""
 
         num_removed_chars = 0
-        num_chunks = divide_rounding_up(len(iterator.testcase), chunk_size)
+        num_chunks = divide_rounding_up(len(iterator.testcase.parts), chunk_size)
         final_chunk_size = max(self.minimize_min, 1)
 
         # Map words to the chunk indexes in which they are present.
         words = {}
         for chunk, line in enumerate(iterator.testcase.parts):
+            if not iterator.testcase.reducible[chunk]:
+                continue
             for match in re.finditer(br"(?<=[\w\d_])\.(\w+)", line):
                 word = match.group(1)
                 if word not in words:
@@ -1253,6 +1253,11 @@ class ReplacePropertiesByGlobals(Minimize):
                         new_tc.parts[:chunk_start]
                         + [subst]
                         + new_tc.parts[(chunk_start + 1) :]
+                    )
+                    new_tc.reducible = (
+                        new_tc.reducible[:chunk_start]
+                        + [True]
+                        + new_tc.reducible[(chunk_start + 1) :]
                     )
 
                 for test in iterator.try_testcase(
@@ -1344,6 +1349,8 @@ class ReplaceArgumentsByGlobals(Minimize):
         anonymous_queue = []
         anonymous_stack = []
         for chunk, line in enumerate(iterator.testcase.parts):
+            if not iterator.testcase.reducible[chunk]:
+                continue
             # Match function definition with at least one argument.
             for match in re.finditer(
                 br"(?:function\s+(\w+)|(\w+)\s*=\s*function)\s*"
@@ -1435,6 +1442,11 @@ class ReplaceArgumentsByGlobals(Minimize):
             new_tc.parts = (
                 new_tc.parts[:def_chunk] + [subst] + new_tc.parts[(def_chunk + 1) :]
             )
+            new_tc.reducible = (
+                new_tc.reducible[:def_chunk]
+                + [True]
+                + new_tc.reducible[(def_chunk + 1) :]
+            )
 
             # Copy callers arguments to globals.
             for arg_use in args_map["uses"]:
@@ -1450,6 +1462,9 @@ class ReplaceArgumentsByGlobals(Minimize):
                 subst = setters + new_tc.parts[chunk]
                 new_tc.parts = (
                     new_tc.parts[:chunk] + [subst] + new_tc.parts[(chunk + 1) :]
+                )
+                new_tc.reducible = (
+                    new_tc.reducible[:chunk] + [True] + new_tc.reducible[(chunk + 1) :]
                 )
             maybe_moved_arguments += len(arg_defs)
 
@@ -1473,6 +1488,9 @@ class ReplaceArgumentsByGlobals(Minimize):
                     continue
                 new_tc.parts = (
                     new_tc.parts[:chunk] + [subst] + new_tc.parts[(chunk + 1) :]
+                )
+                new_tc.reducible = (
+                    new_tc.reducible[:chunk] + [True] + new_tc.reducible[(chunk + 1) :]
                 )
                 maybe_moved_arguments = len(values)
 
@@ -1509,6 +1527,11 @@ class ReplaceArgumentsByGlobals(Minimize):
             new_tc.parts = (
                 new_tc.parts[:def_chunk] + [subst] + new_tc.parts[(def_chunk + 1) :]
             )
+            new_tc.reducible = (
+                new_tc.reducible[:def_chunk]
+                + [True]
+                + new_tc.reducible[(def_chunk + 1) :]
+            )
 
             # Replace arguments by their value in the scope of the function.
             while len(values) < len(arg_defs):
@@ -1522,12 +1545,20 @@ class ReplaceArgumentsByGlobals(Minimize):
             new_tc.parts = (
                 new_tc.parts[:def_chunk] + [subst] + new_tc.parts[(def_chunk + 1) :]
             )
+            new_tc.reducible = (
+                new_tc.reducible[:def_chunk]
+                + [True]
+                + new_tc.reducible[(def_chunk + 1) :]
+            )
 
             # Remove arguments of the anonymous function call.
             subst = new_tc.parts[chunk].replace(b",".join(anon["use"]), b"", 1)
             if new_tc.parts[chunk] == subst:
                 noop_changes += 1
             new_tc.parts = new_tc.parts[:chunk] + [subst] + new_tc.parts[(chunk + 1) :]
+            new_tc.reducible = (
+                new_tc.reducible[:chunk] + [True] + new_tc.reducible[(chunk + 1) :]
+            )
             maybe_moved_arguments += len(values)
 
             if noop_changes == 3:
