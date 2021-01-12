@@ -219,6 +219,55 @@ def test_attrs_1():
 
 
 @pytest.mark.parametrize(
+    "data,parts,reducible",
+    [
+        ("<a>", ["<a", ">"], [False, False]),
+        ("<a b>", ["<a", " b", ">"], [False, True, False]),
+        ('<a b="">', ["<a", ' b=""', ">"], [False, True, False]),
+        ('<a b="c">', ["<a", ' b="c"', ">"], [False, True, False]),
+        (
+            "<a b=\"c\" d='e'>",
+            ["<a", ' b="c"', " d='e'", ">"],
+            [False, True, True, False],
+        ),
+        (
+            '<a b="c"><d e=f>',
+            ["<a", ' b="c"', ">", "<d", " e=f", ">"],
+            [False, True, False, False, True, False],
+        ),
+        ('<a b="c d">', ["<a", ' b="c d"', ">"], [False, True, False]),
+        (
+            '<a b=">" c="d">',
+            ["<a", ' b=">"', ' c="d"', ">"],
+            [False, True, True, False],
+        ),
+        (
+            '<a b=">" c="d"><e f="g">',
+            ["<a", ' b=">"', ' c="d"', ">", "<e", ' f="g"', ">"],
+            [False, True, True, False, False, True, False],
+        ),
+        (
+            "<a b=>><c d>",
+            ["<a", " b=", ">", "><c", " d", ">"],
+            [False, True, False, False, True, False],
+        ),
+    ],
+)
+def test_attrs_2(data, parts, reducible):
+    """Test html attr splitting 2"""
+    parts = [part.encode("utf-8") for part in parts]
+    test = lithium.testcases.TestcaseAttrs()
+    test_path = Path("a.txt")
+    test_path.write_text(data)
+    test.load(test_path)
+    assert test.before == b""
+    assert test.after == b""
+    assert test.parts == parts
+    assert test.reducible == reducible
+    assert len(test) == len(parts) - reducible.count(False)
+
+
+@pytest.mark.parametrize(
     "data,error",
     [
         (b"DDEND\n", "'DDEND' without"),
