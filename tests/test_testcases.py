@@ -266,6 +266,11 @@ def test_attrs_1():
             ["<a", " /garbage", " b=c", ">"],
             [False, False, True, False],
         ),
+        (
+            "<a\nb=1\nc=2>",
+            ["<a", "\nb=1", "\nc=2", ">"],
+            [False, True, True, False],
+        ),
     ],
 )
 def test_attrs_2(data, parts, reducible):
