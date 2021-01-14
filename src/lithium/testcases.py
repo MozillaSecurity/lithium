@@ -401,7 +401,7 @@ class TestcaseAttrs(Testcase):
     args = ("-a", "--attrs")
     arg_help = "Delimit a file by XML attributes."
     TAG_PATTERN = br"<\s*[A-Za-z][A-Za-z-]*"
-    ATTR_PATTERN = br"((\s+|^)[A-Za-z][A-Za-z0-9-]*(=|>|\s)|\s*>)"
+    ATTR_PATTERN = br"((\s+|^)[A-Za-z][A-Za-z0-9:-]*(=|>|\s)|\s*>)"
 
     def split_parts(self, data):
         in_tag = False
@@ -410,6 +410,18 @@ class TestcaseAttrs(Testcase):
                 # we're in what looks like an element definition `<tag ...`
                 # look for attributes, or the end `>`
                 match = re.match(self.ATTR_PATTERN, data)
+
+                if match is None:
+                    # before bailing out of the tag, try consuming up to the next space
+                    # and resuming the search
+                    match = re.search(self.ATTR_PATTERN, data, flags=re.MULTILINE)
+                    if match is not None and match.group(0).strip() != b">":
+                        LOG.debug("skipping unrecognized data (%r)", match)
+                        self.parts.append(data[: match.start(0)])
+                        self.reducible.append(False)
+                        data = data[match.start(0) :]
+                        continue
+
                 if match is None or match.group(0).strip() == b">":
                     in_tag = False
                     LOG.debug("no attribute found (%r), looking for other tags", match)
@@ -418,6 +430,7 @@ class TestcaseAttrs(Testcase):
                         self.reducible.append(False)
                         data = data[match.end(0) :]
                     continue
+
                 # got an attribute
                 if not match.group(0).endswith(b"="):
                     # value-less attribute, accept and continue

@@ -251,6 +251,21 @@ def test_attrs_1():
             ["<a", " b=", ">", "><c", " d", ">"],
             [False, True, False, False, True, False],
         ),
+        (
+            '<a-b c="d">',
+            ["<a-b", ' c="d"', ">"],
+            [False, True, False],
+        ),
+        (
+            "<a xml:b=c>",
+            ["<a", " xml:b=c", ">"],
+            [False, True, False],
+        ),
+        (
+            "<a /garbage b=c>",
+            ["<a", " /garbage", " b=c", ">"],
+            [False, False, True, False],
+        ),
     ],
 )
 def test_attrs_2(data, parts, reducible):
