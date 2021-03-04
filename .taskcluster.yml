@@ -15,10 +15,10 @@ tasks:
 
     fetch_ref:
       $if: 'tasks_for == "github-pull-request"'
-      then: "pull/${event.number}/head"
+      then: ${event.pull_request.head.sha}
       else:
         $if: 'tasks_for == "github-push"'
-        then: ${event.ref}
+        then: ${event.after}
         else: "refs/tags/${event.release.tag_name}:refs/tags/${event.release.tag_name}"
 
     http_repo:
@@ -26,14 +26,17 @@ tasks:
       then: ${event.pull_request.base.repo.clone_url}
       else: ${event.repository.clone_url}
 
-    codecov_secret_url:
-      http://taskcluster/secrets/v1/secret/project/fuzzing/codecov-lithium
+    codecov_secret:
+      codecov-lithium
 
-    pypi_secret_url:
-      http://taskcluster/secrets/v1/secret/project/fuzzing/pypi-lithium
+    pypi_secret:
+      pypi-lithium
+
+    project_name:
+      Lithium
 
   in:
-    $if: 'tasks_for in ["github-pull-request", "github-push", "github-release"]'
+    $if: 'tasks_for != "github-pull-request" || event["action"] in ["opened", "reopened", "synchronize"]'
     then:
       $flatten:
         - $map:
@@ -50,32 +53,35 @@ tasks:
             created: {$fromNow: ''}
             deadline: {$fromNow: '1 hour'}
             scopes:
-              - secrets:get:project/fuzzing/codecov-lithium
+              - secrets:get:project/fuzzing/${codecov_secret}
             payload:
-              maxRunTime: 3600
-              image: mozillasecurity/${build.image}:latest
+              maxRunTime: 900
+              image:
+                type: indexed-image
+                path: public/${build.image}.tar.zst
+                namespace: project.fuzzing.orion.${build.image}.master
+              env:
+                TOXENV: ${build.toxenv}
+                CODECOV_SECRET: ${codecov_secret}
+                FETCH_REF: ${fetch_ref}
+                FETCH_REV: ${fetch_rev}
+                CLONE_REPO: ${http_repo}
               features:
                 taskclusterProxy: true
               command:
                 - /bin/bash
                 - '--login'
                 - '-x'
+                - '-e'
                 - '-c'
                 - >-
-                  retry () { for _ in {1..9}; do "$@" && return || sleep 30; done; "$@"; }  &&
-                  git init repo &&
-                  cd repo &&
-                  git remote add origin ${http_repo} &&
-                  retry git fetch -q --depth=1 origin "${fetch_ref}" &&
-                  git -c advice.detachedHead=false checkout ${fetch_rev} &&
-                  set +x &&
-                  export CODECOV_TOKEN="$(curl -sSL ${codecov_secret_url} | jshon -e secret -e token -u)" &&
-                  set -x &&
-                  tox -e ${build.toxenv} &&
-                  retry tox -e codecov
+                  . py-ci.sh;
+                  clone;
+                  tox;
+                  tox_codecov;
             metadata:
-              name: Lithium ${build.name}
-              description: Lithium ${build.name}
+              name: ${project_name} ${build.name}
+              description: ${project_name} ${build.name}
               owner: '${user}@users.noreply.github.com'
               source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml
         - $if: 'tasks_for in ["github-release"]'
@@ -92,31 +98,33 @@ tasks:
               created: {$fromNow: ''}
               deadline: {$fromNow: '1 hour'}
               scopes:
-                - secrets:get:project/fuzzing/pypi-lithium
+                - secrets:get:project/fuzzing/${pypi_secret}
               payload:
-                maxRunTime: 3600
-                image: mozillasecurity/ci-py-38:latest
+                maxRunTime: 900
+                image:
+                  type: indexed-image
+                  path: public/ci-py-38.tar.zst
+                  namespace: project.fuzzing.orion.ci-py-38.master
                 features:
                   taskclusterProxy: true
+                env:
+                  TOXENV: pypi
+                  FETCH_REF: ${fetch_ref}
+                  FETCH_REV: ${fetch_rev}
+                  CLONE_REPO: ${http_repo}
+                  PYPI_SECRET: ${pypi_secret}
                 command:
                   - /bin/bash
                   - '--login'
                   - '-x'
+                  - '-e'
                   - '-c'
                   - >-
-                    retry () { for _ in {1..9}; do "$@" && return || sleep 30; done; "$@"; }  &&
-                    git init repo &&
-                    cd repo &&
-                    git remote add origin ${http_repo} &&
-                    retry git fetch -q --depth=1 origin "${fetch_ref}" &&
-                    git -c advice.detachedHead=false checkout ${fetch_rev} &&
-                    set +x &&
-                    export TWINE_USERNAME="$(curl -sSL ${pypi_secret_url} | jshon -e secret -e username -u)" &&
-                    export TWINE_PASSWORD="$(curl -sSL ${pypi_secret_url} | jshon -e secret -e password -u)" &&
-                    set -x &&
-                    retry tox -e pypi
+                    . py-ci.sh;
+                    clone;
+                    tox_pypi;
               metadata:
-                name: Lithium PyPI upload
-                description: Lithium PyPI upload
+                name: ${project_name} PyPI upload
+                description: ${project_name} PyPI upload
                 owner: '${user}@users.noreply.github.com'
                 source: ${http_repo}/raw/${fetch_rev}/.taskcluster.yml

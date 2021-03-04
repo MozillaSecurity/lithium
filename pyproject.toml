@@ -12,6 +12,11 @@ omit = [
     "*/.egg/*",
 ]
 
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+]
+
 [tool.isort]
 known_first_party = "lithium"
 profile = "black"
