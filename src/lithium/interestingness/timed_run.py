@@ -105,11 +105,13 @@ def timed_run(
 
     child_stdout = child_stderr = subprocess.PIPE
     if log_prefix is not None:
+        # pylint: disable=consider-using-with
         child_stdout = open(log_prefix + "-out.txt", "wb")
         child_stderr = open(log_prefix + "-err.txt", "wb")
 
     start_time = time.time()
-    child = subprocess.Popen(  # pylint: disable=subprocess-popen-preexec-fn
+    # pylint: disable=consider-using-with,subprocess-popen-preexec-fn
+    child = subprocess.Popen(
         cmd_with_args,
         env=env,
         stderr=child_stderr,

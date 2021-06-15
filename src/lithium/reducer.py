@@ -248,7 +248,7 @@ class Lithium:
         return self.temp_dir / (filename_stem + self.testcase.extension)
 
     def create_temp_dir(self):
-        """Create and switch to the next available temporary working folder. """
+        """Create and switch to the next available temporary working folder."""
         i = 1
         while True:
             temp_dir = Path("tmp%d" % (i,))
