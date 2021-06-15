@@ -424,7 +424,11 @@ class TestcaseAttrs(Testcase):
 
                 if match is None or match.group(0).strip() == b">":
                     in_tag = False
-                    LOG.debug("no attribute found (%r), looking for other tags", match)
+                    LOG.debug(
+                        "no attribute found (%r) in %r..., looking for other tags",
+                        match,
+                        data[:20],
+                    )
                     if match is not None:
                         self.parts.append(data[: match.end(0)])
                         self.reducible.append(False)
@@ -468,7 +472,7 @@ class TestcaseAttrs(Testcase):
                 data = data[end:]
                 self.parts.append(b"".join(attr_parts))
                 self.reducible.append(True)
-                LOG.debug("found attribute")
+                LOG.debug("found attribute: %r", self.parts[-1])
             else:
                 match = re.search(self.TAG_PATTERN, data)
                 if match is None:
