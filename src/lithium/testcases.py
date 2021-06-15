@@ -112,38 +112,46 @@ class Testcase(abc.ABC):
         self.filename = str(path)
         self.extension = os.path.splitext(self.filename)[1]
 
-        with open(self.filename, "rb") as fileobj:
-            before = []
-            for line in fileobj:
-                before.append(line)
-                if line.find(b"DDBEGIN") != -1:
-                    self.before = b"".join(before)
-                    del before
-                    break
-                if line.find(b"DDEND") != -1:
-                    raise LithiumError(
-                        "The testcase (%s) has a line containing 'DDEND' "
-                        "without a line containing 'DDBEGIN' before it."
-                        % (self.filename,)
-                    )
-            else:
-                # no DDBEGIN/END, `before` contains the whole testcase
-                self.split_parts(b"".join(before))
-                return
+        with open(
+            self.filename, "r", encoding="utf-8", errors="surrogateescape"
+        ) as fileobj:
+            lines = [
+                line.encode("utf-8", errors="surrogateescape")
+                for line in fileobj.read().splitlines(keepends=True)
+            ]
 
-            between = []
-            for line in fileobj:
-                if line.find(b"DDEND") != -1:
-                    self.after = line + fileobj.read()
-                    break
-
-                between.append(line)
-            else:
+        before = []
+        while lines:
+            line = lines.pop(0)
+            before.append(line)
+            if line.find(b"DDBEGIN") != -1:
+                self.before = b"".join(before)
+                del before
+                break
+            if line.find(b"DDEND") != -1:
                 raise LithiumError(
-                    "The testcase (%s) has a line containing 'DDBEGIN' "
-                    "but no line containing 'DDEND'." % (self.filename,)
+                    "The testcase (%s) has a line containing 'DDEND' "
+                    "without a line containing 'DDBEGIN' before it." % (self.filename,)
                 )
-            self.split_parts(b"".join(between))
+        else:
+            # no DDBEGIN/END, `before` contains the whole testcase
+            self.split_parts(b"".join(before))
+            return
+
+        between = []
+        while lines:
+            line = lines.pop(0)
+            if line.find(b"DDEND") != -1:
+                self.after = line + b"".join(lines)
+                break
+
+            between.append(line)
+        else:
+            raise LithiumError(
+                "The testcase (%s) has a line containing 'DDBEGIN' "
+                "but no line containing 'DDEND'." % (self.filename,)
+            )
+        self.split_parts(b"".join(between))
 
     @staticmethod
     def add_arguments(parser):
@@ -199,7 +207,12 @@ class TestcaseLine(Testcase):
             data (bytes): Input data read from the testcase file.
         """
         orig = len(self.parts)
-        self.parts.extend(data.splitlines(keepends=True))
+        self.parts.extend(
+            line.encode("utf-8", errors="surrogateescape")
+            for line in data.decode("utf-8", errors="surrogateescape").splitlines(
+                keepends=True
+            )
+        )
         added = len(self.parts) - orig
         self.reducible.extend([True] * added)
 
