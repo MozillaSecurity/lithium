@@ -112,12 +112,12 @@ class Testcase(abc.ABC):
         self.filename = str(path)
         self.extension = os.path.splitext(self.filename)[1]
 
-        with open(
-            self.filename, "r", encoding="utf-8", errors="surrogateescape"
-        ) as fileobj:
+        with open(self.filename, "rb") as fileobj:
+            text = fileobj.read().decode("utf-8", errors="surrogateescape")
+
             lines = [
                 line.encode("utf-8", errors="surrogateescape")
-                for line in fileobj.read().splitlines(keepends=True)
+                for line in text.splitlines(keepends=True)
             ]
 
         before = []
