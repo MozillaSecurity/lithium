@@ -40,6 +40,10 @@ repos:
     rev: v0.0.7
     hooks:
       - id: taskcluster_yml
+  - repo: https://github.com/MozillaSecurity/orion
+    rev: v0.0.2
+    hooks:
+      - id: orion_ci
   - repo: meta
     hooks:
       - id: check-useless-excludes
