@@ -275,16 +275,16 @@ def test_attrs_1():
 )
 def test_attrs_2(data, parts, reducible):
     """Test html attr splitting 2"""
-    parts = [part.encode("utf-8") for part in parts]
+    parts_with_bytes = [part.encode("utf-8") for part in parts]
     test = lithium.testcases.TestcaseAttrs()
     test_path = Path("a.txt")
     test_path.write_text(data)
     test.load(test_path)
     assert test.before == b""
     assert test.after == b""
-    assert test.parts == parts
+    assert test.parts == parts_with_bytes
     assert test.reducible == reducible
-    assert len(test) == len(parts) - reducible.count(False)
+    assert len(test) == len(parts_with_bytes) - reducible.count(False)
 
 
 @pytest.mark.parametrize(
