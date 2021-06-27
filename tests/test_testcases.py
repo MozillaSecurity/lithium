@@ -5,6 +5,7 @@
 """Lithium Testcase* tests"""
 
 from pathlib import Path
+from typing import List
 
 import pytest
 
@@ -13,7 +14,7 @@ import lithium
 pytestmark = pytest.mark.usefixtures("tmp_cwd")  # pylint: disable=invalid-name
 
 
-def test_line():
+def test_line() -> None:
     """Test simple line splitting"""
     test = lithium.testcases.TestcaseLine()
     test_path = Path("a.txt")
@@ -33,7 +34,7 @@ def test_line():
     assert Path("b.txt").read_bytes() == b"hello"
 
 
-def test_line_dd():
+def test_line_dd() -> None:
     """Test line splitting with DDBEGIN/END"""
     test = lithium.testcases.TestcaseLine()
     test_path = Path("a.txt")
@@ -46,7 +47,7 @@ def test_line_dd():
     assert len(test) == 2
 
 
-def test_char_dd():
+def test_char_dd() -> None:
     """Test char splitting with DDBEGIN/END"""
     test = lithium.testcases.TestcaseChar()
     test_path = Path("a.txt")
@@ -59,7 +60,7 @@ def test_char_dd():
     assert test.after == b"\nDDEND\npost\n"
 
 
-def test_jsstr_0():
+def test_jsstr_0() -> None:
     """Test that the TestcaseJsStr class splits JS strings properly 0"""
     test = lithium.testcases.TestcaseJsStr()
     test_path = Path("a.txt")
@@ -102,7 +103,7 @@ def test_jsstr_0():
     assert len(test) == 15
 
 
-def test_jsstr_1():
+def test_jsstr_1() -> None:
     """Test that the TestcaseJsStr class splits JS strings properly 1"""
     test = lithium.testcases.TestcaseJsStr()
     test_path = Path("a.txt")
@@ -115,7 +116,7 @@ def test_jsstr_1():
     assert test.after == b"'"
 
 
-def test_jsstr_2():
+def test_jsstr_2() -> None:
     """Test that the TestcaseJsStr class splits JS strings properly 2"""
     test = lithium.testcases.TestcaseJsStr()
     test_path = Path("a.txt")
@@ -128,7 +129,7 @@ def test_jsstr_2():
     assert test.after == b"'abcx'"
 
 
-def test_jsstr_3():
+def test_jsstr_3() -> None:
     """Test that the TestcaseJsStr class splits JS strings properly 3"""
     test = lithium.testcases.TestcaseJsStr()
     test_path = Path("a.txt")
@@ -141,7 +142,7 @@ def test_jsstr_3():
     assert test.after == b'"x'
 
 
-def test_symbol_0():
+def test_symbol_0() -> None:
     """Test symbol splitting 0"""
     test = lithium.testcases.TestcaseSymbol()
     test_path = Path("a.txt")
@@ -154,7 +155,7 @@ def test_symbol_0():
     assert test.after == b"DDEND\npost\n"
 
 
-def test_symbol_1():
+def test_symbol_1() -> None:
     """Test symbol splitting 1"""
     test = lithium.testcases.TestcaseSymbol()
     test_path = Path("a.txt")
@@ -169,7 +170,7 @@ def test_symbol_1():
     assert test.reducible == [True] * 4
 
 
-def test_attrs_0():
+def test_attrs_0() -> None:
     """Test html attr splitting 0"""
     test = lithium.testcases.TestcaseAttrs()
     test_path = Path("a.txt")
@@ -182,7 +183,7 @@ def test_attrs_0():
     assert len(test) == 2
 
 
-def test_attrs_1():
+def test_attrs_1() -> None:
     """Test html attr splitting 1"""
     test = lithium.testcases.TestcaseAttrs()
     test_path = Path("a.txt")
@@ -273,7 +274,11 @@ def test_attrs_1():
         ),
     ],
 )
-def test_attrs_2(data, parts, reducible):
+def test_attrs_2(
+    data: str,
+    parts: List[str],
+    reducible: List[bool],
+) -> None:
     """Test html attr splitting 2"""
     parts_with_bytes = [part.encode("utf-8") for part in parts]
     test = lithium.testcases.TestcaseAttrs()
@@ -297,7 +302,7 @@ def test_attrs_2(data, parts, reducible):
         (b"DDBEGIN\n", "'DDBEGIN' but no"),
     ],
 )
-def test_errors(data, error):
+def test_errors(data: bytes, error: str) -> None:
     """Test DDBEGIN/END errors"""
     test = lithium.testcases.TestcaseLine()
     test_path = Path("a.txt")
@@ -309,7 +314,7 @@ def test_errors(data, error):
         test.load(test_path)
 
 
-def test_reducible_slices():
+def test_reducible_slices() -> None:
     """Test reducible part slicing"""
     # pylint: disable=protected-access
     test = lithium.testcases.TestcaseChar()

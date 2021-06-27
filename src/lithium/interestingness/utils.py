@@ -14,18 +14,23 @@ import os
 import re
 import sys
 from pathlib import Path
+from types import ModuleType
+from typing import Tuple
+from typing import Union
 
 
-def file_contains_str(input_file, regex, verbose=True):
+def file_contains_str(
+    input_file: Union[Path, str], regex: bytes, verbose: bool = True
+) -> bool:
     """Helper function to check if file contains a given string
 
     Args:
-        input_file (str, Path): file to search
-        regex (str): pattern to look for
-        verbose (bool): print matches to stdout
+        input_file: file to search
+        regex: pattern to look for
+        verbose: print matches to stdout
 
     Returns:
-        bool: if match was found
+        if match was found
     """
     file_contents = Path(input_file).read_bytes()
     idx = file_contents.find(regex)
@@ -43,19 +48,21 @@ def file_contains_str(input_file, regex, verbose=True):
     return False
 
 
-def file_contains_regex(input_file, regex, verbose=True):
+def file_contains_regex(
+    input_file: Union[Path, str], regex: bytes, verbose: bool = True
+) -> Tuple[bool, bytes]:
     """e.g. python -m lithium crashesat --timeout=30 \
       --regex '^#0\\s*0x.* in\\s*.*(?:\\n|\\r\\n?)#1\\s*' \
       ./js --fuzzing-safe --no-threads --ion-eager testcase.js
     Note that putting "^" and "$" together is unlikely to work.
 
     Args:
-        input_file (str, Path): file to search
-        regex (str): pattern to look for
-        verbose (bool): print matches to stdout
+        input_file: file to search
+        regex: pattern to look for
+        verbose: print matches to stdout
 
     Returns:
-        tuple: (bool, str) = if match was found, and matched string
+        if match was found, and matched string
     """
 
     matched_str = ""
@@ -75,14 +82,14 @@ def file_contains_regex(input_file, regex, verbose=True):
     return found, matched_str
 
 
-def rel_or_abs_import(module):
+def rel_or_abs_import(module: str) -> ModuleType:
     """Import a module from anywhere.
     If a full path to module is given, try to import from there.
     If a relative path to module is given (module or module.py), try to import from
     current working directory or the lithium interestingness module.
 
     Args:
-        module (str): the module name to try importing
+        module: the module name to try importing
 
     Returns:
         namespace: the module

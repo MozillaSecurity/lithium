@@ -47,17 +47,17 @@ pytestmark = pytest.mark.usefixtures("tmp_cwd", "_tempjs")
 
 
 @pytest.fixture
-def _tempjs():
+def _tempjs() -> None:
     with open("temp.js", "w"):
         pass
 
 
-def _compile(in_path, out_path):
+def _compile(in_path: Path, out_path: Path) -> None:
     """Try to compile a source file using any available C/C++ compiler.
 
     Args:
-        in_path (str): Source file to compile from
-        out_path (str): Executable file to compile to
+        in_path: Source file to compile from
+        out_path: Executable file to compile to
 
     Raises:
         RuntimeError: Raises this exception if the compilation fails or if the compiler
@@ -89,7 +89,7 @@ def _compile(in_path, out_path):
     raise RuntimeError("Compile failed")
 
 
-def test_crashes_0():
+def test_crashes_0() -> None:
     """simple positive test for the 'crashes' interestingness test"""
     lith = lithium.Lithium()
 
@@ -99,7 +99,7 @@ def test_crashes_0():
     assert lith.test_count == 1
 
 
-def test_crashes_1():
+def test_crashes_1() -> None:
     """timeout test for the 'crashes' interestingness test"""
     lith = lithium.Lithium()
 
@@ -124,7 +124,7 @@ def test_crashes_1():
     assert lith.test_count == 1
 
 
-def test_crashes_2(examples_path):
+def test_crashes_2(examples_path: Path) -> None:
     """crash test for the 'crashes' interestingness test"""
     lith = lithium.Lithium()
 
@@ -143,7 +143,7 @@ def test_crashes_2(examples_path):
     assert lith.test_count == 1
 
 
-def test_diff_test_0():
+def test_diff_test_0() -> None:
     """test for the 'diff_test' interestingness test"""
     lith = lithium.Lithium()
 
@@ -167,7 +167,7 @@ def test_diff_test_0():
     assert lith.test_count == 1
 
 
-def test_diff_test_1():
+def test_diff_test_1() -> None:
     """test for the 'diff_test' interestingness test"""
     lith = lithium.Lithium()
 
@@ -189,7 +189,7 @@ def test_diff_test_1():
     assert lith.test_count == 1
 
 
-def test_hangs_0():
+def test_hangs_0() -> None:
     """test for the 'hangs' interestingness test"""
     lith = lithium.Lithium()
 
@@ -203,7 +203,7 @@ def test_hangs_0():
     assert lith.test_count == 1
 
 
-def test_hangs_1():
+def test_hangs_1() -> None:
     """test for the 'hangs' interestingness test"""
     lith = lithium.Lithium()
 
@@ -215,7 +215,7 @@ def test_hangs_1():
     assert lith.test_count == 1
 
 
-def test_outputs_true():
+def test_outputs_true() -> None:
     """interestingness 'outputs' positive test"""
     lith = lithium.Lithium()
 
@@ -227,7 +227,7 @@ def test_outputs_true():
     assert lith.test_count == 1
 
 
-def test_outputs_false():
+def test_outputs_false() -> None:
     """interestingness 'outputs' negative test"""
     lith = lithium.Lithium()
 
@@ -239,7 +239,7 @@ def test_outputs_false():
     assert lith.test_count == 1
 
 
-def test_outputs_timeout():
+def test_outputs_timeout() -> None:
     """interestingness 'outputs' --timeout test"""
     lith = lithium.Lithium()
 
@@ -265,7 +265,7 @@ def test_outputs_timeout():
     assert lith.test_count == 1
 
 
-def test_outputs_regex():
+def test_outputs_regex() -> None:
     """interestingness 'outputs' --regex test"""
     lith = lithium.Lithium()
 
@@ -279,7 +279,7 @@ def test_outputs_regex():
     assert lith.test_count == 1
 
 
-def test_repeat_0():
+def test_repeat_0() -> None:
     """test for the 'repeat' interestingness test"""
     lith = lithium.Lithium()
     with open("temp.js", "w") as tempf:
@@ -296,7 +296,7 @@ def test_repeat_0():
     assert lith.test_count == 1
 
 
-def test_repeat_1(caplog):
+def test_repeat_1(caplog) -> None:
     """test for the 'repeat' interestingness test"""
     lith = lithium.Lithium()
     with open("temp.js", "w") as tempf:
@@ -326,7 +326,7 @@ def test_repeat_1(caplog):
     assert found_count == last_count  # We should have identical count outputs
 
 
-def test_repeat_2():
+def test_repeat_2() -> None:
     """test for the 'repeat' interestingness test"""
     lith = lithium.Lithium()
 
@@ -344,7 +344,7 @@ def test_repeat_2():
     assert lith.test_count == 1
 
 
-def test_repeat_3():
+def test_repeat_3() -> None:
     """test for the 'repeat' interestingness test"""
     lith = lithium.Lithium()
 
@@ -361,7 +361,7 @@ def test_repeat_3():
     assert lith.test_count == 1
 
 
-def test_repeat_4():
+def test_repeat_4() -> None:
     """test for the 'repeat' interestingness test"""
     lith = lithium.Lithium()
 
@@ -378,7 +378,7 @@ def test_repeat_4():
     assert lith.test_count == 1
 
 
-def test_repeat_5():
+def test_repeat_5() -> None:
     """test for the 'repeat' interestingness test"""
     lith = lithium.Lithium()
 
@@ -407,7 +407,7 @@ def test_repeat_5():
         ("line B", "line B"),
     ],
 )
-def test_interestingness_outputs_multiline(capsys, pattern, expected):
+def test_interestingness_outputs_multiline(capsys, pattern, expected) -> None:
     """Tests for the 'outputs' interestingness test with multiline pattern"""
     lith = lithium.Lithium()
 

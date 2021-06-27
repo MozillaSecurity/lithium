@@ -8,9 +8,15 @@ A testcase is a file to be reduced, split in a certain way (eg. bytes, lines).
 """
 
 import abc
+import argparse
 import logging
 import os.path
+from pathlib import Path
 import re
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 from .util import LithiumError
 
@@ -21,31 +27,31 @@ LOG = logging.getLogger(__name__)
 class Testcase(abc.ABC):
     """Lithium testcase base class."""
 
-    def __init__(self):
-        self.before = b""
-        self.after = b""
-        self.parts = []
+    def __init__(self) -> None:
+        self.before: bytes = b""
+        self.after: bytes = b""
+        self.parts: List[str] = []
         # bool array with same length as `parts`
         # parts with a matchine `False` in `reducible` should
         # not be removed by the Strategy
-        self.reducible = []
-        self.filename = None
-        self.extension = None
+        self.reducible: List[bool] = []
+        self.filename: Optional[str] = None
+        self.extension: Optional[str] = None
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Length of the testcase in terms of parts to be reduced.
 
         Returns:
-            int: length of parts
+            length of parts
         """
         return len(self.parts) - self.reducible.count(False)
 
-    def _slice_xlat(self, start=None, stop=None):
+    def _slice_xlat(self, start: Optional[int] = None, stop: Optional[int] = None):
         # translate slice bounds within `[0, len(self))` (excluding non-reducible parts)
         # to bounds within `self.parts`
         len_self = len(self)
 
-        def _clamp(bound, default):
+        def _clamp(bound: Optional[int], default: int) -> Optional[int]:
             if bound is None:
                 return default
             if bound < 0:
@@ -62,7 +68,7 @@ class Testcase(abc.ABC):
 
         return opts[start], opts[stop]
 
-    def rmslice(self, start, stop):
+    def rmslice(self, start: int, stop: int) -> None:
         """Remove a slice of the testcase between `self.parts[start:stop]`, preserving
         non-reducible parts.
 
@@ -70,8 +76,8 @@ class Testcase(abc.ABC):
         if any parts are marked non-reducible.
 
         Args:
-            start (int): Slice start index
-            stop (int): Slice stop index
+            start: Slice start index
+            stop: Slice stop index
         """
         start, stop = self._slice_xlat(start, stop)
         keep = [
@@ -84,7 +90,7 @@ class Testcase(abc.ABC):
             self.reducible[:start] + ([False] * len(keep)) + self.reducible[stop:]
         )
 
-    def copy(self):
+    def copy(self) -> Testcase:
         """Duplicate the current object.
 
         Returns:
@@ -99,11 +105,11 @@ class Testcase(abc.ABC):
         new.extension = self.extension
         return new
 
-    def load(self, path):
+    def load(self, path: Union[Path, str]) -> None:
         """Load and split a testcase from disk.
 
         Args:
-            path (Path or str): Location on disk of testcase to read.
+            path: Location on disk of testcase to read.
 
         Raises:
             LithiumError: DDBEGIN/DDEND token mismatch.
@@ -154,34 +160,34 @@ class Testcase(abc.ABC):
         self.split_parts(b"".join(between))
 
     @staticmethod
-    def add_arguments(parser):
+    def add_arguments(parser: argparse.ArgumentParser) -> None:
         """Add any testcase specific arguments.
 
         Args:
-            parser (ArgumentParser): argparse object to add arguments to.
+            parser: argparse object to add arguments to.
         """
 
-    def handle_args(self, args):
+    def handle_args(self, args: argparse.Namespace) -> None:
         """Handle arguments after they have been parsed.
 
         Args:
-            args (argparse.Namespace): parsed argparse arguments.
+            args: parsed argparse arguments.
         """
 
     @abc.abstractmethod
-    def split_parts(self, data):
+    def split_parts(self, data: bytes) -> None:
         """Should take testcase data and update `self.parts`.
 
         Args:
-            data (bytes): Input read from the testcase file
-                          (between DDBEGIN/END, if present).
+            data: Input read from the testcase file
+                  (between DDBEGIN/END, if present).
         """
 
-    def dump(self, path=None):
+    def dump(self, path: Optional[Union[Path, str]] = None) -> None:
         """Write the testcase to the filesystem.
 
         Args:
-            path (str or Path, optional): Output path (default: self.filename)
+            path: Output path (default: self.filename)
         """
         if path is None:
             path = self.filename
@@ -200,11 +206,11 @@ class TestcaseLine(Testcase):
     args = ("-l", "--lines")
     arg_help = "Treat the file as a sequence of lines."
 
-    def split_parts(self, data):
+    def split_parts(self, data: bytes) -> None:
         """Take input data and add lines to `parts` to be reduced.
 
         Args:
-            data (bytes): Input data read from the testcase file.
+            data: Input data read from the testcase file.
         """
         orig = len(self.parts)
         self.parts.extend(
@@ -224,7 +230,7 @@ class TestcaseChar(Testcase):
     args = ("-c", "--char")
     arg_help = "Treat the file as a sequence of bytes."
 
-    def load(self, path):
+    def load(self, path) -> None:
         super().load(path)
         if (self.before or self.after) and self.parts:
             # Move the line break at the end of the last line out of the reducible
@@ -233,7 +239,7 @@ class TestcaseChar(Testcase):
             self.reducible.pop()
             self.after = b"\n" + self.after
 
-    def split_parts(self, data):
+    def split_parts(self, data) -> None:
         orig = len(self.parts)
         self.parts.extend(data[i : i + 1] for i in range(len(data)))
         added = len(self.parts) - orig
@@ -254,9 +260,9 @@ class TestcaseJsStr(Testcase):
         "Same as --char but only operate within JS strings, keeping escapes intact."
     )
 
-    def split_parts(self, data):
+    def split_parts(self, data) -> None:
         instr = None
-        chars = []
+        chars: List[int] = []
 
         while True:
             last = 0
@@ -354,17 +360,17 @@ class TestcaseSymbol(Testcase):
         "the --cut-before, and --cut-after options."
     )
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._cutter = None
         self.set_cut_chars(self.DEFAULT_CUT_BEFORE, self.DEFAULT_CUT_AFTER)
 
-    def set_cut_chars(self, before, after):
+    def set_cut_chars(self, before: bytes, after: bytes) -> None:
         """Set the bytes used to delimit slice points.
 
         Args:
-            before (bytes): Split file before these delimiters.
-            after (bytes): Split file after these delimiters.
+            before: Split file before these delimiters.
+            after: Split file after these delimiters.
         """
         self._cutter = re.compile(
             b"["
@@ -381,17 +387,17 @@ class TestcaseSymbol(Testcase):
             + b"]))"
         )
 
-    def split_parts(self, data):
+    def split_parts(self, data) -> None:
         for statement in self._cutter.finditer(data):
             if statement.group(0):
                 self.parts.append(statement.group(0))
                 self.reducible.append(True)
 
-    def handle_args(self, args):
+    def handle_args(self, args) -> None:
         self.set_cut_chars(args.cut_before, args.cut_after)
 
     @classmethod
-    def add_arguments(cls, parser):
+    def add_arguments(cls, parser) -> None:
         grp_add = parser.add_argument_group(
             description="Additional options for the symbol-delimiter testcase type."
         )
@@ -416,7 +422,7 @@ class TestcaseAttrs(Testcase):
     TAG_PATTERN = br"<\s*[A-Za-z][A-Za-z-]*"
     ATTR_PATTERN = br"((\s+|^)[A-Za-z][A-Za-z0-9:-]*(=|>|\s)|\s*>)"
 
-    def split_parts(self, data):
+    def split_parts(self, data) -> None:
         in_tag = False
         while data:
             if in_tag:

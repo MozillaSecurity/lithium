@@ -9,15 +9,15 @@
 import sys
 
 
-def interesting(args, _temp_prefix):
+def interesting(args: str, _temp_prefix: str) -> bool:
     """Interesting if the product of the numbers in the file divides the argument.
 
     Args:
-        args (str): The first parameter.
-        _temp_prefix (str): The second parameter.
+        args: The first parameter.
+        _temp_prefix: The second parameter.
 
     Returns:
-        bool: True if successful, False otherwise.
+        True if successful, False otherwise.
     """
     mod = int(args[0])
     filename = args[1]

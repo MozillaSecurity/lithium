@@ -9,6 +9,9 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Dict
+from typing import List
+from typing import Optional
 
 import pkg_resources
 
@@ -23,7 +26,7 @@ LOG = logging.getLogger(__name__)
 class Lithium:
     """Lithium reduction object."""
 
-    def __init__(self):
+    def __init__(self) -> None:
 
         self.strategy = None
 
@@ -33,21 +36,21 @@ class Lithium:
         self.test_count = 0
         self.test_total = 0
 
-        self.temp_dir = None
+        self.temp_dir: Path = Path()
 
         self.testcase = None
         self.last_interesting = None
 
         self.temp_file_count = 1
 
-    def main(self, argv=None):
+    def main(self, argv: Optional[List[str]]) -> int:
         """Main entrypoint (parse args and call `run()`)
 
         Args:
-            argv (list, None): specify command line args
+            argv: specify command line args
 
         Return:
-            int: 0 for successful reduction
+            0 for successful reduction
         """
         self.process_args(argv)
 
@@ -56,14 +59,14 @@ class Lithium:
 
         except LithiumError:
             summary_header()
-            LOG.exception()
+            LOG.exception("")
             return 1
 
-    def run(self):
+    def run(self) -> int:
         """Reduction Loop
 
         Returns:
-            int: 0 for successful reduction
+            0 for successful reduction
         """
         if hasattr(self.condition_script, "init"):
             self.condition_script.init(self.condition_args)
@@ -92,21 +95,21 @@ class Lithium:
             if self.last_interesting is not None:
                 self.last_interesting.dump()
 
-    def process_args(self, argv=None):
+    def process_args(self, argv: Optional[List[str]]) -> None:
         """Parse command-line args and initialize self.
 
         Args:
-            argv (list, None): specify command line args
+            argv: specify command line args
         """
 
         # Try to parse --strategy before anything else
         class _ArgParseTry(argparse.ArgumentParser):
             # pylint: disable=arguments-differ,no-self-argument
 
-            def exit(_, **kwds):
+            def exit(_, **kwds) -> None:
                 pass
 
-            def error(_, message):
+            def error(_, message) -> None:
                 pass
 
         early_parser = _ArgParseTry(add_help=False)
@@ -119,8 +122,8 @@ class Lithium:
         grp_opt = parser.add_argument_group(description="Lithium options")
         grp_atoms = grp_opt.add_mutually_exclusive_group()
 
-        strategies = {}
-        testcase_types = {}
+        strategies: Dict[str, str] = {}
+        testcase_types: Dict[str, str] = {}
         for entry_point in pkg_resources.iter_entry_points("lithium_strategies"):
             try:
                 strategy_cls = entry_point.load()
@@ -232,22 +235,24 @@ class Lithium:
         self.condition_script = rel_or_abs_import(extra_args[0])
         self.condition_args = extra_args[1:]
 
-    def testcase_temp_filename(self, filename_stem, use_number=True):
+    def testcase_temp_filename(
+        self, filename_stem: str, use_number: bool = True
+    ) -> Path:
         """Create a temporary filename for the next testcase.
 
         Args:
-            filename_stem (str): Basename for the testcase on disk.
-            use_number (bool): Prefix filename with the next number in sequence.
+            filename_stem: Basename for the testcase on disk.
+            use_number: Prefix filename with the next number in sequence.
 
         Returns:
-            Path: Filename to use for the next testcase.
+            Filename to use for the next testcase.
         """
         if use_number:
             filename_stem = "%d-%s" % (self.temp_file_count, filename_stem)
             self.temp_file_count += 1
         return self.temp_dir / (filename_stem + self.testcase.extension)
 
-    def create_temp_dir(self):
+    def create_temp_dir(self) -> None:
         """Create and switch to the next available temporary working folder."""
         i = 1
         while True:
@@ -264,16 +269,16 @@ class Lithium:
 
     # If the file is still interesting after the change, changes "parts" and returns
     # True.
-    def interesting(self, testcase_suggestion, write_it=True):
+    def interesting(self, testcase_suggestion, write_it: bool = True) -> bool:
         """Test whether a testcase suggestion is interesting.
 
         Args:
-            testcase_suggestion (Testcase): Testcase to check.
-            write_it (bool): Update the original file on disk to the suggestion before
+            testcase_suggestion: Testcase to check.
+            write_it: Update the original file on disk to the suggestion before
                              running the condition script.
 
         Returns:
-            bool: Whether or not the testcase was interesting.
+            Whether or not the testcase was interesting.
         """
         if write_it:
             testcase_suggestion.dump()
@@ -299,7 +304,7 @@ class Lithium:
         return inter
 
 
-def main():
+def main() -> None:
     """Lithium main entrypoint"""
     logging.basicConfig(format="%(message)s", level=logging.INFO)
     sys.exit(Lithium().main())

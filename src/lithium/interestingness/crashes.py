@@ -11,19 +11,20 @@ Example:
 """
 
 import logging
+from typing import List
 
 from . import timed_run
 
 
-def interesting(cli_args, temp_prefix):
+def interesting(cli_args: List[str], temp_prefix: str) -> bool:
     """Interesting if the binary causes a crash. (e.g. SIGKILL/SIGTERM/SIGTRAP etc.)
 
     Args:
-        cli_args (list): List of input arguments.
-        temp_prefix (str): Temporary directory prefix, e.g. tmp1/1 or tmp4/1
+        cli_args: List of input arguments.
+        temp_prefix: Temporary directory prefix, e.g. tmp1/1 or tmp4/1
 
     Returns:
-        bool: True if binary crashes, False otherwise.
+        True if binary crashes, False otherwise.
     """
     parser = timed_run.ArgumentParser(
         prog="crashes",

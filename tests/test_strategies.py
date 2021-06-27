@@ -13,7 +13,7 @@ import lithium
 pytestmark = pytest.mark.usefixtures("tmp_cwd")  # pylint: disable=invalid-name
 
 
-def test_minimize(testcase_cls):
+def test_minimize(testcase_cls) -> None:
     """test that minimize strategy works"""
     test_path = Path("a.txt")
 
@@ -38,7 +38,7 @@ def test_minimize(testcase_cls):
     assert test_path.read_bytes() == b"o\n"
 
 
-def test_minimize_around(testcase_cls):
+def test_minimize_around(testcase_cls) -> None:
     """test that minimize around strategy works"""
     test_path = Path("a.txt")
 
@@ -64,7 +64,7 @@ def test_minimize_around(testcase_cls):
     assert test_path.read_bytes() == b"o\n"
 
 
-def test_minimize_balanced(testcase_cls):
+def test_minimize_balanced(testcase_cls) -> None:
     """test that minimize balanced strategy works"""
     test_path = Path("a.txt")
 
@@ -97,7 +97,7 @@ def test_minimize_balanced(testcase_cls):
     assert test_path.read_bytes() == b"o\n"
 
 
-def test_replace_properties(testcase_cls):
+def test_replace_properties(testcase_cls) -> None:
     """test that replace properties strategy works"""
     original = (
         # original: this.list, prototype.push, prototype.last
@@ -168,7 +168,7 @@ def test_replace_properties(testcase_cls):
         assert data == expected
 
 
-def test_replace_arguments(testcase_cls):
+def test_replace_arguments(testcase_cls) -> None:
     """test that replace arguments strategy works"""
     original = b"function foo(a,b) {\n  list = a + b;\n}\nfoo(2,3)\n"
     expected = b"function foo() {\n  list = a + b;\n}\na = 2;\nb = 3;\nfoo()\n"
@@ -184,13 +184,13 @@ def test_replace_arguments(testcase_cls):
 
     class _Interesting:
         # pylint: disable=missing-function-docstring,no-self-use
-        def init(self, condition_args):
+        def init(self, condition_args) -> None:
             pass
 
         def interesting(self, *_):
             return test_path.read_bytes() in valid_reductions
 
-        def cleanup(self, condition_args):
+        def cleanup(self, condition_args) -> None:
             pass
 
     obj = lithium.Lithium()
@@ -216,13 +216,13 @@ def test_replace_arguments(testcase_cls):
         ("NO_BRACE", 13, b"o\n"),
     ],
 )
-def test_minimize_collapse_braces(test_type, test_count, expected):
+def test_minimize_collapse_braces(test_type, test_count, expected) -> None:
     """test that collapse-braces strategy eliminates empty braces"""
     test_path = Path("a.txt")
 
     class _Interesting:
         # pylint: disable=missing-function-docstring,no-self-use
-        def init(self, condition_args):
+        def init(self, condition_args) -> None:
             pass
 
         def interesting(self, condition_args, *_):
@@ -236,7 +236,7 @@ def test_minimize_collapse_braces(test_type, test_count, expected):
 
             return False
 
-        def cleanup(self, condition_args):
+        def cleanup(self, condition_args) -> None:
             pass
 
     # CollapseEmptyBraces only applies to line-based reduction
@@ -252,19 +252,19 @@ def test_minimize_collapse_braces(test_type, test_count, expected):
     assert obj.test_count == test_count
 
 
-def test_minimize_reducible():
+def test_minimize_reducible() -> None:
     """test that minimize works around non-reducible parts in the testcase"""
     test_path = Path("a.txt")
 
     class _Interesting:
         # pylint: disable=missing-function-docstring,no-self-use
-        def init(self, condition_args):
+        def init(self, condition_args) -> None:
             pass
 
         def interesting(self, *_):
             return b"o\n" in test_path.read_bytes()
 
-        def cleanup(self, condition_args):
+        def cleanup(self, condition_args) -> None:
             pass
 
     obj = lithium.Lithium()

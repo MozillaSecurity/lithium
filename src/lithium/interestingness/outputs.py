@@ -12,20 +12,23 @@ Example:
 
 import logging
 import os
+from pathlib import Path
+from typing import List
+from typing import Union
 
 from . import timed_run, utils
 
 
-def interesting(cli_args, temp_prefix):
+def interesting(cli_args: List[str], temp_prefix: str) -> bool:
     """Interesting if the binary causes an intended message to show up. (e.g. on
     stdout/stderr)
 
     Args:
-        cli_args (list): List of input arguments.
-        temp_prefix (str): Temporary directory prefix, e.g. tmp1/1 or tmp4/1
+        cli_args: List of input arguments.
+        temp_prefix: Temporary directory prefix, e.g. tmp1/1 or tmp4/1
 
     Returns:
-        bool: True if the intended message shows up, False otherwise.
+        True if the intended message shows up, False otherwise.
     """
     parser = timed_run.ArgumentParser(
         prog="outputs",
@@ -51,7 +54,7 @@ def interesting(cli_args, temp_prefix):
     # message
     runinfo = timed_run.timed_run(args.cmd_with_flags[1:], args.timeout, temp_prefix)
 
-    def file_contains(path):
+    def file_contains(path: Union[Path, str]) -> bool:
         if args.regex:
             return utils.file_contains_regex(path, search_for)[0]
         return utils.file_contains_str(path, search_for)

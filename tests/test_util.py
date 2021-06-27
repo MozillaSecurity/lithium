@@ -17,14 +17,14 @@ LOG = logging.getLogger(__name__)
 pytestmark = pytest.mark.usefixtures("tmp_cwd")  # pylint: disable=invalid-name
 
 
-def _ispow2(inp):
+def _ispow2(inp: int) -> int:
     """Simple version of `is_power_of_two` for testing and comparison
 
     Args:
-        inp (int): input
+        inp: input
 
     Returns:
-        int: result
+        result
     """
     assert (
         isinstance(inp, int) or inp.is_integer()
@@ -51,15 +51,15 @@ def _ispow2(inp):
     return result
 
 
-def _divceil(num, den):
+def _divceil(num: int, den: int) -> int:
     """Simple version of `_divide_rounding_up` for testing and comparison
 
     Args:
-        num (int): numerator
-        den (int): denominator
+        num: numerator
+        den: denominator
 
     Returns:
-        int: result
+        result
     """
     quo = num // den
     rem = num % den
@@ -73,7 +73,7 @@ def _divceil(num, den):
     return result
 
 
-def test_divide_rounding_up():
+def test_divide_rounding_up() -> None:
     """test `divide_rounding_up`"""
     for _ in range(10000):
         num = random.randint(1, (1 << 64) - 1)
@@ -88,7 +88,7 @@ def test_divide_rounding_up():
             raise
 
 
-def test_is_power_of_two():
+def test_is_power_of_two() -> None:
     """test `is_power_of_two`"""
     assert not lithium.util.is_power_of_two(0)
     # try all integers [1,10000)
@@ -108,11 +108,11 @@ def test_is_power_of_two():
             raise
 
 
-def test_largest_power_of_two_smaller_than():
+def test_largest_power_of_two_smaller_than() -> None:
     """test `largest_power_of_two_smaller_than`"""
     assert lithium.util.largest_power_of_two_smaller_than(0) == 1
 
-    def check_result(inp):
+    def check_result(inp: int) -> None:
         result = lithium.util.largest_power_of_two_smaller_than(inp)
         # check that it is a power of two
         assert _ispow2(result)

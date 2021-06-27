@@ -32,20 +32,21 @@ Use for:
 
 import argparse
 import logging
+from typing import List
 
 from .utils import rel_or_abs_import
 
 
-def interesting(cli_args, temp_prefix):
+def interesting(cli_args: List[str], temp_prefix: str) -> bool:
     """Interesting if the desired interestingness test that is run together with
     "repeat" also reports "interesting".
 
     Args:
-        cli_args (list): List of input arguments.
-        temp_prefix (str): Temporary directory prefix, e.g. tmp1/1 or tmp4/1
+        cli_args: List of input arguments.
+        temp_prefix: Temporary directory prefix, e.g. tmp1/1 or tmp4/1
 
     Returns:
-        bool: True if the desired interestingness test also returns True.
+        True if the desired interestingness test also returns True.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(

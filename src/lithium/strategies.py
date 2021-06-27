@@ -5,12 +5,18 @@
 """Lithium reduction strategy implementations"""
 
 import abc
+import argparse
 import functools
 import hashlib
 import logging
 import re
 import time
+from typing import Generator
+from typing import List
+from typing import Optional
+from typing import Set
 
+from .testcases import Testcase
 from .util import (
     divide_rounding_up,
     is_power_of_two,
@@ -31,33 +37,30 @@ class ReductionIterator(abc.ABC):
     `best`.
     """
 
-    def __init__(self, testcase):
+    def __init__(self, testcase) -> None:
         self._best_testcase = testcase
         self._testcase_attempt = None
-        self._any_success = False
-        self._last_success = None
-        self._description = "Reduction"
-        self._tried = set()
+        self._any_success: bool = False
+        self._last_success: Optional[bool] = None
+        self._description: str = "Reduction"
+        self._tried: Set[bytes] = set()
 
     @property
-    def last_feedback(self):
+    def last_feedback(self) -> Optional[bool]:
         """Get the feedback value from the latest attempt.
 
         Returns:
-            bool: The value last passed to `self.feedback()`
+            The value last passed to `self.feedback()`
         """
         assert self._last_success is not None, "No feedback received yet"
         return self._last_success
 
-    def update_tried(self, tried):
+    def update_tried(self, tried) -> None:
         """Update the list of tried hashes. Testcases are hashed with SHA-512
         and digested to bytes (`hashlib.sha512(testcase).digest()`)
 
         Args:
             tried (iterable(str)): Set of already tried testcase hashes.
-
-        Returns:
-            None
         """
         self._tried.update(frozenset(tried))
 
@@ -70,11 +73,11 @@ class ReductionIterator(abc.ABC):
         """
         return frozenset(self._tried)
 
-    def feedback(self, success):
+    def feedback(self, success: Optional[bool]) -> None:
         """Provide feedback on the current reduction attempt.
 
         Args:
-            success (bool): Whether or not the current reduction was "successful".
+            success: Whether or not the current reduction was "successful".
         """
         assert self._testcase_attempt is not None, "No testcase being attempted"
         assert self._last_success is None, "Already got feedback"
@@ -84,14 +87,16 @@ class ReductionIterator(abc.ABC):
             self._any_success = True
         self._testcase_attempt = None
 
-    def try_testcase(self, testcase, description="Reduction"):
+    def try_testcase(
+        self, testcase: Testcase, description: str = "Reduction"
+    ) -> Generator[Testcase]:
         """Update the currently attempted testcase.
 
         Args:
-            testcase (Testcase): The testcase to try.
+            testcase: The testcase to try.
 
         Yields:
-            Testcase: same as argument
+            Same as argument
         """
         assert self._testcase_attempt is None, "Already attempting a testcase"
         # de-dupe the testcase
@@ -111,39 +116,39 @@ class ReductionIterator(abc.ABC):
             yield self._testcase_attempt
 
     @property
-    def testcase(self):
+    def testcase(self) -> Testcase:
         """Get the best successful testcase in this reduction.
 
         Returns:
-            Testcase: The current best testcase (or end result, if finished).
+            The current best testcase (or end result, if finished).
         """
         return self._best_testcase
 
     @property
-    def reduced(self):
+    def reduced(self) -> bool:
         """Check whether any reduction has been successful.
 
         Returns:
-            bool: True if any iteration got successful feedback.
+            True if any iteration got successful feedback.
         """
         return self._any_success
 
     @property
-    def description(self):
+    def description(self) -> str:
         """Describe the reduction attempt.
 
         Returns:
-            str: Description of the current reduction.
+            Description of the current reduction.
         """
         return self._description
 
     @abc.abstractmethod
-    def __iter__(self):
+    def __iter__(self) -> Generator[Testcase]:
         """Attempt to reduce this testcase.
 
         Yields:
-            Testcase: Reduction attempts. The caller must call `feedback()` following
-                      each result yielded.
+            Reduction attempts. The caller must call `feedback()` following
+            each result yielded.
         """
 
     @classmethod
@@ -179,34 +184,35 @@ class Strategy(abc.ABC):
     interesting callback repeatedly to minimize the testcase.
     """
 
-    def add_args(self, parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         """Add extra strategy-specific arguments to an ArgumentParser.
 
         Args:
-            parser (ArgumentParser): argparse instance to add arguments to.
+            parser: argparse instance to add arguments to.
         """
 
-    def process_args(self, parser, args):
+    def process_args(
+        self, parser: argparse.ArgumentParser, args: argparse.Namespace
+    ) -> None:
         """Handle any args added by this strategy in `add_args()`
 
         Args:
-            parser (argparse.ArgumentParser): argparse instance, if errors need to be
-                                              raised.
-            args (argparse.Namespace): parsed args to process.
+            parser: argparse instance, if errors need to be raised.
+            args: parsed args to process.
         """
 
     @abc.abstractmethod
-    def reduce(self, testcase):
+    def reduce(self, testcase: Testcase) -> None:
         """
 
         Args:
-            testcase (Testcase): testcase to reduce
+            testcase: testcase to reduce
 
         Returns:
-            Iterable: An iterable to reduce the testcase (see ReductionIterator).
+            An iterable to reduce the testcase (see ReductionIterator).
         """
 
-    def main(self, testcase, interesting, temp_filename):
+    def main(self, testcase, interesting, temp_filename) -> int:
         """
 
         Args:
@@ -240,7 +246,7 @@ class Strategy(abc.ABC):
                         Path: Filename to use for the next testcase.
 
         Returns:
-            int: 0 on success
+            0 on success
         """
         testcase.dump(temp_filename("original", False))
 
@@ -289,7 +295,7 @@ class CheckOnly(Strategy):
         # check doesn't reduce, only checks
         yield from iterator.try_testcase(iterator.testcase, "Check")
 
-    def main(self, testcase, interesting, temp_filename):
+    def main(self, testcase, interesting, temp_filename) -> int:
         result = interesting(testcase, write_it=False)
         LOG.info("Lithium result: %sinteresting.", ("" if result else "not "))
         return int(not result)
@@ -310,7 +316,7 @@ class Minimize(Strategy):
 
     name = "minimize"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.minimize_repeat = "last"
         self.minimize_min = 1
@@ -318,17 +324,17 @@ class Minimize(Strategy):
         self.minimize_repeat_first_round = False
         self.stop_after_time = None
 
-    def _chunk_iters(self, length, chunk_size):
+    def _chunk_iters(self, length: int, chunk_size: int) -> int:
         """How many iterations does this chunk represent (recursively)?
         ie. a chunk of length 2 and chunk_size 2 actually represents 3
             iterations (2 + 1)
 
         Arguments:
-            length (int): actual length of the chunk
-            chunk_size (int): chunk_size
+            length: actual length of the chunk
+            chunk_size: chunk_size
 
         Returns:
-            int: Total iterations from this chunk.
+            Total iterations from this chunk.
         """
         result = 0
         while chunk_size >= max(self.minimize_min, 1):
@@ -336,7 +342,7 @@ class Minimize(Strategy):
             chunk_size /= 2
         return int(result)
 
-    def add_args(self, parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         super().add_args(parser)
         grp_add = parser.add_argument_group(
             description="Additional options for the %s strategy" % (self.name,)
@@ -377,7 +383,9 @@ class Minimize(Strategy):
             "for continuing).",
         )
 
-    def process_args(self, parser, args):
+    def process_args(
+        self, parser: argparse.ArgumentParser, args: argparse.Namespace
+    ) -> None:
         super().process_args(parser, args)
         if args.chunk_size:
             self.minimize_min = args.chunk_size
@@ -395,7 +403,9 @@ class Minimize(Strategy):
         if not is_power_of_two(self.minimize_max):
             parser.error("Max must be a power of two.")
 
-    def _post_round_cb(self, iterator):  # pylint: disable=no-self-use
+    def _post_round_cb(  # pylint: disable=no-self-use
+        self, iterator
+    ) -> Optional[List[str]]:
         return []
 
     @ReductionIterator.wrap
@@ -564,7 +574,7 @@ class MinimizeSurroundingPairs(Minimize):
             )
 
     @staticmethod
-    def try_removing_chunks(chunk_size, stop_after_time, iterator):
+    def try_removing_chunks(chunk_size: int, stop_after_time: int, iterator):
         """Make a single run through the testcase, trying to remove chunks of size
         chunk_size.
 
@@ -697,11 +707,11 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
     name = "minimize-balanced"
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.use_experimental_move = False
 
-    def add_args(self, parser):
+    def add_args(self, parser: argparse.ArgumentParser) -> None:
         super().add_args(parser)
         grp_add = parser.add_argument_group(
             description="Additional options for the %s strategy" % (self.name,)
@@ -713,7 +723,9 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
             "reducing loops. Use at own risk!",
         )
 
-    def process_args(self, parser, args):
+    def process_args(
+        self, parser: argparse.ArgumentParser, args: argparse.Namespace
+    ) -> None:
         super().process_args(parser, args)
         self.use_experimental_move = args.with_experimental_move
 
@@ -1245,7 +1257,7 @@ class ReplaceArgumentsByGlobals(Minimize):
     name = "replace-arguments-by-globals"
 
     @ReductionIterator.wrap
-    def reduce(self, iterator):
+    def reduce(self, iterator) -> None:
         while True:
             num_removed_arguments = 0
             for maybe_removed, testcase in self.try_arguments_as_globals(iterator):
@@ -1522,12 +1534,12 @@ class CollapseEmptyBraces(Minimize):
 
     name = "minimize-collapse-brace"
 
-    def _post_round_cb(self, iterator):
+    def _post_round_cb(self, iterator) -> bool:
         """Collapse braces separated by whitespace
         Args:
             testcase (Testcase): Testcase to be reduced.
         Returns:
-            bool: True if callback was performed successfully, False otherwise.
+            True if callback was performed successfully, False otherwise.
         """
         raw = b"".join(iterator.testcase.parts)
         modified = re.sub(br"{\s+}", b"{ }", raw)

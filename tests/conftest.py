@@ -4,15 +4,17 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """lithium unittest fixtures"""
 
+import argparse
 import os
 from pathlib import Path
+from typing import Iterator
 
 import pytest
 
 import lithium
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: argparse.Namespace) -> None:
     """Add option to only lint and not run tests"""
     parser.addoption(
         "--lint-only",
@@ -23,7 +25,7 @@ def pytest_addoption(parser):
 
 
 # pylint: disable=unused-argument
-def pytest_collection_modifyitems(session, config, items):
+def pytest_collection_modifyitems(session, config, items) -> None:
     """Disable collection if any linters are specified, and --lint-only is given"""
     if config.getoption("--lint-only"):
         lint_items = []
@@ -48,7 +50,7 @@ def testcase_cls(request):
 
 
 @pytest.fixture
-def tmp_cwd(tmp_path):
+def tmp_cwd(tmp_path: Path) -> Iterator[Path]:
     """Same as tmp_path, but chdir to the tmp folder too."""
     orig = os.getcwd()
     try:
@@ -59,6 +61,6 @@ def tmp_cwd(tmp_path):
 
 
 @pytest.fixture
-def examples_path():
+def examples_path() -> Iterator[Path]:
     """Path to the lithium examples folder"""
     yield Path(__file__).parent.parent / "src" / "lithium" / "docs" / "examples"

@@ -14,6 +14,9 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import BinaryIO
+from typing import List
+from typing import Union
 
 (CRASHED, TIMED_OUT, NORMAL, ABNORMAL, NONE) = range(5)
 
@@ -28,7 +31,7 @@ RunData = collections.namedtuple(
 class ArgumentParser(argparse.ArgumentParser):
     """Argument parser with `timeout` and `cmd_with_args`"""
 
-    def __init__(self, *args, **kwds):
+    def __init__(self, *args, **kwds) -> None:
         super().__init__(*args, **kwds)
         self.add_argument(
             "-t",
@@ -41,16 +44,16 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("cmd_with_flags", nargs=argparse.REMAINDER)
 
 
-def get_signal_name(signum, default="Unknown signal"):
+def get_signal_name(signum: int, default: str = "Unknown signal") -> str:
     """Stringify a signal number. The result will be something like "SIGSEGV",
     or from Python 3.8, "Segmentation fault".
 
     Args:
-        signum (int): Signal number to lookup
-        default (str): Default to return if signal isn't recognized.
+        signum: Signal number to lookup
+        default: Default to return if signal isn't recognized.
 
     Returns:
-        str: String description of the signal.
+        String description of the signal.
     """
     if sys.version_info[:2] >= (3, 8) and platform.system() != "Windows":
         return signal.strsignal(signum) or default
@@ -62,17 +65,22 @@ def get_signal_name(signum, default="Unknown signal"):
 
 
 def timed_run(
-    cmd_with_args, timeout, log_prefix=None, env=None, inp=None, preexec_fn=None
-):
+    cmd_with_args: List[str],
+    timeout: int,
+    log_prefix: str = "",
+    env=None,
+    inp: str = "",
+    preexec_fn=None,
+) -> RunData:
     """If log_prefix is None, uses pipes instead of files for all output.
 
     Args:
-        cmd_with_args (list): List of command and parameters to be executed
-        timeout (int): Timeout for the command to be run, in seconds
-        log_prefix (str): Prefix string of the log files
-        env (dict): Environment for the command to be executed in
-        inp (str): stdin to be passed to the command
-        preexec_fn (callable): called in child process after fork, prior to exec
+        cmd_with_args: List of command and parameters to be executed
+        timeout: Timeout for the command to be run, in seconds
+        log_prefix: Prefix string of the log files
+        env: Environment for the command to be executed in
+        inp: stdin to be passed to the command
+        preexec_fn: called in child process after fork, prior to exec
 
     Raises:
         TypeError: Raises if input parameters are not of the desired types
@@ -80,7 +88,7 @@ def timed_run(
         OSError: Raises if timed_run is attempted to be used with gdb
 
     Returns:
-        class: A rundata instance containing run information
+        A rundata instance containing run information
     """
     if not isinstance(cmd_with_args, list):
         raise TypeError("cmd_with_args should be a list (of strings).")
@@ -103,7 +111,8 @@ def timed_run(
     sta = NONE
     msg = ""
 
-    child_stdout = child_stderr = subprocess.PIPE
+    child_stderr: Union[int, BinaryIO] = subprocess.PIPE
+    child_stdout: Union[int, BinaryIO] = subprocess.PIPE
     if log_prefix is not None:
         # pylint: disable=consider-using-with
         child_stdout = open(log_prefix + "-out.txt", "wb")
@@ -120,7 +129,7 @@ def timed_run(
     )
     try:
         stdout, stderr = child.communicate(
-            input=inp,
+            input=inp.encode("utf-8"),
             timeout=timeout,
         )
     except subprocess.TimeoutExpired:

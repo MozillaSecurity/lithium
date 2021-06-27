@@ -16,13 +16,13 @@ LOG = logging.getLogger(__name__)
 pytestmark = pytest.mark.usefixtures("tmp_cwd")  # pylint: disable=invalid-name
 
 
-def test_executable():
+def test_executable() -> None:
     """test lithium main help call"""
     with pytest.raises(SystemExit, match="0"):
         lithium.Lithium().main(["-h"])
 
 
-def test_class():
+def test_class() -> None:
     """test that lithium works as a class"""
     lith = lithium.Lithium()
     with open("empty.txt", "w"):
@@ -34,14 +34,14 @@ def test_class():
         interesting_called = False
         cleanup_called = False
 
-        def init(self, *_):
+        def init(self, *_) -> None:
             self.init_called = True
 
-        def interesting(self, *_):
+        def interesting(self, *_) -> bool:
             self.interesting_called = True
             return True
 
-        def cleanup(self, *_):
+        def cleanup(self, *_) -> None:
             self.cleanup_called = True
 
     inter = _Interesting()
@@ -56,7 +56,7 @@ def test_class():
     assert inter.cleanup_called
 
 
-def test_empty(caplog):
+def test_empty(caplog) -> None:
     """test lithium with empty input"""
     lith = lithium.Lithium()
     with open("empty.txt", "w"):
@@ -91,7 +91,7 @@ def test_empty(caplog):
 
 
 @pytest.mark.parametrize("char", [(True, False)])
-def test_arithmetic(examples_path, char):
+def test_arithmetic(examples_path: Path, char) -> None:
     """test lithium arithmetic example"""
     path = examples_path / "arithmetic"
     shutil.copyfile(str(path / "11.txt"), "11.txt")

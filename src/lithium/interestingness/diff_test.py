@@ -24,20 +24,21 @@ Example with autobisectjs, split into separate lines here for readability:
 
 import filecmp
 import logging
+from typing import List
 
 from . import timed_run
 
 
-def interesting(cli_args, temp_prefix):
+def interesting(cli_args: List[str], temp_prefix: str) -> bool:
     """Interesting if the binary shows a difference in output when different command
     line arguments are passed in.
 
     Args:
-        cli_args (list): List of input arguments.
-        temp_prefix (str): Temporary directory prefix, e.g. tmp1/1 or tmp4/1
+        cli_args: List of input arguments.
+        temp_prefix: Temporary directory prefix, e.g. tmp1/1 or tmp4/1
 
     Returns:
-        bool: True if a difference in output appears, False otherwise.
+        True if a difference in output appears, False otherwise.
     """
     parser = timed_run.ArgumentParser(
         prog="diff_test",
