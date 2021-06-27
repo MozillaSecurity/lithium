@@ -25,3 +25,7 @@
 
 # Tox environment
 /.tox/
+
+# IDE / Editor
+.vscode/
+.idea/
