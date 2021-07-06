@@ -32,7 +32,7 @@ Use for:
 
 import argparse
 import logging
-from typing import List
+from typing import Any, List, cast
 
 from .utils import rel_or_abs_import
 
@@ -69,7 +69,7 @@ def interesting(cli_args: List[str], temp_prefix: str) -> bool:
     condition_args = args.cmd_with_flags[2:]
 
     if hasattr(condition_script, "init"):
-        condition_script.init(condition_args)
+        cast(Any, condition_script).init(condition_args)
 
     # Run the program over as many iterations as intended, with desired flags, replacing
     # REPEATNUM where necessary.
@@ -79,7 +79,9 @@ def interesting(cli_args: List[str], temp_prefix: str) -> bool:
             s.replace("REPEATNUM", str(i)) for s in condition_args
         ]
         log.info("Repeat number %d:", i)
-        if condition_script.interesting(replaced_condition_args, temp_prefix):
+        if cast(Any, condition_script).interesting(
+            replaced_condition_args, temp_prefix
+        ):
             return True
 
     return False

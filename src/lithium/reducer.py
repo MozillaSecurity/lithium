@@ -9,15 +9,16 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Dict
-from typing import List
-from typing import Optional
+from types import ModuleType
+from typing import Any, Dict, List, Optional, Type, cast
 
 import pkg_resources
 
 from .interestingness.utils import rel_or_abs_import
 from .strategies import DEFAULT as DEFAULT_STRATEGY
+from .strategies import Strategy
 from .testcases import DEFAULT as DEFAULT_TESTCASE
+from .testcases import Testcase
 from .util import LithiumError, quantity, summary_header
 
 LOG = logging.getLogger(__name__)
@@ -28,22 +29,22 @@ class Lithium:
 
     def __init__(self) -> None:
 
-        self.strategy = None
+        self.strategy: Optional[Strategy] = None
 
-        self.condition_script = None
-        self.condition_args = None
+        self.condition_script: Optional[ModuleType] = None
+        self.condition_args: Optional[List[str]] = None
 
         self.test_count = 0
         self.test_total = 0
 
-        self.temp_dir: Path = Path()
+        self.temp_dir: Optional[Path] = None
 
-        self.testcase = None
-        self.last_interesting = None
+        self.testcase: Optional[Testcase] = None
+        self.last_interesting: Optional[Testcase] = None
 
         self.temp_file_count = 1
 
-    def main(self, argv: Optional[List[str]]) -> int:
+    def main(self, argv: Optional[List[str]] = None) -> int:
         """Main entrypoint (parse args and call `run()`)
 
         Args:
@@ -69,7 +70,7 @@ class Lithium:
             0 for successful reduction
         """
         if hasattr(self.condition_script, "init"):
-            self.condition_script.init(self.condition_args)
+            cast(Any, self.condition_script).init(self.condition_args)
 
         try:
             if self.temp_dir is None:
@@ -78,6 +79,8 @@ class Lithium:
                     "Intermediate files will be stored in %s%s.", self.temp_dir, os.sep
                 )
 
+            assert self.strategy is not None
+            assert self.testcase is not None
             result = self.strategy.main(
                 self.testcase, self.interesting, self.testcase_temp_filename
             )
@@ -89,13 +92,13 @@ class Lithium:
 
         finally:
             if hasattr(self.condition_script, "cleanup"):
-                self.condition_script.cleanup(self.condition_args)
+                cast(Any, self.condition_script).cleanup(self.condition_args)
 
             # Make sure we exit with an interesting testcase
             if self.last_interesting is not None:
                 self.last_interesting.dump()
 
-    def process_args(self, argv: Optional[List[str]]) -> None:
+    def process_args(self, argv: Optional[List[str]] = None) -> None:
         """Parse command-line args and initialize self.
 
         Args:
@@ -106,10 +109,12 @@ class Lithium:
         class _ArgParseTry(argparse.ArgumentParser):
             # pylint: disable=arguments-differ,no-self-argument
 
-            def exit(_, **kwds) -> None:
+            def exit(  # type: ignore[override]
+                self, status: int = 0, message: Optional[str] = None
+            ) -> None:
                 pass
 
-            def error(_, message) -> None:
+            def error(self, message: str) -> None:  # type: ignore[override]
                 pass
 
         early_parser = _ArgParseTry(add_help=False)
@@ -122,8 +127,8 @@ class Lithium:
         grp_opt = parser.add_argument_group(description="Lithium options")
         grp_atoms = grp_opt.add_mutually_exclusive_group()
 
-        strategies: Dict[str, str] = {}
-        testcase_types: Dict[str, str] = {}
+        strategies: Dict[str, Type[Strategy]] = {}
+        testcase_types: Dict[str, Type[Testcase]] = {}
         for entry_point in pkg_resources.iter_entry_points("lithium_strategies"):
             try:
                 strategy_cls = entry_point.load()
@@ -174,10 +179,10 @@ class Lithium:
         early_parser.add_argument(
             "--strategy", default=DEFAULT_STRATEGY, choices=strategies.keys()
         )
-        args = early_parser.parse_known_args(argv)
-        atom = args[0].atom if args else DEFAULT_TESTCASE
+        early_args = early_parser.parse_known_args(argv)
+        atom = early_args[0].atom if early_args else DEFAULT_TESTCASE
         self.strategy = strategies.get(
-            args[0].strategy if args else None, strategies[DEFAULT_STRATEGY]
+            early_args[0].strategy if early_args else None, strategies[DEFAULT_STRATEGY]
         )()
 
         grp_opt.add_argument(
@@ -192,6 +197,7 @@ class Lithium:
             "-v", "--verbose", action="store_true", help="enable verbose debug logging"
         )
         # this has already been parsed above, it's only here for the help message
+        assert self.strategy is not None
         grp_opt.add_argument(
             "--strategy",
             default=self.strategy.name,
@@ -250,6 +256,9 @@ class Lithium:
         if use_number:
             filename_stem = "%d-%s" % (self.temp_file_count, filename_stem)
             self.temp_file_count += 1
+        assert self.testcase is not None
+        assert self.testcase.extension is not None
+        assert self.temp_dir is not None
         return self.temp_dir / (filename_stem + self.testcase.extension)
 
     def create_temp_dir(self) -> None:
@@ -269,7 +278,7 @@ class Lithium:
 
     # If the file is still interesting after the change, changes "parts" and returns
     # True.
-    def interesting(self, testcase_suggestion, write_it: bool = True) -> bool:
+    def interesting(self, testcase_suggestion: Testcase, write_it: bool = True) -> bool:
         """Test whether a testcase suggestion is interesting.
 
         Args:
@@ -286,9 +295,15 @@ class Lithium:
         self.test_count += 1
         self.test_total += len(testcase_suggestion)
 
+        assert self.temp_dir is not None
         temp_prefix = str(self.temp_dir / str(self.temp_file_count))
 
-        inter = self.condition_script.interesting(self.condition_args, temp_prefix)
+        assert self.condition_script is not None
+        inter = bool(
+            cast(Any, self.condition_script).interesting(
+                self.condition_args, temp_prefix
+            )
+        )
 
         # Save an extra copy of the file inside the temp directory.
         # This is useful if you're reducing an assertion and encounter a crash:

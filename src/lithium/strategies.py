@@ -11,10 +11,21 @@ import hashlib
 import logging
 import re
 import time
-from typing import Generator
-from typing import List
-from typing import Optional
-from typing import Set
+from pathlib import Path
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    FrozenSet,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+    cast,
+)
 
 from .testcases import Testcase
 from .util import (
@@ -37,16 +48,16 @@ class ReductionIterator(abc.ABC):
     `best`.
     """
 
-    def __init__(self, testcase) -> None:
+    def __init__(self, testcase: Testcase) -> None:
         self._best_testcase = testcase
-        self._testcase_attempt = None
+        self._testcase_attempt: Optional[Testcase] = None
         self._any_success: bool = False
         self._last_success: Optional[bool] = None
         self._description: str = "Reduction"
-        self._tried: Set[bytes] = set()
+        self._tried: Set[str] = set()
 
     @property
-    def last_feedback(self) -> Optional[bool]:
+    def last_feedback(self) -> bool:
         """Get the feedback value from the latest attempt.
 
         Returns:
@@ -55,29 +66,29 @@ class ReductionIterator(abc.ABC):
         assert self._last_success is not None, "No feedback received yet"
         return self._last_success
 
-    def update_tried(self, tried) -> None:
+    def update_tried(self, tried: Iterable[str]) -> None:
         """Update the list of tried hashes. Testcases are hashed with SHA-512
         and digested to bytes (`hashlib.sha512(testcase).digest()`)
 
         Args:
-            tried (iterable(str)): Set of already tried testcase hashes.
+            tried: Set of already tried testcase hashes.
         """
         self._tried.update(frozenset(tried))
 
-    def get_tried(self):
+    def get_tried(self) -> FrozenSet[str]:
         """Return the set of tried testcase hashes. Testcases are hashed with SHA-512
         and digested to bytes (`hashlib.sha512(testcase).digest()`)
 
         Returns:
-            frozenset(str): Testcase hashes.
+            Testcase hashes.
         """
         return frozenset(self._tried)
 
-    def feedback(self, success: Optional[bool]) -> None:
+    def feedback(self, success: bool) -> None:
         """Provide feedback on the current reduction attempt.
 
         Args:
-            success: Whether or not the current reduction was "successful".
+            Whether or not the current reduction was "successful".
         """
         assert self._testcase_attempt is not None, "No testcase being attempted"
         assert self._last_success is None, "Already got feedback"
@@ -89,7 +100,7 @@ class ReductionIterator(abc.ABC):
 
     def try_testcase(
         self, testcase: Testcase, description: str = "Reduction"
-    ) -> Generator[Testcase]:
+    ) -> Iterator[Testcase]:
         """Update the currently attempted testcase.
 
         Args:
@@ -102,12 +113,12 @@ class ReductionIterator(abc.ABC):
         # de-dupe the testcase
         # include before/after since different testcase types
         #   may split them inconsistently.
-        tc_hash = hashlib.sha512()
-        tc_hash.update(testcase.before)
+        tc_hasher = hashlib.sha512()
+        tc_hasher.update(testcase.before)
         for part in testcase.parts:
-            tc_hash.update(part)
-        tc_hash.update(testcase.after)
-        tc_hash = tc_hash.hexdigest()
+            tc_hasher.update(part)
+        tc_hasher.update(testcase.after)
+        tc_hash = tc_hasher.hexdigest()
         if tc_hash not in self._tried:
             self._tried.add(tc_hash)
             self._last_success = None
@@ -143,7 +154,7 @@ class ReductionIterator(abc.ABC):
         return self._description
 
     @abc.abstractmethod
-    def __iter__(self) -> Generator[Testcase]:
+    def __iter__(self) -> Iterator[Testcase]:
         """Attempt to reduce this testcase.
 
         Yields:
@@ -152,7 +163,9 @@ class ReductionIterator(abc.ABC):
         """
 
     @classmethod
-    def wrap(cls, method):
+    def wrap(
+        cls, method: Callable[["Strategy", "ReductionIterator"], Iterator[Testcase]]
+    ) -> Callable[["Strategy", Testcase], Iterator[Testcase]]:
         """This can be used as a decorator to define the `Strategy.reduce` method
         with a simpler signature:
 
@@ -167,9 +180,9 @@ class ReductionIterator(abc.ABC):
         """
 
         @functools.wraps(method)
-        def wrapped(inst, testcase):
-            class _iter(cls):
-                def __iter__(self):
+        def wrapped(inst: "Strategy", testcase: Testcase) -> Iterator[Testcase]:
+            class _iter(cls):  # type: ignore[valid-type,misc]
+                def __iter__(self) -> Iterator[Testcase]:
                     yield from method(inst, self)
 
             return _iter(testcase)
@@ -183,6 +196,9 @@ class Strategy(abc.ABC):
     Implementers should define a main() method which takes a testcase and calls the
     interesting callback repeatedly to minimize the testcase.
     """
+
+    name: str
+    """short name of this strategy for CLI use"""
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
         """Add extra strategy-specific arguments to an ArgumentParser.
@@ -202,7 +218,7 @@ class Strategy(abc.ABC):
         """
 
     @abc.abstractmethod
-    def reduce(self, testcase: Testcase) -> None:
+    def reduce(self, testcase: Testcase) -> ReductionIterator:
         """
 
         Args:
@@ -212,7 +228,12 @@ class Strategy(abc.ABC):
             An iterable to reduce the testcase (see ReductionIterator).
         """
 
-    def main(self, testcase, interesting, temp_filename) -> int:
+    def main(
+        self,
+        testcase: Testcase,
+        interesting: Callable[[Testcase, bool], bool],
+        temp_filename: Callable[[str, bool], Path],
+    ) -> int:
         """
 
         Args:
@@ -261,13 +282,13 @@ class Strategy(abc.ABC):
         LOG.info("The original testcase has %s.", orig_len)
 
         LOG.info("Checking that the original testcase is 'interesting'...")
-        if not interesting(testcase, write_it=False):
+        if not interesting(testcase, False):
             LOG.info("Lithium result: the original testcase is not 'interesting'!")
             return 1
 
         reduction = self.reduce(testcase)
         for attempt in reduction:
-            success = interesting(attempt)
+            success = interesting(attempt, True)
             if success:
                 LOG.info("%s was successful", reduction.description)
             else:
@@ -290,13 +311,21 @@ class CheckOnly(Strategy):
 
     name = "check-only"
 
-    @ReductionIterator.wrap
-    def reduce(self, iterator):  # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ
+    @ReductionIterator.wrap  # type: ignore[arg-type]
+    def reduce(  # type: ignore[override]
+        self, iterator: ReductionIterator
+    ) -> Iterator[Testcase]:
         # check doesn't reduce, only checks
         yield from iterator.try_testcase(iterator.testcase, "Check")
 
-    def main(self, testcase, interesting, temp_filename) -> int:
-        result = interesting(testcase, write_it=False)
+    def main(
+        self,
+        testcase: Testcase,
+        interesting: Callable[[Testcase, bool], bool],
+        temp_filename: Callable[[str, bool], Path],
+    ) -> int:
+        result = interesting(testcase, False)
         LOG.info("Lithium result: %sinteresting.", ("" if result else "not "))
         return int(not result)
 
@@ -339,7 +368,7 @@ class Minimize(Strategy):
         result = 0
         while chunk_size >= max(self.minimize_min, 1):
             result += divide_rounding_up(length, chunk_size)
-            chunk_size /= 2
+            chunk_size = int(chunk_size / 2)
         return int(result)
 
     def add_args(self, parser: argparse.ArgumentParser) -> None:
@@ -404,12 +433,15 @@ class Minimize(Strategy):
             parser.error("Max must be a power of two.")
 
     def _post_round_cb(  # pylint: disable=no-self-use
-        self, iterator
-    ) -> Optional[List[str]]:
-        return []
+        self, iterator: ReductionIterator
+    ) -> Iterator[Testcase]:
+        return cast(Iterator[Testcase], [])
 
-    @ReductionIterator.wrap
-    def reduce(self, iterator):  # pylint: disable=arguments-differ
+    # pylint: disable=arguments-differ
+    @ReductionIterator.wrap  # type: ignore[arg-type]
+    def reduce(  # type: ignore[override]
+        self, iterator: ReductionIterator
+    ) -> Iterator[Testcase]:
         chunk_size = min(
             self.minimize_max, largest_power_of_two_smaller_than(len(iterator.testcase))
         )
@@ -524,13 +556,15 @@ class MinimizeSurroundingPairs(Minimize):
 
     name = "minimize-around"
 
-    @ReductionIterator.wrap
-    def reduce(self, iterator):
+    @ReductionIterator.wrap  # type: ignore[arg-type]
+    def reduce(  # type: ignore[override]
+        self, iterator: ReductionIterator
+    ) -> Iterator[Testcase]:
         chunk_size = min(
             self.minimize_max, largest_power_of_two_smaller_than(len(iterator.testcase))
         )
         final_chunk_size = max(self.minimize_min, 1)
-        stop_after_time = None
+        stop_after_time: Optional[int] = None
         if self.stop_after_time is not None:
             stop_after_time = time.time() + self.stop_after_time
 
@@ -573,8 +607,12 @@ class MinimizeSurroundingPairs(Minimize):
                 iterator.testcase.atom,
             )
 
-    @staticmethod
-    def try_removing_chunks(chunk_size: int, stop_after_time: int, iterator):
+    def try_removing_chunks(  # pylint: disable=no-self-use
+        self,
+        chunk_size: int,
+        stop_after_time: Optional[int],
+        iterator: ReductionIterator,
+    ) -> Iterator[Testcase]:
         """Make a single run through the testcase, trying to remove chunks of size
         chunk_size.
 
@@ -729,7 +767,12 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
         super().process_args(parser, args)
         self.use_experimental_move = args.with_experimental_move
 
-    def try_removing_chunks(self, chunk_size, stop_after_time, iterator):
+    def try_removing_chunks(
+        self,
+        chunk_size: int,
+        stop_after_time: Optional[int],
+        iterator: ReductionIterator,
+    ) -> Iterator[Testcase]:
         """Make a single run through the testcase, trying to remove chunks of size
         chunk_size.
 
@@ -752,7 +795,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
             quantity(chunk_size, iterator.testcase.atom),
         )
 
-        def _count_diff(chunk, ops):
+        def _count_diff(chunk: int, ops: bytes) -> int:
             assert len(ops) == 2
             return iterator.testcase.parts[chunk].count(
                 ops[0]
@@ -888,7 +931,12 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 # Moving chunks is still a bit experimental, and it can introduce
                 # reducing loops.
 
-                def _split_parts(lst, step, ignore_before, start, stop):
+                Sliceable = Union[str, List[Any]]
+                FiveParts = Tuple[Sliceable, Sliceable, Sliceable, Sliceable, Sliceable]
+
+                def _split_parts(
+                    lst: Sliceable, step: int, ignore_before: int, start: int, stop: int
+                ) -> FiveParts:
                     return (
                         lst[:ignore_before],
                         lst[ignore_before:start],
@@ -897,19 +945,37 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         lst[(stop + step) :],
                     )
 
-                def _parts_after(*args):
-                    assert len(args) == 5
-                    return args[0] + args[1] + args[3] + args[2] + args[4]
+                def _parts_after(parts: FiveParts) -> Sliceable:
+                    return (
+                        parts[0]  # type: ignore[operator]
+                        + parts[1]
+                        + parts[3]
+                        + parts[2]
+                        + parts[4]
+                    )
 
-                def _parts_before(*args):
-                    assert len(args) == 5
-                    return args[0] + args[2] + args[1] + args[3] + args[4]
+                def _parts_before(parts: FiveParts) -> Sliceable:
+                    return (
+                        parts[0]  # type: ignore[operator]
+                        + parts[2]
+                        + parts[1]
+                        + parts[3]
+                        + parts[4]
+                    )
 
-                def _move_after(*args):
-                    return _parts_after(*_split_parts(*args))
+                def _move_after(
+                    lst: Sliceable, step: int, ignore_before: int, start: int, stop: int
+                ) -> Sliceable:
+                    return _parts_after(
+                        _split_parts(lst, step, ignore_before, start, stop)
+                    )
 
-                def _move_before(*args):
-                    return _parts_before(*_split_parts(*args))
+                def _move_before(
+                    lst: Sliceable, step: int, ignore_before: int, start: int, stop: int
+                ) -> Sliceable:
+                    return _parts_before(
+                        _split_parts(lst, step, ignore_before, start, stop)
+                    )
 
                 orig_chunk_idx = lhs_chunk_idx
                 stay_on_same_chunk = False
@@ -957,8 +1023,10 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
                     # Try moving the chunk after.
                     testcase_suggestion = iterator.testcase.copy()
-                    testcase_suggestion.parts = _parts_after(parts)
-                    testcase_suggestion.reducible = _parts_after(reducible)
+                    testcase_suggestion.parts = cast(List[bytes], _parts_after(parts))
+                    testcase_suggestion.reducible = cast(
+                        List[bool], _parts_after(reducible)
+                    )
                     worked = False
                     for test in iterator.try_testcase(
                         testcase_suggestion, "->Moving " + description
@@ -967,17 +1035,45 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         if iterator.last_feedback:
                             chunk_rhs_start -= chunk_size
                             chunk_rhs_end -= chunk_size
-                            summary = _move_after(
-                                summary, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            summary = cast(
+                                str,
+                                _move_after(
+                                    summary,
+                                    1,
+                                    lhs_chunk_idx,
+                                    mid_chunk_idx,
+                                    rhs_chunk_idx,
+                                ),
                             )
-                            curly = _move_after(
-                                curly, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            curly = cast(
+                                List[int],
+                                _move_after(
+                                    curly,
+                                    1,
+                                    lhs_chunk_idx,
+                                    mid_chunk_idx,
+                                    rhs_chunk_idx,
+                                ),
                             )
-                            square = _move_after(
-                                square, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            square = cast(
+                                List[int],
+                                _move_after(
+                                    square,
+                                    1,
+                                    lhs_chunk_idx,
+                                    mid_chunk_idx,
+                                    rhs_chunk_idx,
+                                ),
                             )
-                            normal = _move_after(
-                                normal, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            normal = cast(
+                                List[int],
+                                _move_after(
+                                    normal,
+                                    1,
+                                    lhs_chunk_idx,
+                                    mid_chunk_idx,
+                                    rhs_chunk_idx,
+                                ),
                             )
                             rhs_chunk_idx -= 1
                             mid_chunk_idx = summary.index("S", mid_chunk_idx + 1)
@@ -986,8 +1082,10 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         continue
 
                     # Try moving the chunk before.
-                    testcase_suggestion.parts = _parts_before(parts)
-                    testcase_suggestion.reducible = _parts_before(reducible)
+                    testcase_suggestion.parts = cast(List[bytes], _parts_before(parts))
+                    testcase_suggestion.reducible = cast(
+                        List[bool], _parts_before(reducible)
+                    )
                     worked = False
                     for test in iterator.try_testcase(
                         testcase_suggestion, "<-Moving " + description
@@ -997,17 +1095,45 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                             chunk_lhs_start += chunk_size
                             chunk_lhs_end += chunk_size
                             chunk_mid_start += chunk_size
-                            summary = _move_before(
-                                summary, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            summary = cast(
+                                str,
+                                _move_before(
+                                    summary,
+                                    1,
+                                    lhs_chunk_idx,
+                                    mid_chunk_idx,
+                                    rhs_chunk_idx,
+                                ),
                             )
-                            curly = _move_before(
-                                curly, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            curly = cast(
+                                List[int],
+                                _move_before(
+                                    curly,
+                                    1,
+                                    lhs_chunk_idx,
+                                    mid_chunk_idx,
+                                    rhs_chunk_idx,
+                                ),
                             )
-                            square = _move_before(
-                                square, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            square = cast(
+                                List[int],
+                                _move_before(
+                                    square,
+                                    1,
+                                    lhs_chunk_idx,
+                                    mid_chunk_idx,
+                                    rhs_chunk_idx,
+                                ),
                             )
-                            normal = _move_before(
-                                normal, 1, lhs_chunk_idx, mid_chunk_idx, rhs_chunk_idx
+                            normal = cast(
+                                List[int],
+                                _move_before(
+                                    normal,
+                                    1,
+                                    lhs_chunk_idx,
+                                    mid_chunk_idx,
+                                    rhs_chunk_idx,
+                                ),
                             )
                             lhs_chunk_idx += 1
                             mid_chunk_idx = summary.index("S", mid_chunk_idx + 1)
@@ -1079,8 +1205,10 @@ class ReplacePropertiesByGlobals(Minimize):
 
     name = "replace-properties-by-globals"
 
-    @ReductionIterator.wrap
-    def reduce(self, iterator):
+    @ReductionIterator.wrap  # type: ignore[arg-type]
+    def reduce(  # type: ignore[override]
+        self, iterator: ReductionIterator
+    ) -> Iterator[Testcase]:
         chunk_size = min(
             self.minimize_max,
             2 * largest_power_of_two_smaller_than(len(iterator.testcase.parts)),
@@ -1127,7 +1255,9 @@ class ReplacePropertiesByGlobals(Minimize):
                 iterator.testcase.atom,
             )
 
-    def try_making_globals(self, chunk_size, num_chars, iterator):
+    def try_making_globals(
+        self, chunk_size: int, num_chars: int, iterator: ReductionIterator
+    ) -> Iterator[Tuple[int, Testcase]]:
         """Make a single run through the testcase, trying to remove chunks of size
         chunk_size.
 
@@ -1256,8 +1386,10 @@ class ReplaceArgumentsByGlobals(Minimize):
 
     name = "replace-arguments-by-globals"
 
-    @ReductionIterator.wrap
-    def reduce(self, iterator) -> None:
+    @ReductionIterator.wrap  # type: ignore[arg-type]
+    def reduce(  # type: ignore[override]
+        self, iterator: ReductionIterator
+    ) -> Iterator[Testcase]:
         while True:
             num_removed_arguments = 0
             for maybe_removed, testcase in self.try_arguments_as_globals(iterator):
@@ -1275,7 +1407,9 @@ class ReplaceArgumentsByGlobals(Minimize):
                 break
 
     @staticmethod
-    def try_arguments_as_globals(iterator):
+    def try_arguments_as_globals(
+        iterator: ReductionIterator,
+    ) -> Iterator[Tuple[int, Testcase]]:
         """Make a single run through the testcase, trying to remove chunks of size
         chunk_size.
 
@@ -1285,9 +1419,9 @@ class ReplaceArgumentsByGlobals(Minimize):
         num_survived_arguments = 0
 
         # Map words to the chunk indexes in which they are present.
-        functions = {}
-        anonymous_queue = []
-        anonymous_stack = []
+        functions: Dict[bytes, Dict[str, Any]] = {}
+        anonymous_queue: List[Dict[str, Any]] = []
+        anonymous_stack: List[Dict[str, Any]] = []
         for chunk, line in enumerate(iterator.testcase.parts):
             if not iterator.testcase.reducible[chunk]:
                 continue
@@ -1325,7 +1459,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 if match.group(1) == b"":
                     args = []
                 else:
-                    args = match.group(1).split(",")
+                    args = match.group(1).split(b",")
                 anonymous_stack += [
                     {"defs": args, "chunk": chunk, "use": None, "use_chunk": 0}
                 ]
@@ -1534,7 +1668,7 @@ class CollapseEmptyBraces(Minimize):
 
     name = "minimize-collapse-brace"
 
-    def _post_round_cb(self, iterator) -> bool:
+    def _post_round_cb(self, iterator: ReductionIterator) -> Iterator[Testcase]:
         """Collapse braces separated by whitespace
         Args:
             testcase (Testcase): Testcase to be reduced.
@@ -1546,6 +1680,7 @@ class CollapseEmptyBraces(Minimize):
 
         # Don't update the testcase if no changes were applied
         if raw != modified:
+            assert iterator.testcase.filename is not None
             with open(iterator.testcase.filename, "wb") as testf:
                 testf.write(iterator.testcase.before)
                 testf.write(modified)

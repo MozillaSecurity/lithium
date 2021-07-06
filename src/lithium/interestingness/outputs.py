@@ -13,8 +13,7 @@ Example:
 import logging
 import os
 from pathlib import Path
-from typing import List
-from typing import Union
+from typing import List, Union
 
 from . import timed_run, utils
 

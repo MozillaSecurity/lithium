@@ -22,41 +22,9 @@ known_first_party = "lithium"
 profile = "black"
 
 [tool.mypy]
-check_untyped_defs = true
-disallow_any_generics = true
-disallow_incomplete_defs = true
-disallow_subclassing_any = true
-disallow_untyped_calls = true
-disallow_untyped_decorators = true
-disallow_untyped_defs = true
-implicit_reexport = false
-namespace_packages = true
-no_implicit_optional = true
-python_version = "3.6"
-show_error_codes = true
-strict_equality = true
-warn_redundant_casts = true
-warn_return_any = true
-warn_unused_configs = true
-warn_unused_ignores = true
-
-[[tool.mypy.overrides]]
-module = [
-    "Collector.Collector",
-    "CovReporter",
-    "distro",
-    "FTB",
-    "FTB.ProgramConfiguration",
-    "FTB.Signatures",
-    "FTB.Signatures.CrashInfo",
-    "fasteners",
-    "lithium",  # Lithium *may* get types soon, as of mid-2021
-    "lithium.interestingness",
-    "lithium.interestingness.timed_run",
-    "lithium.interestingness.utils",
-    "Reporter.Reporter",
-]
+strict = true
 ignore_missing_imports = true
+show_error_codes = true
 
 [tool.pylint.format]
 max-line-length = 88
@@ -66,6 +34,7 @@ disable = [
     "C0330",
     "C0326",
     "bad-continuation",
+    "duplicate-code",
     "fixme",
     "import-error",
     "subprocess-run-check",

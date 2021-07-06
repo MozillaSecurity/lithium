@@ -15,8 +15,7 @@ import re
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Tuple
-from typing import Union
+from typing import Tuple, Union
 
 
 def file_contains_str(
@@ -65,7 +64,7 @@ def file_contains_regex(
         if match was found, and matched string
     """
 
-    matched_str = ""
+    matched_str = b""
     found = False
     file_contents = Path(input_file).read_bytes()
     found_regex = re.search(regex, file_contents, flags=re.MULTILINE)

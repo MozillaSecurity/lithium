@@ -7,14 +7,15 @@
 """This tests Lithium's main "minimize" algorithm."""
 
 import sys
+from typing import List
 
 
-def interesting(args: str, _temp_prefix: str) -> bool:
+def interesting(args: List[str], _temp_prefix: str) -> bool:
     """Interesting if the product of the numbers in the file divides the argument.
 
     Args:
-        args: The first parameter.
-        _temp_prefix: The second parameter.
+        args: Input arguments.
+        _temp_prefix: Temp directory prefix.
 
     Returns:
         True if successful, False otherwise.

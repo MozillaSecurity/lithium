@@ -14,9 +14,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import BinaryIO
-from typing import List
-from typing import Union
+from typing import BinaryIO, Callable, Dict, List, Optional, Union
 
 (CRASHED, TIMED_OUT, NORMAL, ABNORMAL, NONE) = range(5)
 
@@ -31,7 +29,7 @@ RunData = collections.namedtuple(
 class ArgumentParser(argparse.ArgumentParser):
     """Argument parser with `timeout` and `cmd_with_args`"""
 
-    def __init__(self, *args, **kwds) -> None:
+    def __init__(self, *args, **kwds) -> None:  # type: ignore
         super().__init__(*args, **kwds)
         self.add_argument(
             "-t",
@@ -68,9 +66,9 @@ def timed_run(
     cmd_with_args: List[str],
     timeout: int,
     log_prefix: str = "",
-    env=None,
+    env: Optional[Dict[str, str]] = None,
     inp: str = "",
-    preexec_fn=None,
+    preexec_fn: Optional[Callable[[], None]] = None,
 ) -> RunData:
     """If log_prefix is None, uses pipes instead of files for all output.
 
