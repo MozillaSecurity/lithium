@@ -420,7 +420,7 @@ class TestcaseSymbol(Testcase):
 class TestcaseAttrs(Testcase):
     """Testcase file split by anything that looks like an XML attribute."""
 
-    atom = "attributes"
+    atom = "attribute"
     args = ("-a", "--attrs")
     arg_help = "Delimit a file by XML attributes."
     TAG_PATTERN = br"<\s*[A-Za-z][A-Za-z-]*"
