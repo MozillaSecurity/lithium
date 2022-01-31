@@ -141,7 +141,7 @@ def timed_run(
         print("  %s" % exc)
         sys.exit(2)
     finally:
-        if log_prefix is not None:
+        if isinstance(child_stderr, BinaryIO) and isinstance(child_stdout, BinaryIO):
             child_stdout.close()
             child_stderr.close()
     elapsed_time = time.time() - start_time
