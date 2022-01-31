@@ -65,7 +65,7 @@ def get_signal_name(signum: int, default: str = "Unknown signal") -> str:
 def timed_run(
     cmd_with_args: List[str],
     timeout: int,
-    log_prefix: str = "",
+    log_prefix: Optional[str] = None,
     env: Optional[Dict[str, str]] = None,
     inp: str = "",
     preexec_fn: Optional[Callable[[], None]] = None,
@@ -141,7 +141,7 @@ def timed_run(
         print("  %s" % exc)
         sys.exit(2)
     finally:
-        if log_prefix is not None:
+        if isinstance(child_stderr, BinaryIO) and isinstance(child_stdout, BinaryIO):
             child_stdout.close()
             child_stderr.close()
     elapsed_time = time.time() - start_time
