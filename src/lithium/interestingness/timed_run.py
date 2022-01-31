@@ -65,7 +65,7 @@ def get_signal_name(signum: int, default: str = "Unknown signal") -> str:
 def timed_run(
     cmd_with_args: List[str],
     timeout: int,
-    log_prefix: str = "",
+    log_prefix: Optional[str] = None,
     env: Optional[Dict[str, str]] = None,
     inp: str = "",
     preexec_fn: Optional[Callable[[], None]] = None,
