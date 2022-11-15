@@ -1272,7 +1272,7 @@ class ReplacePropertiesByGlobals(Minimize):
         for chunk, line in enumerate(iterator.testcase.parts):
             if not iterator.testcase.reducible[chunk]:
                 continue
-            for match in re.finditer(br"(?<=[\w\d_])\.(\w+)", line):
+            for match in re.finditer(rb"(?<=[\w\d_])\.(\w+)", line):
                 word = match.group(1)
                 if word not in words:
                     words[word] = [chunk]
@@ -1316,7 +1316,7 @@ class ReplacePropertiesByGlobals(Minimize):
                 new_tc = iterator.testcase.copy()
                 for chunk_start in chunk_starts:
                     subst = re.sub(
-                        br"[\w_.]+\." + word, word, new_tc.parts[chunk_start]
+                        rb"[\w_.]+\." + word, word, new_tc.parts[chunk_start]
                     )
                     maybe_removed += len(new_tc.parts[chunk_start]) - len(subst)
                     new_tc.parts = (
@@ -1427,8 +1427,8 @@ class ReplaceArgumentsByGlobals(Minimize):
                 continue
             # Match function definition with at least one argument.
             for match in re.finditer(
-                br"(?:function\s+(\w+)|(\w+)\s*=\s*function)\s*"
-                br"\((\s*\w+\s*(?:,\s*\w+\s*)*)\)",
+                rb"(?:function\s+(\w+)|(\w+)\s*=\s*function)\s*"
+                rb"\((\s*\w+\s*(?:,\s*\w+\s*)*)\)",
                 line,
             ):
                 fun = match.group(1)
@@ -1454,7 +1454,7 @@ class ReplaceArgumentsByGlobals(Minimize):
 
             # Match anonymous function definition, which are surrounded by parentheses.
             for match in re.finditer(
-                br"\(function\s*\w*\s*\(((?:\s*\w+\s*(?:,\s*\w+\s*)*)?)\)\s*{", line
+                rb"\(function\s*\w*\s*\(((?:\s*\w+\s*(?:,\s*\w+\s*)*)?)\)\s*{", line
             ):
                 if match.group(1) == b"":
                     args = []
@@ -1465,7 +1465,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 ]
 
             # Match calls of anonymous function.
-            for match in re.finditer(br"}\s*\)\s*\(((?:[^()]|\([^,()]*\))*)\)", line):
+            for match in re.finditer(rb"}\s*\)\s*\(((?:[^()]|\([^,()]*\))*)\)", line):
                 if not anonymous_stack:
                     continue
                 anon = anonymous_stack[-1]
@@ -1481,7 +1481,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 anonymous_queue += [anon]
 
             # match function calls. (and some definitions)
-            for match in re.finditer(br"((\w+)\s*\(((?:[^()]|\([^,()]*\))*)\))", line):
+            for match in re.finditer(rb"((\w+)\s*\(((?:[^()]|\([^,()]*\))*)\))", line):
                 pattern = match.group(1)
                 fun = match.group(2)
                 if match.group(3) == b"":
@@ -1676,7 +1676,7 @@ class CollapseEmptyBraces(Minimize):
             True if callback was performed successfully, False otherwise.
         """
         raw = b"".join(iterator.testcase.parts)
-        modified = re.sub(br"{\s+}", b"{ }", raw)
+        modified = re.sub(rb"{\s+}", b"{ }", raw)
 
         # Don't update the testcase if no changes were applied
         if raw != modified:

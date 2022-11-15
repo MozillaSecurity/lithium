@@ -272,8 +272,8 @@ class TestcaseJsStr(Testcase):
             while True:
                 if instr:
                     match = re.match(
-                        br"(\\u[0-9A-Fa-f]{4}|\\x[0-9A-Fa-f]{2}|"
-                        br"\\u\{[0-9A-Fa-f]+\}|\\.|.)",
+                        rb"(\\u[0-9A-Fa-f]{4}|\\x[0-9A-Fa-f]{2}|"
+                        rb"\\u\{[0-9A-Fa-f]+\}|\\.|.)",
                         data[last:],
                         re.DOTALL,
                     )
@@ -284,7 +284,7 @@ class TestcaseJsStr(Testcase):
                         instr = None
                         chars.pop()
                 else:
-                    match = re.search(br"""['"]""", data[last:])
+                    match = re.search(rb"""['"]""", data[last:])
                     if not match:
                         break
                     instr = match.group(0)
@@ -423,8 +423,8 @@ class TestcaseAttrs(Testcase):
     atom = "attribute"
     args = ("-a", "--attrs")
     arg_help = "Delimit a file by XML attributes."
-    TAG_PATTERN = br"<\s*[A-Za-z][A-Za-z-]*"
-    ATTR_PATTERN = br"((\s+|^)[A-Za-z][A-Za-z0-9:-]*(=|>|\s)|\s*>)"
+    TAG_PATTERN = rb"<\s*[A-Za-z][A-Za-z-]*"
+    ATTR_PATTERN = rb"((\s+|^)[A-Za-z][A-Za-z0-9:-]*(=|>|\s)|\s*>)"
 
     def split_parts(self, data: bytes) -> None:
         in_tag = False
@@ -480,7 +480,7 @@ class TestcaseAttrs(Testcase):
                     end_match = re.search(attr_parts[-1], data)
                     incl_end = True
                 else:
-                    end_match = re.search(br"(\s|>)", data)
+                    end_match = re.search(rb"(\s|>)", data)
                     incl_end = False
                 if end_match is None:
                     # EOF looking for end quote
