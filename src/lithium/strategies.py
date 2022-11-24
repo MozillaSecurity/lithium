@@ -1,4 +1,3 @@
-# coding=utf-8
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -311,7 +310,7 @@ class CheckOnly(Strategy):
 
     name = "check-only"
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-renamed
     @ReductionIterator.wrap  # type: ignore[arg-type]
     def reduce(  # type: ignore[override]
         self, iterator: ReductionIterator
@@ -374,7 +373,7 @@ class Minimize(Strategy):
     def add_args(self, parser: argparse.ArgumentParser) -> None:
         super().add_args(parser)
         grp_add = parser.add_argument_group(
-            description="Additional options for the %s strategy" % (self.name,)
+            description=f"Additional options for the {self.name} strategy"
         )
         grp_add.add_argument(
             "--min", type=int, default=1, help="must be a power of two. default: 1"
@@ -432,12 +431,10 @@ class Minimize(Strategy):
         if not is_power_of_two(self.minimize_max):
             parser.error("Max must be a power of two.")
 
-    def _post_round_cb(  # pylint: disable=no-self-use
-        self, iterator: ReductionIterator
-    ) -> Iterator[Testcase]:
+    def _post_round_cb(self, iterator: ReductionIterator) -> Iterator[Testcase]:
         return cast(Iterator[Testcase], [])
 
-    # pylint: disable=arguments-differ
+    # pylint: disable=arguments-renamed
     @ReductionIterator.wrap  # type: ignore[arg-type]
     def reduce(  # type: ignore[override]
         self, iterator: ReductionIterator
@@ -475,10 +472,7 @@ class Minimize(Strategy):
                 if chunk_size <= min_chunk_size:
                     # Repeat mode is last or always and at least one chunk was removed
                     # during the last round, repeat
-                    if removed_chunks and (
-                        self.minimize_repeat == "always"
-                        or self.minimize_repeat == "last"
-                    ):
+                    if removed_chunks and self.minimize_repeat in {"always", "last"}:
                         LOG.info("Starting another round of chunk size %d", chunk_size)
                         chunk_end = len(iterator.testcase)
                     # Otherwise, end minimization
@@ -513,10 +507,9 @@ class Minimize(Strategy):
                 removed_chunks = False
 
             chunk_start = max(0, chunk_end - chunk_size)
-            status = "Removing chunk from %s to %s of %d" % (
-                chunk_start,
-                chunk_end,
-                len(iterator.testcase),
+            status = (
+                f"Removing chunk from {chunk_start} to {chunk_end}"
+                f" of {len(iterator.testcase)}"
             )
             test_to_try = iterator.testcase.copy()
             test_to_try.rmslice(chunk_start, chunk_end)
@@ -607,7 +600,7 @@ class MinimizeSurroundingPairs(Minimize):
                 iterator.testcase.atom,
             )
 
-    def try_removing_chunks(  # pylint: disable=no-self-use
+    def try_removing_chunks(
         self,
         chunk_size: int,
         stop_after_time: Optional[int],
@@ -652,11 +645,9 @@ class MinimizeSurroundingPairs(Minimize):
                 chunk_aft_end = min(
                     len(iterator.testcase), chunk_aft_start + chunk_size
                 )
-                description = "Removing chunk #%d & #%d of %d chunks of size %d" % (
-                    before_chunk_idx,
-                    after_chunk_idx,
-                    num_chunks,
-                    chunk_size,
+                description = (
+                    f"Removing chunk #{before_chunk_idx} & #{after_chunk_idx} of "
+                    f"{num_chunks} chunks of size {chunk_size}"
                 )
 
                 testcase_suggestion = iterator.testcase.copy()
@@ -752,7 +743,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
     def add_args(self, parser: argparse.ArgumentParser) -> None:
         super().add_args(parser)
         grp_add = parser.add_argument_group(
-            description="Additional options for the %s strategy" % (self.name,)
+            description=f"Additional options for the {self.name} strategy"
         )
         grp_add.add_argument(
             "--with-experimental-move",
@@ -813,10 +804,9 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 if stop_after_time is not None and time.time() > stop_after_time:
                     return
 
-                description = "chunk #%d of %d chunks of size %d" % (
-                    lhs_chunk_idx,
-                    num_chunks,
-                    chunk_size,
+                description = (
+                    f"chunk #{lhs_chunk_idx} of {num_chunks} chunks of size "
+                    f"{chunk_size}"
                 )
 
                 assert (
@@ -888,11 +878,9 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                     len(iterator.testcase), chunk_rhs_start + chunk_size
                 )
 
-                description = "chunk #%d & #%d of %d chunks of size %d" % (
-                    lhs_chunk_idx,
-                    rhs_chunk_idx,
-                    num_chunks,
-                    chunk_size,
+                description = (
+                    f"chunk #{lhs_chunk_idx} & #{rhs_chunk_idx} of {num_chunks} chunks "
+                    f"of size {chunk_size}"
                 )
 
                 testcase_suggestion = iterator.testcase.copy()
@@ -989,10 +977,9 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         "the chunk_mid_start should correspond to the mid_chunk_idx "
                         "modulo the removed chunks."
                     )
-                    description = "chunk #%d of %d chunks of size %d" % (
-                        mid_chunk_idx,
-                        num_chunks,
-                        chunk_size,
+                    description = (
+                        f"chunk #{mid_chunk_idx} of {num_chunks} chunks of size "
+                        f"{chunk_size}"
                     )
 
                     parts = _split_parts(
@@ -1305,11 +1292,9 @@ class ReplacePropertiesByGlobals(Minimize):
                 if len(chunk_starts) == 1 and final_chunk_size != chunk_size:
                     continue
 
-                description = "'%s' in chunk #%d of %d chunks of size %d" % (
-                    word.decode("utf-8", "replace"),
-                    chunk_idx,
-                    num_chunks,
-                    chunk_size,
+                description = (
+                    f"'{word.decode('utf-8', 'replace')}' in chunk #{chunk_idx} "
+                    f"of {num_chunks} chunks of size {chunk_size}"
                 )
 
                 maybe_removed = 0
@@ -1397,9 +1382,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 if iterator.last_feedback:
                     num_removed_arguments += maybe_removed
 
-            if num_removed_arguments and (
-                self.minimize_repeat == "always" or self.minimize_repeat == "last"
-            ):
+            if num_removed_arguments and self.minimize_repeat in {"always", "last"}:
                 # Repeat with the same chunk size
                 pass
             else:
@@ -1422,6 +1405,7 @@ class ReplaceArgumentsByGlobals(Minimize):
         functions: Dict[bytes, Dict[str, Any]] = {}
         anonymous_queue: List[Dict[str, Any]] = []
         anonymous_stack: List[Dict[str, Any]] = []
+        args: List[bytes]
         for chunk, line in enumerate(iterator.testcase.parts):
             if not iterator.testcase.reducible[chunk]:
                 continue
@@ -1570,8 +1554,7 @@ class ReplaceArgumentsByGlobals(Minimize):
 
                 for test in iterator.try_testcase(
                     new_tc,
-                    "Removing %s at %s #%d"
-                    % (description, iterator.testcase.atom, chunk),
+                    f"Removing {description} at {iterator.testcase.atom} #{chunk}",
                 ):
                     yield maybe_moved_arguments, test
                     if iterator.last_feedback:
@@ -1590,9 +1573,9 @@ class ReplaceArgumentsByGlobals(Minimize):
             def_chunk = anon["chunk"]
             values = anon["use"]
             chunk = anon["use_chunk"]
-            description = "arguments of anonymous function at #%s %s" % (
-                iterator.testcase.atom,
-                def_chunk,
+            description = (
+                f"arguments of anonymous function at #{iterator.testcase.atom} "
+                f"{def_chunk}"
             )
             # Remove arguments of the function.
             subst = new_tc.parts[def_chunk].replace(b",".join(arg_defs), b"", 1)

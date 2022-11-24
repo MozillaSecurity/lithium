@@ -1,4 +1,3 @@
-# coding=utf-8
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -18,7 +17,7 @@ def test_minimize(testcase_cls) -> None:
     test_path = Path("a.txt")
 
     class _Interesting:
-        # pylint: disable=missing-function-docstring,no-self-use
+        # pylint: disable=missing-function-docstring
         def init(self, condition_args):
             pass
 
@@ -43,7 +42,7 @@ def test_minimize_around(testcase_cls) -> None:
     test_path = Path("a.txt")
 
     class _Interesting:
-        # pylint: disable=missing-function-docstring,no-self-use
+        # pylint: disable=missing-function-docstring
         def init(self, condition_args):
             pass
 
@@ -69,7 +68,7 @@ def test_minimize_balanced(testcase_cls) -> None:
     test_path = Path("a.txt")
 
     class _Interesting:
-        # pylint: disable=missing-function-docstring,no-self-use
+        # pylint: disable=missing-function-docstring
         def init(self, condition_args):
             pass
 
@@ -142,7 +141,7 @@ def test_replace_properties(testcase_cls) -> None:
     test_path = Path("a.txt")
 
     class _Interesting:
-        # pylint: disable=missing-function-docstring,no-self-use
+        # pylint: disable=missing-function-docstring
         def init(self, condition_args):
             pass
 
@@ -183,7 +182,7 @@ def test_replace_arguments(testcase_cls) -> None:
     test_path = Path("a.txt")
 
     class _Interesting:
-        # pylint: disable=missing-function-docstring,no-self-use
+        # pylint: disable=missing-function-docstring
         def init(self, condition_args) -> None:
             pass
 
@@ -221,7 +220,7 @@ def test_minimize_collapse_braces(test_type, test_count, expected) -> None:
     test_path = Path("a.txt")
 
     class _Interesting:
-        # pylint: disable=missing-function-docstring,no-self-use
+        # pylint: disable=missing-function-docstring
         def init(self, condition_args) -> None:
             pass
 
@@ -257,7 +256,7 @@ def test_minimize_reducible() -> None:
     test_path = Path("a.txt")
 
     class _Interesting:
-        # pylint: disable=missing-function-docstring,no-self-use
+        # pylint: disable=missing-function-docstring
         def init(self, condition_args) -> None:
             pass
 
