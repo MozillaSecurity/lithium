@@ -1,4 +1,3 @@
-# coding=utf-8
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -309,7 +308,7 @@ def test_errors(data: bytes, error: str) -> None:
     test_path.write_bytes(data)
     with pytest.raises(
         lithium.LithiumError,
-        match=r"^The testcase \(%s\) has a line containing %s" % (test_path, error),
+        match=rf"^The testcase \({test_path}\) has a line containing {error}",
     ):
         test.load(test_path)
 

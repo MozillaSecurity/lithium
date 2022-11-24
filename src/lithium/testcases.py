@@ -1,4 +1,3 @@
-# coding=utf-8
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -116,6 +115,7 @@ class Testcase(abc.ABC):
         Raises:
             LithiumError: DDBEGIN/DDEND token mismatch.
         """
+        # pylint: disable=unnecessary-dunder-call
         self.__init__()  # type: ignore[misc]
         self.filename = str(path)
         self.extension = os.path.splitext(self.filename)[1]
@@ -138,8 +138,8 @@ class Testcase(abc.ABC):
                 break
             if line.find(b"DDEND") != -1:
                 raise LithiumError(
-                    "The testcase (%s) has a line containing 'DDEND' "
-                    "without a line containing 'DDBEGIN' before it." % (self.filename,)
+                    f"The testcase ({self.filename}) has a line containing 'DDEND' "
+                    "without a line containing 'DDBEGIN' before it."
                 )
         else:
             # no DDBEGIN/END, `before` contains the whole testcase
@@ -156,8 +156,8 @@ class Testcase(abc.ABC):
             between.append(line)
         else:
             raise LithiumError(
-                "The testcase (%s) has a line containing 'DDBEGIN' "
-                "but no line containing 'DDEND'." % (self.filename,)
+                f"The testcase ({self.filename}) has a line containing 'DDBEGIN' but no"
+                "line containing 'DDEND'."
             )
         self.split_parts(b"".join(between))
 

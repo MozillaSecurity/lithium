@@ -1,4 +1,3 @@
-# coding=utf-8
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -423,7 +422,7 @@ def test_interestingness_outputs_multiline(capsys, pattern, expected) -> None:
         + CAT_CMD
         + ["temp.js"]
     )
-    assert result == 0, "%r not found in %r" % (pattern, open("temp.js").read())
+    assert result == 0, f"{pattern!r} not found in {Path('temp.js').read_text()!r}"
     #    assert lith.test_count == 1
     captured = capsys.readouterr()
-    assert "[Found string in: %r]" % (expected,) in captured.out
+    assert f"[Found string in: {expected!r}]" in captured.out

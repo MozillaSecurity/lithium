@@ -1,4 +1,3 @@
-# coding=utf-8
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -132,10 +131,9 @@ class Lithium:
         for entry_point in pkg_resources.iter_entry_points("lithium_strategies"):
             try:
                 strategy_cls = entry_point.load()
-                assert (
-                    strategy_cls.name == entry_point.name
-                ), "entry_point name mismatch, check setup.py and %s.name" % (
-                    strategy_cls.__name__,
+                assert strategy_cls.name == entry_point.name, (
+                    "entry_point name mismatch, check setup.py and "
+                    f"{strategy_cls.__name__}.name"
                 )
             except Exception as exc:  # pylint: disable=broad-except
                 LOG.warning("error loading strategy type %s: %s", entry_point.name, exc)
@@ -202,7 +200,7 @@ class Lithium:
             "--strategy",
             default=self.strategy.name,
             choices=strategies.keys(),
-            help="reduction strategy to use. default: %s" % DEFAULT_STRATEGY,
+            help=f"reduction strategy to use. default: {DEFAULT_STRATEGY}",
         )
         self.strategy.add_args(parser)
         testcase_types[atom].add_arguments(parser)
@@ -254,7 +252,7 @@ class Lithium:
             Filename to use for the next testcase.
         """
         if use_number:
-            filename_stem = "%d-%s" % (self.temp_file_count, filename_stem)
+            filename_stem = f"{self.temp_file_count}-{filename_stem}"
             self.temp_file_count += 1
         assert self.testcase is not None
         assert self.testcase.extension is not None
@@ -265,7 +263,7 @@ class Lithium:
         """Create and switch to the next available temporary working folder."""
         i = 1
         while True:
-            temp_dir = Path("tmp%d" % (i,))
+            temp_dir = Path(f"tmp{i}")
             # To avoid race conditions, we use try/except instead of exists/create
             # Hopefully we don't get any errors other than "File exists" :)
             try:

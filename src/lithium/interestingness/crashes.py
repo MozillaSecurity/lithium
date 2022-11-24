@@ -1,4 +1,3 @@
-# coding=utf-8
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,7 +35,7 @@ def interesting(cli_args: List[str], temp_prefix: str) -> bool:
     # Run the program with desired flags and look out for crashes.
     runinfo = timed_run.timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
 
-    time_str = " (%.3f seconds)" % runinfo.elapsedtime
+    time_str = f" ({runinfo.elapsedtime:.3f} seconds)"
     if runinfo.sta == timed_run.CRASHED:
         log.info("Exit status: " + runinfo.msg + time_str)
         return True

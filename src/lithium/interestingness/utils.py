@@ -1,4 +1,3 @@
-# coding=utf-8
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +41,7 @@ def file_contains_str(
             if not regex.endswith(b"\n"):
                 next_nl = max(file_contents.find(b"\n", idx + len(regex)), next_nl)
             match = file_contents[prev_nl:next_nl].decode("utf-8", errors="replace")
-            print("[Found string in: %r]" % (match,), end=" ")
+            print(f"[Found string in: {match!r}]", end=" ")
         return True
     return False
 

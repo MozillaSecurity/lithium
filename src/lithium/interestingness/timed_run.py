@@ -1,4 +1,3 @@
-# coding=utf-8
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -136,9 +135,9 @@ def timed_run(
         sta = TIMED_OUT
     except Exception as exc:  # pylint: disable=broad-except
         print("Tried to run:")
-        print("  %r" % cmd_with_args)
+        print(f"  {cmd_with_args!r}")
         print("but got this error:")
-        print("  %s" % exc)
+        print(f"  {exc}")
         sys.exit(2)
     finally:
         if isinstance(child_stderr, BinaryIO) and isinstance(child_stdout, BinaryIO):
@@ -163,10 +162,7 @@ def timed_run(
             signum = -child.returncode
         else:
             signum = child.returncode
-        msg = "CRASHED signal %d (%s)" % (
-            signum,
-            get_signal_name(signum),
-        )
+        msg = f"CRASHED signal {signum} ({get_signal_name(signum)})"
         sta = CRASHED
 
     return RunData(

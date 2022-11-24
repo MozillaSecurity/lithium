@@ -1,4 +1,3 @@
-# coding=utf-8
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,12 +68,12 @@ def interesting(cli_args: List[str], temp_prefix: str) -> bool:
         temp_prefix + "-b",
     )
     log = logging.getLogger(__name__)
-    time_str = "(1st Run: %.3f seconds) (2nd Run: %.3f seconds)" % (
-        a_runinfo.elapsedtime,
-        b_runinfo.elapsedtime,
+    time_str = (
+        f"(1st Run: {a_runinfo.elapsedtime:.3f} seconds)"
+        f" (2nd Run: {b_runinfo.elapsedtime:.3f} seconds)"
     )
 
-    if a_runinfo.sta != timed_run.TIMED_OUT and b_runinfo.sta != timed_run.TIMED_OUT:
+    if timed_run.TIMED_OUT not in (a_runinfo.sta, b_runinfo.sta):
         if a_runinfo.return_code != b_runinfo.return_code:
             log.info(
                 "[Interesting] Different return code (%d, %d). %s",

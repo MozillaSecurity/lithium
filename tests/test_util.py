@@ -1,4 +1,3 @@
-# coding=utf-8
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -28,7 +27,7 @@ def _ispow2(inp: int) -> int:
     """
     assert (
         isinstance(inp, int) or inp.is_integer()
-    ), "ispow2() only works for integers, %r is not an integer" % (inp,)
+    ), f"ispow2() only works for integers, {inp!r} is not an integer"
     assert inp >= 1, "domain error"
     orig = inp
     result = True
@@ -47,7 +46,7 @@ def _ispow2(inp: int) -> int:
         )  # float_info.dig is the # of decimal digits representable
         assert (
             result == math_result
-        ), "ispow2(n) did not match math.log(n)/math.log(2) for n = %d" % (orig,)
+        ), f"ispow2(n) did not match math.log(n)/math.log(2) for n = {orig}"
     return result
 
 
@@ -69,7 +68,7 @@ def _divceil(num: int, den: int) -> int:
         math_result = math.ceil(1.0 * num / den)
         assert (
             result == math_result
-        ), "divceil(n,d) did not match math.ceil(n/d) for n = %d, d = %d" % (num, den)
+        ), f"divceil(n,d) did not match math.ceil(n/d) for n = {num}, d = {den}"
     return result
 
 
