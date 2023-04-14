@@ -27,7 +27,6 @@ class Lithium:
     """Lithium reduction object."""
 
     def __init__(self) -> None:
-
         self.strategy: Optional[Strategy] = None
 
         self.condition_script: Optional[ModuleType] = None
