@@ -31,7 +31,7 @@ class Testcase(abc.ABC):
         self.after: bytes = b""
         self.parts: List[bytes] = []
         # bool array with same length as `parts`
-        # parts with a matchine `False` in `reducible` should
+        # parts with a matching `False` in `reducible` should
         # not be removed by the Strategy
         self.reducible: List[bool] = []
         self.filename: Optional[str] = None
