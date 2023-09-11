@@ -78,8 +78,8 @@ tasks:
             namespace: project.fuzzing.orion.orion-decision.master
           env:
             PROJECT_NAME: ${project_name}
-            CI_MATRIX: {$json: {$eval: matrix}}
-            GITHUB_EVENT: {$json: {$eval: event}}
+            CI_MATRIX: "{jobs:{}}"
+            GITHUB_EVENT: ""
             GITHUB_ACTION: ${tasks_for}
             TASKCLUSTER_NOW: ${now}
           command:
