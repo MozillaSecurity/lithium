@@ -72,6 +72,10 @@ tasks:
           features:
             taskclusterProxy: true
           maxRunTime: 3600
+          image:
+            type: indexed-image
+            path: public/orion-decision.tar.zst
+            namespace: project.fuzzing.orion.orion-decision.master
           env:
             PROJECT_NAME: ${project_name}
             CI_MATRIX: {$json: {$eval: matrix}}
@@ -79,16 +83,8 @@ tasks:
             GITHUB_ACTION: ${tasks_for}
             TASKCLUSTER_NOW: ${now}
           command:
-            - - bash
-              - "-exc"
-              - "-o"
-              - "pipefail"
-              - >
-                curl --retry 5 --connect-timeout 25 -sSfL --write-out "%{stderr}Resolved orion-decision to %{url_effective}\n"
-                "$TASKCLUSTER_PROXY_URL/api/index/v1/task/project.fuzzing.orion.orion-decision.master/artifacts/public/orion-decision.tar.zst"
-                | zstdcat | podman load; podman run --rm -e TASK_ID -e RUN_ID -e TASKCLUSTER_ROOT_URL --add-host=taskcluster:127.0.0.1 --net=host
-                -e TASKCLUSTER_PROXY_URL=http://localhost:80 -e PROJECT_NAME -e CI_MATRIX -e GITHUB_EVENT -e GITHUB_ACTION -e TASKCLUSTER_NOW
-                mozillasecurity/orion-decision:latest ci-decision -v
+            - ci-decision
+            - -v
         scopes:
           - queue:create-task:highest:proj-fuzzing/ci
           - queue:create-task:highest:proj-fuzzing/ci-*
