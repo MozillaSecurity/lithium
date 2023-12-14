@@ -1,23 +1,38 @@
-#
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-"""Lithium's "outputs" interestingness test to assess whether an intended message shows
-up.
-
-Example:
-    python -m lithium outputs --timeout=9 FOO <binary> --fuzzing-safe <testcase>
-"""
-
 import logging
-import os
+import re
+import sys
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 
-from . import timed_run, utils
+from . import utils
+from .timed_run import BaseParser, timed_run
+
+LOG = logging.getLogger(__name__)
 
 
-def interesting(cli_args: List[str], temp_prefix: str) -> bool:
+def file_contains(path: Union[Path, str], is_regex: bool, search: str) -> bool:
+    """Determine if string is present in a file.
+
+    Args:
+        path:
+        is_regex:
+        search:
+
+    Returns:
+
+    """
+    if is_regex:
+        return utils.file_contains_regex(path, search.encode())[0]
+    return utils.file_contains_str(path, search.encode())
+
+
+def interesting(
+    cli_args: Optional[List[str]] = None,
+    temp_prefix: Optional[str] = None,
+) -> bool:
     """Interesting if the binary causes an intended message to show up. (e.g. on
     stdout/stderr)
 
@@ -28,38 +43,48 @@ def interesting(cli_args: List[str], temp_prefix: str) -> bool:
     Returns:
         True if the intended message shows up, False otherwise.
     """
-    parser = timed_run.ArgumentParser(
-        prog="outputs",
-        usage="python -m lithium %(prog)s [options] output_message binary [flags] "
-        "testcase.ext",
+    parser = BaseParser()
+    parser.add_argument(
+        "-s",
+        "--search",
+        help="String to search for.",
+        required=True,
     )
     parser.add_argument(
         "-r",
         "--regex",
         action="store_true",
         default=False,
-        help="Allow search for regular expressions instead of strings.",
+        help="Treat string as a regular expression",
     )
     args = parser.parse_args(cli_args)
 
-    log = logging.getLogger(__name__)
+    run_info = timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
 
-    search_for = args.cmd_with_flags[0]
-    if not isinstance(search_for, bytes):
-        search_for = os.fsencode(search_for)
+    if temp_prefix is None:
+        outputs = (run_info.out, run_info.err)
+        for data in outputs:
+            if (args.regex and re.match(args.search, data, flags=re.MULTILINE)) or (
+                args.search in data
+            ):
+                LOG.info("Match detected!")
+                return True
 
-    # Run the program with desired flags and search stdout and stderr for intended
-    # message
-    runinfo = timed_run.timed_run(args.cmd_with_flags[1:], args.timeout, temp_prefix)
-
-    def file_contains(path: Union[Path, str]) -> bool:
-        if args.regex:
-            return utils.file_contains_regex(path, search_for)[0]
-        return utils.file_contains_str(path, search_for)
+        LOG.info("No match detected!")
+        return False
 
     result = any(
-        file_contains(temp_prefix + suffix) for suffix in ("-out.txt", "-err.txt")
+        file_contains(f"{temp_prefix}{suffix}", args.regex, args.search)
+        for suffix in ("-out.txt", "-err.txt")
     )
+    if result:
+        LOG.info("Match detected!")
+        return True
 
-    log.info("Exit status: %s (%.3f seconds)", runinfo.msg, runinfo.elapsedtime)
-    return result
+    LOG.info("No match detected!")
+    return False
+
+
+if __name__ == "__main__":
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
+    sys.exit(interesting())

@@ -1,21 +1,19 @@
-#
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
-"""Lithium's "hangs" interestingness test to assess whether a binary hangs.
-
-Example:
-    python -m lithium hangs --timeout=3 <binary> --fuzzing-safe <testcase>
-"""
-
 import logging
-from typing import List
+import sys
+from typing import List, Optional
 
-from . import timed_run
+from .timed_run import BaseParser, ExitStatus, timed_run
+
+LOG = logging.getLogger(__name__)
 
 
-def interesting(cli_args: List[str], temp_prefix: str) -> bool:
+def interesting(
+    cli_args: Optional[List[str]] = None,
+    temp_prefix: Optional[str] = None,
+) -> bool:
     """Interesting if the binary causes a hang.
 
     Args:
@@ -25,18 +23,17 @@ def interesting(cli_args: List[str], temp_prefix: str) -> bool:
     Returns:
         True if binary causes a hang, False otherwise.
     """
-    parser = timed_run.ArgumentParser(
-        prog="hangs",
-        usage="python -m lithium %(prog)s [options] binary [flags] testcase.ext",
-    )
+    parser = BaseParser()
     args = parser.parse_args(cli_args)
-
-    log = logging.getLogger(__name__)
-    runinfo = timed_run.timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
-
-    if runinfo.sta == timed_run.TIMED_OUT:
-        log.info("Timed out after %.3f seconds", args.timeout)
+    run_info = timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
+    if run_info.status == ExitStatus.TIMEOUT:
+        LOG.info(f"Timeout detected ({args.timeout:.3f}s)")
         return True
 
-    log.info("Exited in %.3f seconds", runinfo.elapsedtime)
+    LOG.info(f"Program exited ({run_info.elapsed:.3f}s)")
     return False
+
+
+if __name__ == "__main__":
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
+    sys.exit(interesting())

@@ -1,12 +1,11 @@
-#
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-"""Run a subprocess with timeout
-"""
-
+"""Run a subprocess with timeout"""
 import argparse
-import collections
+import enum
+import logging
+import os
 import platform
 import signal
 import subprocess
@@ -15,17 +14,14 @@ import time
 from pathlib import Path
 from typing import BinaryIO, Callable, Dict, List, Optional, Union
 
-(CRASHED, TIMED_OUT, NORMAL, ABNORMAL, NONE) = range(5)
+from ffpuppet import SanitizerOptions
+
+LOG = logging.getLogger(__name__)
+
+ERROR_CODE = 77
 
 
-# Define struct that contains data from a process that has already ended.
-RunData = collections.namedtuple(
-    "RunData",
-    "sta, return_code, msg, elapsedtime, killed, out, err, pid",
-)
-
-
-class ArgumentParser(argparse.ArgumentParser):
+class BaseParser(argparse.ArgumentParser):
     """Argument parser with `timeout` and `cmd_with_args`"""
 
     def __init__(self, *args, **kwds) -> None:  # type: ignore
@@ -41,9 +37,77 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument("cmd_with_flags", nargs=argparse.REMAINDER)
 
 
-def get_signal_name(signum: int, default: str = "Unknown signal") -> str:
-    """Stringify a signal number. The result will be something like "SIGSEGV",
-    or from Python 3.8, "Segmentation fault".
+class ExitStatus(enum.IntEnum):
+    """Enum for recording exit status"""
+
+    NORMAL = 1
+    ABNORMAL = 2
+    CRASH = 3
+    TIMEOUT = 4
+
+
+class RunData:
+    """Class for storing run data"""
+
+    def __init__(
+        self,
+        pid: int,
+        status: ExitStatus,
+        return_code: Union[int, None],
+        message: str,
+        elapsed: float,
+        out: Union[bytes, str],
+        err: Union[bytes, str],
+    ):
+        self.pid = pid
+        self.status = status
+        self.return_code = return_code
+        self.message = message
+        self.elapsed = elapsed
+        self.out = out
+        self.err = err
+
+
+def _configure_sanitizers(orig_env: Dict[str, str]) -> Dict[str, str]:
+    """Copy environment and update default values in *SAN_OPTIONS entries.
+
+    Args:
+        orig_env: Current environment.
+
+    Returns:
+        Environment with *SAN_OPTIONS defaults set.
+    """
+    env: Dict[str, str] = dict(orig_env)
+    # https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
+    common_flags = [
+        ("abort_on_error", "false"),
+        ("allocator_may_return_null", "true"),
+        ("disable_coredump", "true"),
+        ("exitcode", str(ERROR_CODE)),  # use unique exitcode
+        ("handle_abort", "true"),  # if true, abort_on_error=false to prevent hangs
+        ("handle_sigbus", "true"),  # set to be safe
+        ("handle_sigfpe", "true"),  # set to be safe
+        ("handle_sigill", "true"),  # set to be safe
+        ("symbolize", "true"),
+    ]
+
+    sanitizer_env_variables = (
+        "ASAN_OPTIONS",
+        "UBSAN_OPTIONS",
+        "LSAN_OPTIONS",
+        "TSAN_OPTIONS",
+    )
+    for sanitizer in sanitizer_env_variables:
+        config = SanitizerOptions(env.get(sanitizer))
+        for flag in common_flags:
+            config.add(*flag)
+        env[sanitizer] = str(config)
+
+    return env
+
+
+def _get_signal_name(signum: int, default: str = "Unknown signal") -> str:
+    """Stringify a signal number
 
     Args:
         signum: Signal number to lookup
@@ -80,24 +144,12 @@ def timed_run(
         preexec_fn: called in child process after fork, prior to exec
 
     Raises:
-        TypeError: Raises if input parameters are not of the desired types
-                   (e.g. cmd_with_args should be a list)
         OSError: Raises if timed_run is attempted to be used with gdb
 
     Returns:
-        A rundata instance containing run information
+        A RunData instance containing run information.
     """
-    if not isinstance(cmd_with_args, list):
-        raise TypeError("cmd_with_args should be a list (of strings).")
-    if not isinstance(timeout, int):
-        raise TypeError("timeout should be an int.")
-    if log_prefix is not None and not isinstance(log_prefix, str):
-        raise TypeError("log_prefix should be a string.")
-    if preexec_fn is not None and not hasattr(preexec_fn, "__call__"):
-        raise TypeError("preexec_fn should be callable.")
-
-    prog = Path(cmd_with_args[0]).expanduser()
-    cmd_with_args[0] = str(prog)
+    prog = Path(cmd_with_args[0]).resolve()
 
     if prog.stem == "gdb":
         raise OSError(
@@ -105,18 +157,18 @@ def timed_run(
             "kill gdb but leave the process within gdb still running"
         )
 
-    sta = NONE
-    msg = ""
-
-    child_stderr: Union[int, BinaryIO] = subprocess.PIPE
-    child_stdout: Union[int, BinaryIO] = subprocess.PIPE
+    status = None
+    env = _configure_sanitizers(os.environ.copy() if env is None else env)
+    child_stderr: Union[BinaryIO, int] = subprocess.PIPE
+    child_stdout: Union[BinaryIO, int] = subprocess.PIPE
     if log_prefix is not None:
         # pylint: disable=consider-using-with
-        child_stdout = open(log_prefix + "-out.txt", "wb")
-        child_stderr = open(log_prefix + "-err.txt", "wb")
+        child_stdout = open(f"{log_prefix}-out.txt", "wb")
+        child_stderr = open(f"{log_prefix}-err.txt", "wb")
 
     start_time = time.time()
     # pylint: disable=consider-using-with,subprocess-popen-preexec-fn
+    LOG.info(f"Running: {' '.join(cmd_with_args)}")
     child = subprocess.Popen(
         cmd_with_args,
         env=env,
@@ -132,12 +184,9 @@ def timed_run(
     except subprocess.TimeoutExpired:
         child.kill()
         stdout, stderr = child.communicate()
-        sta = TIMED_OUT
+        status = ExitStatus.TIMEOUT
     except Exception as exc:  # pylint: disable=broad-except
-        print("Tried to run:")
-        print(f"  {cmd_with_args!r}")
-        print("but got this error:")
-        print(f"  {exc}")
+        LOG.error(exc)
         sys.exit(2)
     finally:
         if isinstance(child_stderr, BinaryIO) and isinstance(child_stdout, BinaryIO):
@@ -145,33 +194,31 @@ def timed_run(
             child_stderr.close()
     elapsed_time = time.time() - start_time
 
-    if sta == TIMED_OUT:
-        msg = "TIMED OUT"
+    if status == ExitStatus.TIMEOUT:
+        message = "TIMED OUT"
     elif child.returncode == 0:
-        msg = "NORMAL"
-        sta = NORMAL
-    elif 0 < child.returncode < 0x80000000:
-        msg = "ABNORMAL exit code " + str(child.returncode)
-        sta = ABNORMAL
+        message = "NORMAL"
+        status = ExitStatus.NORMAL
+    elif child.returncode != ERROR_CODE and 0 < child.returncode < 0x80000000:
+        message = f"ABNORMAL exit code {child.returncode}"
+        status = ExitStatus.ABNORMAL
     else:
-        # return_code < 0 (or > 0x80000000 in Windows)
-        # The program was terminated by a signal, which usually indicates a crash.
+        # The program was terminated by a signal or by the sanitizer (ERROR_CODE)
         # Mac/Linux only!
-        # XXX: this doesn't work on Windows
         if child.returncode < 0:
-            signum = -child.returncode
+            signum = abs(child.returncode)
+            message = f"CRASHED with {_get_signal_name(signum)}"
         else:
-            signum = child.returncode
-        msg = f"CRASHED signal {signum} ({get_signal_name(signum)})"
-        sta = CRASHED
+            message = "CRASHED"
+
+        status = ExitStatus.CRASH
 
     return RunData(
-        sta,
-        child.returncode if sta != TIMED_OUT else None,
-        msg,
-        elapsed_time,
-        sta == TIMED_OUT,
-        log_prefix + "-out.txt" if log_prefix is not None else stdout,
-        log_prefix + "-err.txt" if log_prefix is not None else stderr,
         child.pid,
+        status,
+        child.returncode if status != ExitStatus.TIMEOUT else None,
+        message,
+        elapsed_time,
+        stdout if log_prefix is None else f"{log_prefix}-out.txt",
+        stderr if log_prefix is None else f"{log_prefix}-err.txt",
     )

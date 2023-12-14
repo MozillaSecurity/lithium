@@ -34,6 +34,8 @@ disable = [
     "duplicate-code",
     "fixme",
     "import-error",
+    "logging-fstring-interpolation",
+    "missing-module-docstring",
     "subprocess-run-check",
     "too-few-public-methods",
     "too-many-arguments",
