@@ -77,10 +77,10 @@ def interesting(
             if (args.regex and re.match(args.search, data, flags=re.MULTILINE)) or (
                 args.search in data
             ):
-                LOG.info("Match detected!")
+                LOG.info("[Interesting] Match detected!")
                 return True
 
-        LOG.info("No match detected!")
+        LOG.info("[Uninteresting] No match detected!")
         return False
 
     result = any(
@@ -88,10 +88,10 @@ def interesting(
         for suffix in ("-out.txt", "-err.txt")
     )
     if result:
-        LOG.info("Match detected!")
+        LOG.info("[Interesting] Match detected!")
         return True
 
-    LOG.info("No match detected!")
+    LOG.info("[Uninteresting] No match detected!")
     return False
 
 

@@ -37,10 +37,10 @@ def interesting(
 
     run_info = timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
     if run_info.status == ExitStatus.TIMEOUT:
-        LOG.info(f"Timeout detected ({args.timeout:.3f}s)")
+        LOG.info(f"[Interesting] Timeout detected ({args.timeout:.3f}s)")
         return True
 
-    LOG.info(f"Program exited ({run_info.elapsed:.3f}s)")
+    LOG.info(f"[Uninteresting] Program exited ({run_info.elapsed:.3f}s)")
     return False
 
 

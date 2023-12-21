@@ -38,10 +38,10 @@ def interesting(
     run_info = timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
 
     if run_info.status == ExitStatus.CRASH:
-        LOG.info(f"Crash detected ({run_info.elapsed:.3f}s)")
+        LOG.info(f"[Interesting] Crash detected ({run_info.elapsed:.3f}s)")
         return True
 
-    LOG.info(f"No crash detected ({run_info.elapsed:.3f}s)")
+    LOG.info(f"[Uninteresting] No crash detected ({run_info.elapsed:.3f}s)")
     return False
 
 

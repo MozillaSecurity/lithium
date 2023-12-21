@@ -90,8 +90,10 @@ def interesting(
         LOG.warning("Command B timed out!")
 
     # Compare return codes
-    if a_run.return_code != b_run.return_code:
-        LOG.info(f"Different return codes: {a_run.return_code} vs {b_run.return_code}")
+    a_ret = a_run.return_code
+    b_ret = b_run.return_code
+    if a_ret != b_ret:
+        LOG.info(f"[Interesting] Different return codes: {a_ret} vs {b_ret}")
         return True
 
     # Compare outputs
@@ -106,14 +108,14 @@ def interesting(
 
     if temp_prefix:
         if cmp_out(a_run.out, b_run.out, True) or cmp_out(a_run.err, b_run.err, True):
-            LOG.info("Differences in output detected")
+            LOG.info("[Interesting] Differences in output detected")
             return True
     else:
         if cmp_out(a_run.out, b_run.out) or cmp_out(a_run.err, b_run.err):
-            LOG.info("Differences in output detected")
+            LOG.info("[Interesting] Differences in output detected")
             return True
 
-    LOG.info("No differences detected")
+    LOG.info("[Uninteresting] No differences detected")
     return False
 
 
