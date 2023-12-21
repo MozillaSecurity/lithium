@@ -154,8 +154,10 @@ def test_diff_test_0() -> None:
             "diff_test",
             "--timeout",
             "99",
-            "-a 'flags_one'",
-            "-b 'flags_two_a flags_two_b'",
+            "-a",
+            "flags_one",
+            "-b",
+            "flags_two_a flags_two_b",
         ]
         + LS_CMD
         + ["temp.js"]
