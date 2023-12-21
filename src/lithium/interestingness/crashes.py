@@ -12,7 +12,7 @@ import logging
 import sys
 from typing import List, Optional
 
-from lithium.interestingness.timed_run import BaseParser, ExitStatus, timed_run
+from .timed_run import BaseParser, ExitStatus, timed_run
 
 LOG = logging.getLogger(__name__)
 
