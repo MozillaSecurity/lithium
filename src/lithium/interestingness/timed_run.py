@@ -149,7 +149,7 @@ def timed_run(
     Returns:
         A RunData instance containing run information.
     """
-    if not len(cmd_with_args):
+    if len(cmd_with_args) == 0:
         raise ValueError("Command not specified!")
 
     prog = Path(cmd_with_args[0]).resolve()
