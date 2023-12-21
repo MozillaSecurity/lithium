@@ -149,6 +149,9 @@ def timed_run(
     Returns:
         A RunData instance containing run information.
     """
+    if not len(cmd_with_args):
+        raise ValueError("Command not specified!")
+
     prog = Path(cmd_with_args[0]).resolve()
 
     if prog.stem == "gdb":

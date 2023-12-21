@@ -49,7 +49,12 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         help="Set of extra arguments given to second run.",
         required=True,
     )
-    return parser.parse_args(argv)
+
+    args = parser.parse_args(argv)
+    if not args.cmd_with_flags:
+        parser.error("Must specify command to evaluate.")
+
+    return args
 
 
 def interesting(

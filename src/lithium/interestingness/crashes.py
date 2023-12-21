@@ -32,6 +32,9 @@ def interesting(
     """
     parser = BaseParser()
     args = parser.parse_args(cli_args)
+    if not args.cmd_with_flags:
+        parser.error("Must specify command to evaluate.")
+
     run_info = timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
 
     if run_info.status == ExitStatus.CRASH:
