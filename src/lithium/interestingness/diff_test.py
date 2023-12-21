@@ -7,14 +7,10 @@ difference in output when different command line arguments are passed in. This c
 used to isolate and minimize differential behaviour test cases.
 
 Example:
-    python -m lithium diff_test -a "--fuzzing-safe" \
-      -b "--fuzzing-safe --wasm-always-baseline" <binary> <testcase>
-
-Example with autobisectjs, split into separate lines here for readability:
-    python -u -m funfuzz.autobisectjs.autobisectjs \
-      -b "--enable-debug --enable-more-deterministic" -p testcase.js \
-      -i diff_test -a "--fuzzing-safe --no-threads --ion-eager" \
-                   -b "--fuzzing-safe --no-threads --ion-eager --no-wasm-baseline"
+    python -m lithium diff_test \
+      -a "--fuzzing-safe" \
+      -b "--fuzzing-safe --wasm-always-baseline" \
+      <binary> <testcase>
 """
 import argparse
 import filecmp

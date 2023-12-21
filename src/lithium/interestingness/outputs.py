@@ -1,6 +1,14 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+"""Lithium's "outputs" interestingness test to assess whether an intended message shows
+up.
+
+Example:
+    python -m lithium outputs --timeout=9 FOO <binary> --fuzzing-safe <testcase>
+"""
+
 import logging
 import re
 import sys
