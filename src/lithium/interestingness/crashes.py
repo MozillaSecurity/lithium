@@ -1,4 +1,3 @@
-#
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -10,13 +9,19 @@ Example:
 """
 
 import logging
-from typing import List
+import sys
+from typing import List, Optional
 
-from . import timed_run
+from .timed_run import BaseParser, ExitStatus, timed_run
+
+LOG = logging.getLogger(__name__)
 
 
-def interesting(cli_args: List[str], temp_prefix: str) -> bool:
-    """Interesting if the binary causes a crash. (e.g. SIGKILL/SIGTERM/SIGTRAP etc.)
+def interesting(
+    cli_args: Optional[List[str]] = None,
+    temp_prefix: Optional[str] = None,
+) -> bool:
+    """Interesting if the binary causes a crash.
 
     Args:
         cli_args: List of input arguments.
@@ -25,20 +30,21 @@ def interesting(cli_args: List[str], temp_prefix: str) -> bool:
     Returns:
         True if binary crashes, False otherwise.
     """
-    parser = timed_run.ArgumentParser(
-        prog="crashes",
-        usage="python -m lithium %(prog)s [options] binary [flags] testcase.ext",
-    )
+    parser = BaseParser()
     args = parser.parse_args(cli_args)
+    if not args.cmd_with_flags:
+        parser.error("Must specify command to evaluate.")
 
-    log = logging.getLogger(__name__)
-    # Run the program with desired flags and look out for crashes.
-    runinfo = timed_run.timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
+    run_info = timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
 
-    time_str = f" ({runinfo.elapsedtime:.3f} seconds)"
-    if runinfo.sta == timed_run.CRASHED:
-        log.info("Exit status: " + runinfo.msg + time_str)
+    if run_info.status == ExitStatus.CRASH:
+        LOG.info(f"[Interesting] Crash detected ({run_info.elapsed:.3f}s)")
         return True
 
-    log.info("[Uninteresting] It didn't crash: " + runinfo.msg + time_str)
+    LOG.info(f"[Uninteresting] No crash detected ({run_info.elapsed:.3f}s)")
     return False
+
+
+if __name__ == "__main__":
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
+    sys.exit(interesting())

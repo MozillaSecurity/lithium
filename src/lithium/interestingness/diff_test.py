@@ -1,4 +1,3 @@
-#
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -8,89 +7,118 @@ difference in output when different command line arguments are passed in. This c
 used to isolate and minimize differential behaviour test cases.
 
 Example:
-    python -m lithium diff_test -a "--fuzzing-safe" \
-      -b "--fuzzing-safe --wasm-always-baseline" <binary> <testcase>
-
-Example with autobisectjs, split into separate lines here for readability:
-    python -u -m funfuzz.autobisectjs.autobisectjs \
-      -b "--enable-debug --enable-more-deterministic" -p testcase.js \
-      -i diff_test -a "--fuzzing-safe --no-threads --ion-eager" \
-                   -b "--fuzzing-safe --no-threads --ion-eager --no-wasm-baseline"
+    python -m lithium diff_test \
+      -a "--fuzzing-safe" \
+      -b "--fuzzing-safe --wasm-always-baseline" \
+      <binary> <testcase>
 """
-
-# This file came from nbp's GitHub PR #2 for adding new Lithium reduction strategies.
-#   https://github.com/MozillaSecurity/lithium/pull/2
-
+import argparse
 import filecmp
 import logging
-from typing import List
+import sys
+from typing import List, Optional, Union
 
-from . import timed_run
+from .timed_run import BaseParser, ExitStatus, timed_run
+
+LOG = logging.getLogger(__name__)
 
 
-def interesting(cli_args: List[str], temp_prefix: str) -> bool:
-    """Interesting if the binary shows a difference in output when different command
-    line arguments are passed in.
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+    """Parse args
 
     Args:
-        cli_args: List of input arguments.
-        temp_prefix: Temporary directory prefix, e.g. tmp1/1 or tmp4/1
+        argv: List of input arguments.
+
+    Returns:
+        Parsed arguments
+    """
+    parser = BaseParser(
+        prog="diff_test",
+        usage="python -m lithium.interestingness.diff "
+        "-a '--fuzzing-safe' -b='' binary testcase.js",
+    )
+    parser.add_argument(
+        "-a",
+        dest="a_args",
+        help="Set of extra arguments given to first run.",
+        required=True,
+    )
+    parser.add_argument(
+        "-b",
+        dest="b_args",
+        help="Set of extra arguments given to second run.",
+        required=True,
+    )
+
+    args = parser.parse_args(argv)
+    if not args.cmd_with_flags:
+        parser.error("Must specify command to evaluate.")
+
+    return args
+
+
+def interesting(
+    cli_args: Optional[List[str]] = None,
+    temp_prefix: Optional[str] = None,
+) -> bool:
+    """Check if there's a difference in output or return code with different args.
+
+    Args:
+        cli_args: Input arguments.
+        temp_prefix: Temporary directory prefix, e.g. tmp1/1.
 
     Returns:
         True if a difference in output appears, False otherwise.
     """
-    parser = timed_run.ArgumentParser(
-        prog="diff_test",
-        usage="python -m lithium %(prog)s [options] binary testcase.ext",
-    )
-    parser.add_argument(
-        "-a",
-        "--a-args",
-        dest="a_args",
-        help="Set of extra arguments given to first run.",
-    )
-    parser.add_argument(
-        "-b",
-        "--b-args",
-        dest="b_args",
-        help="Set of extra arguments given to second run.",
-    )
-    args = parser.parse_args(cli_args)
+    args = parse_args(cli_args)
 
-    a_runinfo = timed_run.timed_run(
-        args.cmd_with_flags[:1] + args.a_args.split() + args.cmd_with_flags[1:],
-        args.timeout,
-        temp_prefix + "-a",
-    )
-    b_runinfo = timed_run.timed_run(
-        args.cmd_with_flags[:1] + args.b_args.split() + args.cmd_with_flags[1:],
-        args.timeout,
-        temp_prefix + "-b",
-    )
-    log = logging.getLogger(__name__)
-    time_str = (
-        f"(1st Run: {a_runinfo.elapsedtime:.3f} seconds)"
-        f" (2nd Run: {b_runinfo.elapsedtime:.3f} seconds)"
-    )
+    binary = args.cmd_with_flags[:1]
+    testcase = args.cmd_with_flags[1:]
 
-    if timed_run.TIMED_OUT not in (a_runinfo.sta, b_runinfo.sta):
-        if a_runinfo.return_code != b_runinfo.return_code:
-            log.info(
-                "[Interesting] Different return code (%d, %d). %s",
-                a_runinfo.return_code,
-                b_runinfo.return_code,
-                time_str,
-            )
-            return True
-        if not filecmp.cmp(a_runinfo.out, b_runinfo.out):
-            log.info("[Interesting] Different output. %s", time_str)
-            return True
-        if not filecmp.cmp(a_runinfo.err, b_runinfo.err):
-            log.info("[Interesting] Different error output. %s", time_str)
+    # Run with arguments set A
+    command_a = binary + args.a_args.split() + testcase
+    log_prefix_a = f"{temp_prefix}-a" if temp_prefix else None
+    a_run = timed_run(command_a, args.timeout, log_prefix_a)
+    if a_run.status == ExitStatus.TIMEOUT:
+        LOG.warning("Command A timed out!")
+
+    # Run with arguments set B
+    command_b = binary + args.b_args.split() + testcase
+    log_prefix_b = f"{temp_prefix}-b" if temp_prefix else None
+    b_run = timed_run(command_b, args.timeout, log_prefix_b)
+    if b_run.status == ExitStatus.TIMEOUT:
+        LOG.warning("Command B timed out!")
+
+    # Compare return codes
+    a_ret = a_run.return_code
+    b_ret = b_run.return_code
+    if a_ret != b_ret:
+        LOG.info(f"[Interesting] Different return codes: {a_ret} vs {b_ret}")
+        return True
+
+    # Compare outputs
+    def cmp_out(
+        a_data: Union[str, bytes],
+        b_run: Union[str, bytes],
+        is_file: bool = False,
+    ) -> bool:
+        if is_file:
+            return not filecmp.cmp(a_data, b_run)
+        return a_data != b_run
+
+    if temp_prefix:
+        if cmp_out(a_run.out, b_run.out, True) or cmp_out(a_run.err, b_run.err, True):
+            LOG.info("[Interesting] Differences in output detected")
             return True
     else:
-        log.info("[Uninteresting] At least one test timed out. %s", time_str)
-        return False
+        if cmp_out(a_run.out, b_run.out) or cmp_out(a_run.err, b_run.err):
+            LOG.info("[Interesting] Differences in output detected")
+            return True
 
-    log.info("[Uninteresting] Identical behaviour. %s", time_str)
+    LOG.info("[Uninteresting] No differences detected")
     return False
+
+
+if __name__ == "__main__":
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
+    sys.exit(interesting())

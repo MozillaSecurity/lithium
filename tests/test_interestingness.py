@@ -176,10 +176,10 @@ def test_diff_test_1() -> None:
             "--strategy",
             "check-only",
             "diff_test",
-            "--a-args",
-            "flags_one_a flags_one_b",
-            "--b-args",
-            "flags_two",
+            "-a",
+            "'--fuzzing-safe'",
+            "-b",
+            "'--fuzzing-safe --ion-offthread-compile=off'",
         ]
         + LS_CMD
         + ["temp.js"]
@@ -220,7 +220,9 @@ def test_outputs_true() -> None:
 
     # test that `ls temp.js` contains "temp.js"
     result = lith.main(
-        ["--strategy", "check-only", "outputs", "temp.js"] + LS_CMD + ["temp.js"]
+        ["--strategy", "check-only", "outputs", "--search", "temp.js"]
+        + LS_CMD
+        + ["temp.js"]
     )
     assert result == 0
     assert lith.test_count == 1
@@ -232,7 +234,9 @@ def test_outputs_false() -> None:
 
     # test that `ls temp.js` does not contain "blah"
     result = lith.main(
-        ["--strategy", "check-only", "outputs", "blah"] + LS_CMD + ["temp.js"]
+        ["--strategy", "check-only", "outputs", "--search", "blah"]
+        + LS_CMD
+        + ["temp.js"]
     )
     assert result == 1
     assert lith.test_count == 1
@@ -253,6 +257,7 @@ def test_outputs_timeout() -> None:
             "outputs",
             "--timeout",
             "1",
+            "--search",
             "blah",
         ]
         + SLEEP_CMD
@@ -270,7 +275,7 @@ def test_outputs_regex() -> None:
 
     # test that regex matches work too
     result = lith.main(
-        ["--strategy", "check-only", "outputs", "--regex", r"^.*js\s?$"]
+        ["--strategy", "check-only", "outputs", "--search", r"^.*js\s?$", "--regex"]
         + LS_CMD
         + ["temp.js"]
     )
@@ -287,7 +292,7 @@ def test_repeat_0() -> None:
     # Check for a known string
     result = lith.main(
         ["--strategy", "check-only"]
-        + ["repeat", "5", "outputs", "hello"]
+        + ["repeat", "5", "outputs", "--search", "hello"]
         + CAT_CMD
         + ["temp.js"]
     )
@@ -306,7 +311,7 @@ def test_repeat_1(caplog) -> None:
     caplog.clear()
     result = lith.main(
         ["--strategy", "check-only"]
-        + ["repeat", "5", "outputs", "notfound"]
+        + ["repeat", "5", "outputs", "--search", "notfound"]
         + CAT_CMD
         + ["temp.js"]
     )
@@ -335,7 +340,7 @@ def test_repeat_2() -> None:
         tempf1a.write("num0")
     result = lith.main(
         ["--strategy", "check-only"]
-        + ["repeat", "1", "outputs", "--timeout=9", "numREPEATNUM"]
+        + ["repeat", "1", "outputs", "--timeout=9", "--search", "numREPEATNUM"]
         + CAT_CMD
         + ["temp.js"]
     )
@@ -352,7 +357,7 @@ def test_repeat_3() -> None:
         tempf1b.write("num2")
     result = lith.main(
         ["--strategy", "check-only"]
-        + ["repeat", "1", "outputs", "--timeout=9", "numREPEATNUM"]
+        + ["repeat", "1", "outputs", "--timeout=9", "--search", "numREPEATNUM"]
         + CAT_CMD
         + ["temp.js"]
     )
@@ -369,7 +374,7 @@ def test_repeat_4() -> None:
         tempf2a.write("num0")
     result = lith.main(
         ["--strategy", "check-only"]
-        + ["repeat", "2", "outputs", "--timeout=9", "numREPEATNUM"]
+        + ["repeat", "2", "outputs", "--timeout=9", "--search", "numREPEATNUM"]
         + CAT_CMD
         + ["temp.js"]
     )
@@ -386,7 +391,7 @@ def test_repeat_5() -> None:
         tempf2b.write("num3")
     result = lith.main(
         ["--strategy", "check-only"]
-        + ["repeat", "2", "outputs", "--timeout=9", "numREPEATNUM"]
+        + ["repeat", "2", "outputs", "--timeout=9", "--search", "numREPEATNUM"]
         + CAT_CMD
         + ["temp.js"]
     )
@@ -417,6 +422,7 @@ def test_interestingness_outputs_multiline(capsys, pattern, expected) -> None:
     result = lith.main(
         [
             "outputs",
+            "--search",
             pattern,
         ]
         + CAT_CMD
