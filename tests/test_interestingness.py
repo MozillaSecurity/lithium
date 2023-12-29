@@ -9,10 +9,13 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 import lithium
+from lithium.interestingness import outputs
+from lithium.interestingness.timed_run import RunData
 
 CAT_CMD = [
     sys.executable,
@@ -226,6 +229,16 @@ def test_outputs_true() -> None:
     )
     assert result == 0
     assert lith.test_count == 1
+
+
+def test_outputs_in_bytes_true() -> None:
+    """Test that output test properly identifies string in bytes object"""
+    mock_run_data = MagicMock(RunData)
+    mock_run_data.err = b""
+    mock_run_data.out = b"magic bytes"
+    with patch("lithium.interestingness.outputs.timed_run") as mock_timed_run:
+        mock_timed_run.return_value = mock_run_data
+        assert outputs.interesting(["-s", "magic bytes"] + LS_CMD)
 
 
 def test_outputs_false() -> None:

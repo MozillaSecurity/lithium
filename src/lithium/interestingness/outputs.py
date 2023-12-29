@@ -75,7 +75,7 @@ def interesting(
         outputs = (run_info.out, run_info.err)
         for data in outputs:
             if (args.regex and re.match(args.search, data, flags=re.MULTILINE)) or (
-                args.search in data
+                args.search.encode("utf-8") in data
             ):
                 LOG.info("[Interesting] Match detected!")
                 return True
