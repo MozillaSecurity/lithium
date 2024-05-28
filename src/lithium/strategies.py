@@ -53,7 +53,7 @@ class ReductionIterator(abc.ABC):
         self._any_success: bool = False
         self._last_success: Optional[bool] = None
         self._description: str = "Reduction"
-        self._tried: Set[str] = set()
+        self._tried: Set[bytes] = set()
 
     @property
     def last_feedback(self) -> bool:
@@ -65,7 +65,7 @@ class ReductionIterator(abc.ABC):
         assert self._last_success is not None, "No feedback received yet"
         return self._last_success
 
-    def update_tried(self, tried: Iterable[str]) -> None:
+    def update_tried(self, tried: Iterable[bytes]) -> None:
         """Update the list of tried hashes. Testcases are hashed with SHA-512
         and digested to bytes (`hashlib.sha512(testcase).digest()`)
 
@@ -74,7 +74,7 @@ class ReductionIterator(abc.ABC):
         """
         self._tried.update(frozenset(tried))
 
-    def get_tried(self) -> FrozenSet[str]:
+    def get_tried(self) -> FrozenSet[bytes]:
         """Return the set of tried testcase hashes. Testcases are hashed with SHA-512
         and digested to bytes (`hashlib.sha512(testcase).digest()`)
 
@@ -117,7 +117,7 @@ class ReductionIterator(abc.ABC):
         for part in testcase.parts:
             tc_hasher.update(part)
         tc_hasher.update(testcase.after)
-        tc_hash = tc_hasher.hexdigest()
+        tc_hash = tc_hasher.digest()
         if tc_hash not in self._tried:
             self._tried.add(tc_hash)
             self._last_success = None
