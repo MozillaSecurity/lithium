@@ -67,7 +67,7 @@ tasks:
       - created: {$fromNow: ''}
         deadline: {$fromNow: '1 hour'}
         provisionerId: proj-fuzzing
-        workerType: ci-gw
+        workerType: ci
         payload:
           features:
             taskclusterProxy: true
