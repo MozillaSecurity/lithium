@@ -45,8 +45,8 @@ repos:
     rev: v0.0.10
     hooks:
       - id: taskcluster_yml
-  - repo: https://github.com/MozillaSecurity/orion
-    rev: v0.0.7
+  - repo: https://github.com/MozillaSecurity/orion-ci
+    rev: v0.0.8
     hooks:
       - id: orion_ci
   - repo: meta
