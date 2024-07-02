@@ -9,9 +9,7 @@ import os
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict, List, Optional, Type, cast
-
-import pkg_resources
+from typing import Any, Dict, Iterator, List, Optional, Type, cast
 
 from .interestingness.utils import rel_or_abs_import
 from .strategies import DEFAULT as DEFAULT_STRATEGY
@@ -21,6 +19,24 @@ from .testcases import Testcase
 from .util import LithiumError, quantity, summary_header
 
 LOG = logging.getLogger(__name__)
+
+
+# TODO: remove this function when support for Python 3.9 is dropped
+if sys.version_info >= (3, 10):
+    from importlib.metadata import EntryPoint, entry_points
+
+    def iter_entry_points(group: str) -> Iterator[EntryPoint]:
+        """Compatibility wrapper code for importlib.metadata.entry_points()
+        Args:
+            group: See entry_points().
+        Yields:
+            EntryPoint
+        """
+        assert group
+        yield from entry_points().select(group=group)
+
+else:
+    from pkg_resources import iter_entry_points
 
 
 class Lithium:
@@ -127,7 +143,7 @@ class Lithium:
 
         strategies: Dict[str, Type[Strategy]] = {}
         testcase_types: Dict[str, Type[Testcase]] = {}
-        for entry_point in pkg_resources.iter_entry_points("lithium_strategies"):
+        for entry_point in iter_entry_points("lithium_strategies"):
             try:
                 strategy_cls = entry_point.load()
                 assert strategy_cls.name == entry_point.name, (
@@ -139,7 +155,7 @@ class Lithium:
                 continue
             strategies[entry_point.name] = strategy_cls
         assert DEFAULT_STRATEGY in strategies
-        for entry_point in pkg_resources.iter_entry_points("lithium_testcases"):
+        for entry_point in iter_entry_points("lithium_testcases"):
             try:
                 testcase_cls = entry_point.load()
                 assert testcase_cls.args
