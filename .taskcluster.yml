@@ -36,6 +36,10 @@ tasks:
             version: "3.11"
             env:
               TOXENV: py311
+          - name: tests python 3.12
+            version: "3.12"
+            env:
+              TOXENV: py312
           - name: lint
             version: "3.9"
             env:
