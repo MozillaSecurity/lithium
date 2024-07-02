@@ -249,6 +249,7 @@ class Lithium:
         LOG.info("Testcase type: %s", atom)
         self.testcase = testcase_types[atom]()
         self.testcase.handle_args(args)
+        # pylint: disable=possibly-used-before-assignment
         self.testcase.load(testcase_filename)
 
         self.condition_script = rel_or_abs_import(extra_args[0])
