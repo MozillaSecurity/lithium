@@ -72,11 +72,10 @@ def interesting(
     run_info = timed_run(args.cmd_with_flags, args.timeout, temp_prefix)
 
     if temp_prefix is None:
-        outputs = (run_info.out, run_info.err)
-        for data in outputs:
-            if (args.regex and re.match(args.search, data, flags=re.MULTILINE)) or (
-                args.search.encode("utf-8") in data
-            ):
+        encoded = args.search.encode("utf-8")
+        match = encoded if args.regex else re.escape(encoded)
+        for data in (run_info.out, run_info.err):
+            if re.search(match, data, flags=re.MULTILINE):
                 LOG.info("[Interesting] Match detected!")
                 return True
 
