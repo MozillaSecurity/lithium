@@ -8,12 +8,12 @@ up.
 Example:
     python -m lithium outputs --timeout=9 FOO <binary> --fuzzing-safe <testcase>
 """
+from __future__ import annotations
 
 import logging
 import re
 import sys
 from pathlib import Path
-from typing import List, Optional, Union
 
 from . import utils
 from .timed_run import BaseParser, timed_run
@@ -21,7 +21,7 @@ from .timed_run import BaseParser, timed_run
 LOG = logging.getLogger(__name__)
 
 
-def file_contains(path: Union[Path, str], is_regex: bool, search: str) -> bool:
+def file_contains(path: Path | str, is_regex: bool, search: str) -> bool:
     """Determine if string is present in a file.
 
     Args:
@@ -38,8 +38,8 @@ def file_contains(path: Union[Path, str], is_regex: bool, search: str) -> bool:
 
 
 def interesting(
-    cli_args: Optional[List[str]] = None,
-    temp_prefix: Optional[str] = None,
+    cli_args: list[str] | None = None,
+    temp_prefix: str | None = None,
 ) -> bool:
     """Interesting if the binary causes an intended message to show up. (e.g. on
     stdout/stderr)

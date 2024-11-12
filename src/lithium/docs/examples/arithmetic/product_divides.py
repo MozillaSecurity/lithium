@@ -6,10 +6,9 @@
 """This tests Lithium's main "minimize" algorithm."""
 
 import sys
-from typing import List
 
 
-def interesting(args: List[str], _temp_prefix: str) -> bool:
+def interesting(args: list[str], _temp_prefix: str) -> bool:
     """Interesting if the product of the numbers in the file divides the argument.
 
     Args:

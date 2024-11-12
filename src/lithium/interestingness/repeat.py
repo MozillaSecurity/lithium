@@ -31,12 +31,12 @@ Use for:
 
 import argparse
 import logging
-from typing import Any, List, cast
+from typing import Any, cast
 
 from .utils import rel_or_abs_import
 
 
-def interesting(cli_args: List[str], temp_prefix: str) -> bool:
+def interesting(cli_args: list[str], temp_prefix: str) -> bool:
     """Interesting if the desired interestingness test that is run together with
     "repeat" also reports "interesting".
 

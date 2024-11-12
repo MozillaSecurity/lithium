@@ -2,14 +2,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """lithium reducer"""
+from __future__ import annotations
 
 import argparse
 import logging
 import os
 import sys
+from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Dict, Iterator, List, Optional, Type, cast
+from typing import Any, cast
 
 from .interestingness.utils import rel_or_abs_import
 from .strategies import DEFAULT as DEFAULT_STRATEGY
@@ -43,22 +45,22 @@ class Lithium:
     """Lithium reduction object."""
 
     def __init__(self) -> None:
-        self.strategy: Optional[Strategy] = None
+        self.strategy: Strategy | None = None
 
-        self.condition_script: Optional[ModuleType] = None
-        self.condition_args: Optional[List[str]] = None
+        self.condition_script: ModuleType | None = None
+        self.condition_args: list[str] | None = None
 
         self.test_count = 0
         self.test_total = 0
 
-        self.temp_dir: Optional[Path] = None
+        self.temp_dir: Path | None = None
 
-        self.testcase: Optional[Testcase] = None
-        self.last_interesting: Optional[Testcase] = None
+        self.testcase: Testcase | None = None
+        self.last_interesting: Testcase | None = None
 
         self.temp_file_count = 1
 
-    def main(self, argv: Optional[List[str]] = None) -> int:
+    def main(self, argv: list[str] | None = None) -> int:
         """Main entrypoint (parse args and call `run()`)
 
         Args:
@@ -112,7 +114,7 @@ class Lithium:
             if self.last_interesting is not None:
                 self.last_interesting.dump()
 
-    def process_args(self, argv: Optional[List[str]] = None) -> None:
+    def process_args(self, argv: list[str] | None = None) -> None:
         """Parse command-line args and initialize self.
 
         Args:
@@ -124,7 +126,7 @@ class Lithium:
             # pylint: disable=arguments-differ,no-self-argument
 
             def exit(  # type: ignore[override]
-                self, status: int = 0, message: Optional[str] = None
+                self, status: int = 0, message: str | None = None
             ) -> None:
                 pass
 
@@ -141,8 +143,8 @@ class Lithium:
         grp_opt = parser.add_argument_group(description="Lithium options")
         grp_atoms = grp_opt.add_mutually_exclusive_group()
 
-        strategies: Dict[str, Type[Strategy]] = {}
-        testcase_types: Dict[str, Type[Testcase]] = {}
+        strategies: dict[str, type[Strategy]] = {}
+        testcase_types: dict[str, type[Testcase]] = {}
         for entry_point in iter_entry_points("lithium_strategies"):
             try:
                 strategy_cls = entry_point.load()

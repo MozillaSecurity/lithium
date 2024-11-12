@@ -14,7 +14,7 @@ import re
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Tuple, Union
+from typing import Union
 
 
 def file_contains_str(
@@ -52,7 +52,7 @@ def file_contains_regex(
     input_file: Union[Path, str],
     regex: bytes,
     verbose: bool = True,
-) -> Tuple[bool, bytes]:
+) -> tuple[bool, bytes]:
     """e.g. python -m lithium crashesat --timeout=30 \
       --regex '^#0\\s*0x.* in\\s*.*(?:\\n|\\r\\n?)#1\\s*' \
       ./js --fuzzing-safe --no-threads --ion-eager testcase.js

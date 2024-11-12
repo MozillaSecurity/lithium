@@ -5,6 +5,7 @@
 
 A testcase is a file to be reduced, split in a certain way (eg. bytes, lines).
 """
+from __future__ import annotations
 
 import abc
 import argparse
@@ -12,7 +13,7 @@ import logging
 import os.path
 import re
 from pathlib import Path
-from typing import List, Optional, Pattern, Tuple, Union
+from re import Pattern
 
 from .util import LithiumError
 
@@ -29,13 +30,13 @@ class Testcase(abc.ABC):
     def __init__(self) -> None:
         self.before: bytes = b""
         self.after: bytes = b""
-        self.parts: List[bytes] = []
+        self.parts: list[bytes] = []
         # bool array with same length as `parts`
         # parts with a matching `False` in `reducible` should
         # not be removed by the Strategy
-        self.reducible: List[bool] = []
-        self.filename: Optional[str] = None
-        self.extension: Optional[str] = None
+        self.reducible: list[bool] = []
+        self.filename: str | None = None
+        self.extension: str | None = None
 
     def __len__(self) -> int:
         """Length of the testcase in terms of parts to be reduced.
@@ -46,13 +47,13 @@ class Testcase(abc.ABC):
         return len(self.parts) - self.reducible.count(False)
 
     def _slice_xlat(
-        self, start: Optional[int] = None, stop: Optional[int] = None
-    ) -> Tuple[int, int]:
+        self, start: int | None = None, stop: int | None = None
+    ) -> tuple[int, int]:
         # translate slice bounds within `[0, len(self))` (excluding non-reducible parts)
         # to bounds within `self.parts`
         len_self = len(self)
 
-        def _clamp(bound: Optional[int], default: int) -> int:
+        def _clamp(bound: int | None, default: int) -> int:
             if bound is None:
                 return default
             if bound < 0:
@@ -91,7 +92,7 @@ class Testcase(abc.ABC):
             self.reducible[:start] + ([False] * len(keep)) + self.reducible[stop:]
         )
 
-    def copy(self) -> "Testcase":
+    def copy(self) -> Testcase:
         """Duplicate the current object.
 
         Returns:
@@ -106,7 +107,7 @@ class Testcase(abc.ABC):
         new.extension = self.extension
         return new
 
-    def load(self, path: Union[Path, str]) -> None:
+    def load(self, path: Path | str) -> None:
         """Load and split a testcase from disk.
 
         Args:
@@ -185,7 +186,7 @@ class Testcase(abc.ABC):
                   (between DDBEGIN/END, if present).
         """
 
-    def dump(self, path: Optional[Union[Path, str]] = None) -> None:
+    def dump(self, path: Path | str | None = None) -> None:
         """Write the testcase to the filesystem.
 
         Args:
@@ -233,7 +234,7 @@ class TestcaseChar(Testcase):
     args = ("-c", "--char")
     arg_help = "Treat the file as a sequence of bytes."
 
-    def load(self, path: Union[Path, str]) -> None:
+    def load(self, path: Path | str) -> None:
         super().load(path)
         if (self.before or self.after) and self.parts:
             # Move the line break at the end of the last line out of the reducible
@@ -265,7 +266,7 @@ class TestcaseJsStr(Testcase):
 
     def split_parts(self, data: bytes) -> None:
         instr = None
-        chars: List[int] = []
+        chars: list[int] = []
 
         while True:
             last = 0
@@ -365,7 +366,7 @@ class TestcaseSymbol(Testcase):
 
     def __init__(self) -> None:
         super().__init__()
-        self._cutter: Optional[Pattern[bytes]] = None
+        self._cutter: Pattern[bytes] | None = None
         self.set_cut_chars(self.DEFAULT_CUT_BEFORE, self.DEFAULT_CUT_AFTER)
 
     def set_cut_chars(self, before: bytes, after: bytes) -> None:
