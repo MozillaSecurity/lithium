@@ -12,18 +12,19 @@ Example:
       -b "--fuzzing-safe --wasm-always-baseline" \
       <binary> <testcase>
 """
+from __future__ import annotations
+
 import argparse
 import filecmp
 import logging
 import sys
-from typing import List, Optional, Union
 
 from .timed_run import BaseParser, ExitStatus, timed_run
 
 LOG = logging.getLogger(__name__)
 
 
-def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse args
 
     Args:
@@ -58,8 +59,8 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
 
 
 def interesting(
-    cli_args: Optional[List[str]] = None,
-    temp_prefix: Optional[str] = None,
+    cli_args: list[str] | None = None,
+    temp_prefix: str | None = None,
 ) -> bool:
     """Check if there's a difference in output or return code with different args.
 
@@ -98,8 +99,8 @@ def interesting(
 
     # Compare outputs
     def cmp_out(
-        a_data: Union[str, bytes],
-        b_run: Union[str, bytes],
+        a_data: str | bytes,
+        b_run: str | bytes,
         is_file: bool = False,
     ) -> bool:
         if is_file:

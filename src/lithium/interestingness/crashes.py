@@ -7,10 +7,10 @@
 Example:
     python -m lithium crashes --timeout=9 <binary> --fuzzing-safe <testcase>
 """
+from __future__ import annotations
 
 import logging
 import sys
-from typing import List, Optional
 
 from .timed_run import BaseParser, ExitStatus, timed_run
 
@@ -18,8 +18,8 @@ LOG = logging.getLogger(__name__)
 
 
 def interesting(
-    cli_args: Optional[List[str]] = None,
-    temp_prefix: Optional[str] = None,
+    cli_args: list[str] | None = None,
+    temp_prefix: str | None = None,
 ) -> bool:
     """Interesting if the binary causes a crash.
 

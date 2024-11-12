@@ -2,6 +2,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """Run a subprocess with timeout"""
+from __future__ import annotations
+
 import argparse
 import enum
 import logging
@@ -12,7 +14,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import BinaryIO, Callable, Dict, List, Optional, Union
+from typing import BinaryIO, Callable
 
 from ffpuppet import SanitizerOptions
 
@@ -53,11 +55,11 @@ class RunData:
         self,
         pid: int,
         status: ExitStatus,
-        return_code: Union[int, None],
+        return_code: int | None,
         message: str,
         elapsed: float,
-        out: Union[bytes, str],
-        err: Union[bytes, str],
+        out: bytes | str,
+        err: bytes | str,
     ):
         self.pid = pid
         self.status = status
@@ -68,7 +70,7 @@ class RunData:
         self.err = err
 
 
-def _configure_sanitizers(orig_env: Dict[str, str]) -> Dict[str, str]:
+def _configure_sanitizers(orig_env: dict[str, str]) -> dict[str, str]:
     """Copy environment and update default values in *SAN_OPTIONS entries.
 
     Args:
@@ -77,7 +79,7 @@ def _configure_sanitizers(orig_env: Dict[str, str]) -> Dict[str, str]:
     Returns:
         Environment with *SAN_OPTIONS defaults set.
     """
-    env: Dict[str, str] = dict(orig_env)
+    env: dict[str, str] = dict(orig_env)
     # https://github.com/google/sanitizers/wiki/SanitizerCommonFlags
     common_flags = [
         ("abort_on_error", "false"),
@@ -126,12 +128,12 @@ def _get_signal_name(signum: int, default: str = "Unknown signal") -> str:
 
 
 def timed_run(
-    cmd_with_args: List[str],
+    cmd_with_args: list[str],
     timeout: int,
-    log_prefix: Optional[str] = None,
-    env: Optional[Dict[str, str]] = None,
+    log_prefix: str | None = None,
+    env: dict[str, str] | None = None,
     inp: str = "",
-    preexec_fn: Optional[Callable[[], None]] = None,
+    preexec_fn: Callable[[], None] | None = None,
 ) -> RunData:
     """If log_prefix is None, uses pipes instead of files for all output.
 
@@ -162,8 +164,8 @@ def timed_run(
 
     status = None
     env = _configure_sanitizers(os.environ.copy() if env is None else env)
-    child_stderr: Union[BinaryIO, int] = subprocess.PIPE
-    child_stdout: Union[BinaryIO, int] = subprocess.PIPE
+    child_stderr: BinaryIO | int = subprocess.PIPE
+    child_stdout: BinaryIO | int = subprocess.PIPE
     if log_prefix is not None:
         # pylint: disable=consider-using-with
         child_stdout = open(f"{log_prefix}-out.txt", "wb")

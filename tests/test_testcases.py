@@ -4,7 +4,6 @@
 """Lithium Testcase* tests"""
 
 from pathlib import Path
-from typing import List
 
 import pytest
 
@@ -275,8 +274,8 @@ def test_attrs_1() -> None:
 )
 def test_attrs_2(
     data: str,
-    parts: List[str],
-    reducible: List[bool],
+    parts: list[str],
+    reducible: list[bool],
 ) -> None:
     """Test html attr splitting 2"""
     parts_with_bytes = [part.encode("utf-8") for part in parts]

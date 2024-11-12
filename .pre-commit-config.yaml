@@ -8,20 +8,20 @@ repos:
     hooks:
       - id: yesqa
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.16.0
+    rev: v3.19.0
     hooks:
       - id: pyupgrade
         args: ['--py39-plus']
   - repo: https://github.com/ambv/black
-    rev: 24.4.2
+    rev: 24.10.0
     hooks:
       - id: black
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.0
+    rev: 7.1.1
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-ast
       - id: check-docstring-first
@@ -42,11 +42,11 @@ repos:
       - id: codespell
         exclude_types: [json]
   - repo: https://github.com/marco-c/taskcluster_yml_validator
-    rev: v0.0.11
+    rev: v0.0.12
     hooks:
       - id: taskcluster_yml
   - repo: https://github.com/MozillaSecurity/orion-ci
-    rev: v0.0.9
+    rev: v0.0.10
     hooks:
       - id: orion_ci
   - repo: meta
