@@ -79,12 +79,15 @@ def test_empty(caplog) -> None:
     caplog.clear()
     assert lith.run() == 0
     for record in caplog.records:
-        if record.name == "lithium.strategies" and record.levelno == logging.INFO:
-            if (
+        if (
+            record.name == "lithium.strategies"
+            and record.levelno == logging.INFO
+            and (
                 "The file has 0 lines so there's nothing for Lithium to try to remove!"
                 in record.getMessage()
-            ):
-                break
+            )
+        ):
+            break
     else:
         raise RuntimeError("Missing log output")
 
@@ -96,7 +99,7 @@ def test_arithmetic(examples_path: Path, char) -> None:
     shutil.copyfile(str(path / "11.txt"), "11.txt")
     args = [str(path / "product_divides.py"), "35", "11.txt"]
     if char:
-        args = ["-c"] + args
+        args = ["-c", *args]
     result = lithium.Lithium().main(args)
     assert result == 0
     assert Path("11.txt").read_text() == "2\n\n# DDBEGIN\n5\n7\n# DDEND\n\n2\n"

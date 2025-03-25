@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """Run a subprocess with timeout"""
+
 from __future__ import annotations
 
 import argparse
@@ -10,13 +11,17 @@ import logging
 import os
 import platform
 import signal
-import subprocess
 import sys
 import time
+from contextlib import contextmanager
 from pathlib import Path
-from typing import BinaryIO, Callable
+from subprocess import PIPE, Popen, TimeoutExpired
+from typing import TYPE_CHECKING, BinaryIO, Callable
 
 from ffpuppet import SanitizerOptions
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 LOG = logging.getLogger(__name__)
 
@@ -121,10 +126,23 @@ def _get_signal_name(signum: int, default: str = "Unknown signal") -> str:
     if sys.version_info[:2] >= (3, 8) and platform.system() != "Windows":
         return signal.strsignal(signum) or default
     for member in dir(signal):
-        if member.startswith("SIG") and not member.startswith("SIG_"):
-            if getattr(signal, member) == signum:
-                return member
+        if (
+            member.startswith("SIG")
+            and not member.startswith("SIG_")
+            and getattr(signal, member) == signum
+        ):
+            return member
     return default
+
+
+@contextmanager
+def file_or_pipe(log_prefix: str | None, name: str) -> Generator[BinaryIO | int]:
+    """Context manager for an optional file handle or PIPE"""
+    if log_prefix is None:
+        yield PIPE
+    else:
+        with open(f"{log_prefix}-{name}.txt", "wb") as f:
+            yield f
 
 
 def timed_run(
@@ -164,39 +182,35 @@ def timed_run(
 
     status = None
     env = _configure_sanitizers(os.environ.copy() if env is None else env)
-    child_stderr: BinaryIO | int = subprocess.PIPE
-    child_stdout: BinaryIO | int = subprocess.PIPE
-    if log_prefix is not None:
-        # pylint: disable=consider-using-with
-        child_stdout = open(f"{log_prefix}-out.txt", "wb")
-        child_stderr = open(f"{log_prefix}-err.txt", "wb")
 
-    start_time = time.time()
-    # pylint: disable=consider-using-with,subprocess-popen-preexec-fn
-    LOG.info(f"Running: {' '.join(cmd_with_args)}")
-    child = subprocess.Popen(
-        cmd_with_args,
-        env=env,
-        stderr=child_stderr,
-        stdout=child_stdout,
-        preexec_fn=preexec_fn,
-    )
-    try:
-        stdout, stderr = child.communicate(
-            input=inp.encode("utf-8"),
-            timeout=timeout,
+    with (
+        file_or_pipe(log_prefix, "out") as child_stdout,
+        file_or_pipe(log_prefix, "err") as child_stderr,
+    ):
+        start_time = time.time()
+        # pylint: disable=consider-using-with,subprocess-popen-preexec-fn
+        LOG.info(f"Running: {' '.join(cmd_with_args)}")
+        child = Popen(
+            cmd_with_args,
+            env=env,
+            stdin=PIPE,
+            stderr=child_stderr,
+            stdout=child_stdout,
+            preexec_fn=preexec_fn,
         )
-    except subprocess.TimeoutExpired:
-        child.kill()
-        stdout, stderr = child.communicate()
-        status = ExitStatus.TIMEOUT
-    except Exception as exc:  # pylint: disable=broad-except
-        LOG.error(exc)
-        sys.exit(2)
-    finally:
-        if isinstance(child_stderr, BinaryIO) and isinstance(child_stdout, BinaryIO):
-            child_stdout.close()
-            child_stderr.close()
+        try:
+            stdout, stderr = child.communicate(
+                input=inp.encode("utf-8"),
+                timeout=timeout,
+            )
+        except TimeoutExpired:
+            child.kill()
+            stdout, stderr = child.communicate()
+            status = ExitStatus.TIMEOUT
+        except Exception as exc:  # pylint: disable=broad-except
+            LOG.error(exc)
+            sys.exit(2)
+
     elapsed_time = time.time() - start_time
 
     if status == ExitStatus.TIMEOUT:

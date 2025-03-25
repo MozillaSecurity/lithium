@@ -7,6 +7,7 @@
 Example:
     python -m lithium crashes --timeout=9 <binary> --fuzzing-safe <testcase>
 """
+
 from __future__ import annotations
 
 import logging

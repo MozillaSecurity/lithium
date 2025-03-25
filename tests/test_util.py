@@ -25,9 +25,9 @@ def _ispow2(inp: int) -> int:
     Returns:
         result
     """
-    assert (
-        isinstance(inp, int) or inp.is_integer()
-    ), f"ispow2() only works for integers, {inp!r} is not an integer"
+    assert isinstance(inp, int) or inp.is_integer(), (
+        f"ispow2() only works for integers, {inp!r} is not an integer"
+    )
     assert inp >= 1, "domain error"
     orig = inp
     result = True
@@ -44,9 +44,9 @@ def _ispow2(inp: int) -> int:
         math_result = diff < 10 ** -(
             sys.float_info.dig - 1
         )  # float_info.dig is the # of decimal digits representable
-        assert (
-            result == math_result
-        ), f"ispow2(n) did not match math.log(n)/math.log(2) for n = {orig}"
+        assert result == math_result, (
+            f"ispow2(n) did not match math.log(n)/math.log(2) for n = {orig}"
+        )
     return result
 
 
@@ -66,9 +66,9 @@ def _divceil(num: int, den: int) -> int:
     # if the inputs are representable as a float, compare the result to math library
     if num <= sys.float_info.max and den <= sys.float_info.max:
         math_result = math.ceil(1.0 * num / den)
-        assert (
-            result == math_result
-        ), f"divceil(n,d) did not match math.ceil(n/d) for n = {num}, d = {den}"
+        assert result == math_result, (
+            f"divceil(n,d) did not match math.ceil(n/d) for n = {num}, d = {den}"
+        )
     return result
 
 
@@ -91,12 +91,12 @@ def test_is_power_of_two() -> None:
     """test `is_power_of_two`"""
     assert not lithium.util.is_power_of_two(0)
     # try all integers [1,10000)
-    for i in range(1, 10000):
-        try:
+    try:
+        for i in range(1, 10000):
             assert _ispow2(i) == lithium.util.is_power_of_two(i)
-        except Exception:
-            LOG.debug("i = %d", i)
-            raise
+    except Exception:
+        LOG.debug("i = %d", i)
+        raise
     # try 10000 random integers >= 10000
     for _ in range(10000):
         rand = random.randint(10000, (1 << 64) - 1)
@@ -122,12 +122,12 @@ def test_largest_power_of_two_smaller_than() -> None:
         assert result * 2 >= inp
 
     # try all integers [1,10000)
-    for inp in range(1, 10000):
-        try:
+    try:
+        for inp in range(1, 10000):
             check_result(inp)
-        except Exception:
-            LOG.debug("inp = %d", inp)
-            raise
+    except Exception:
+        LOG.debug("inp = %d", inp)
+        raise
     # try 10000 random integers >= 10000
     for _ in range(10000):
         rand = random.randint(10000, (1 << 64) - 1)

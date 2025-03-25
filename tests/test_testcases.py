@@ -36,7 +36,7 @@ def test_line_dd() -> None:
     """Test line splitting with DDBEGIN/END"""
     test = lithium.testcases.TestcaseLine()
     test_path = Path("a.txt")
-    test_path.write_bytes(b"pre\n" b"DDBEGIN\n" b"data\n" b"2\n" b"DDEND\n" b"post\n")
+    test_path.write_bytes(b"pre\nDDBEGIN\ndata\n2\nDDEND\npost\n")
     test.load(test_path)
     assert test.before == b"pre\nDDBEGIN\n"
     assert test.parts == [b"data\n", b"2\n"]
@@ -49,7 +49,7 @@ def test_char_dd() -> None:
     """Test char splitting with DDBEGIN/END"""
     test = lithium.testcases.TestcaseChar()
     test_path = Path("a.txt")
-    test_path.write_bytes(b"pre\n" b"DDBEGIN\n" b"data\n" b"2\n" b"DDEND\n" b"post\n")
+    test_path.write_bytes(b"pre\nDDBEGIN\ndata\n2\nDDEND\npost\n")
     test.load(test_path)
     assert test.before == b"pre\nDDBEGIN\n"
     assert test.parts == [b"d", b"a", b"t", b"a", b"\n", b"2"]
@@ -70,8 +70,8 @@ def test_jsstr_0() -> None:
         b"'\\u{123}\"1\\x32\\023\n'\n"  # a str with some escapes
         b'""\n'  # empty string
         b'"\\u12345Xyz"\n'  # another str with the last escape format
-        b"Data\xFF\n"
-        b'"x\xFF" something\n'  # last str
+        b"Data\xff\n"
+        b'"x\xff" something\n'  # last str
         b"DDEND\n"
         b"post\n"
     )
@@ -92,9 +92,9 @@ def test_jsstr_0() -> None:
         b"X",
         b"y",
         b"z",  # next JS str
-        b'"\nData\xFF\n"',
+        b'"\nData\xff\n"',
         b"x",
-        b"\xFF",
+        b"\xff",
     ]  # last JS str
     assert test.after == b'" something\nDDEND\npost\n'
     assert test.reducible == [True] * 8 + [False] + [True] * 5 + [False] + [True] * 2
@@ -144,7 +144,7 @@ def test_symbol_0() -> None:
     """Test symbol splitting 0"""
     test = lithium.testcases.TestcaseSymbol()
     test_path = Path("a.txt")
-    test_path.write_bytes(b"pre\n" b"DDBEGIN\n" b"d{a}ta\n" b"2\n" b"DDEND\n" b"post\n")
+    test_path.write_bytes(b"pre\nDDBEGIN\nd{a}ta\n2\nDDEND\npost\n")
     test.load(test_path)
     assert test.before == b"pre\nDDBEGIN\n"
     assert test.parts == [b"d{", b"a", b"}ta\n", b"2\n"]
@@ -157,13 +157,25 @@ def test_symbol_1() -> None:
     """Test symbol splitting 1"""
     test = lithium.testcases.TestcaseSymbol()
     test_path = Path("a.txt")
-    test_path.write_bytes(
-        b"pre\n" b"DDBEGIN\n" b"{data\n" b"2}\n}" b"DDEND\n" b"post\n"
-    )
+    test_path.write_bytes(b"pre\nDDBEGIN\n{data\n2}\n}DDEND\npost\n")
     test.load(test_path)
     assert test.before == b"pre\nDDBEGIN\n"
     assert test.parts == [b"{", b"data\n", b"2", b"}\n"]
     assert test.after == b"}DDEND\npost\n"
+    assert len(test) == 4
+    assert test.reducible == [True] * 4
+
+
+def test_symbol_2() -> None:
+    """Test symbol splitting 2"""
+    test = lithium.testcases.TestcaseSymbol()
+    test.set_cut_chars(b"<", b">")
+    test_path = Path("a.txt")
+    test_path.write_bytes(b"pre\nDDBEGIN\n<style>cont\n</style>\nDDEND\npost\n")
+    test.load(test_path)
+    assert test.before == b"pre\nDDBEGIN\n"
+    assert test.parts == [b"<style>", b"cont\n", b"</style>", b"\n"]
+    assert test.after == b"DDEND\npost\n"
     assert len(test) == 4
     assert test.reducible == [True] * 4
 

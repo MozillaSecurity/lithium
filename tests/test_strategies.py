@@ -229,9 +229,8 @@ def test_minimize_collapse_braces(test_type, test_count, expected) -> None:
             if condition_args == "NEEDS_BRACE":
                 return data.count(b"{") == 1 and data.count(b"{") == data.count(b"}")
 
-            if condition_args == "NO_BRACE":
-                if b"o\n" in data:
-                    return data.count(b"{") == data.count(b"}")
+            if condition_args == "NO_BRACE" and b"o\n" in data:
+                return data.count(b"{") == data.count(b"}")
 
             return False
 

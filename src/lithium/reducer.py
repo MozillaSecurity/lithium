@@ -2,16 +2,15 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """lithium reducer"""
+
 from __future__ import annotations
 
 import argparse
 import logging
 import os
 import sys
-from collections.abc import Iterator
 from pathlib import Path
-from types import ModuleType
-from typing import Any, cast
+from typing import TYPE_CHECKING
 
 from .interestingness.utils import rel_or_abs_import
 from .strategies import DEFAULT as DEFAULT_STRATEGY
@@ -19,6 +18,10 @@ from .strategies import Strategy
 from .testcases import DEFAULT as DEFAULT_TESTCASE
 from .testcases import Testcase
 from .util import LithiumError, quantity, summary_header
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from types import ModuleType
 
 LOG = logging.getLogger(__name__)
 
@@ -85,8 +88,9 @@ class Lithium:
         Returns:
             0 for successful reduction
         """
+        assert self.condition_script is not None
         if hasattr(self.condition_script, "init"):
-            cast(Any, self.condition_script).init(self.condition_args)
+            self.condition_script.init(self.condition_args)
 
         try:
             if self.temp_dir is None:
@@ -108,7 +112,7 @@ class Lithium:
 
         finally:
             if hasattr(self.condition_script, "cleanup"):
-                cast(Any, self.condition_script).cleanup(self.condition_args)
+                self.condition_script.cleanup(self.condition_args)
 
             # Make sure we exit with an interesting testcase
             if self.last_interesting is not None:
@@ -316,9 +320,7 @@ class Lithium:
 
         assert self.condition_script is not None
         inter = bool(
-            cast(Any, self.condition_script).interesting(
-                self.condition_args, temp_prefix
-            )
+            self.condition_script.interesting(self.condition_args, temp_prefix)
         )
 
         # Save an extra copy of the file inside the temp directory.
