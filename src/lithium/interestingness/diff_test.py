@@ -12,14 +12,18 @@ Example:
       -b "--fuzzing-safe --wasm-always-baseline" \
       <binary> <testcase>
 """
+
 from __future__ import annotations
 
-import argparse
 import filecmp
 import logging
 import sys
+from typing import TYPE_CHECKING
 
 from .timed_run import BaseParser, ExitStatus, timed_run
+
+if TYPE_CHECKING:
+    import argparse
 
 LOG = logging.getLogger(__name__)
 

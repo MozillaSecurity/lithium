@@ -7,6 +7,7 @@
 Example:
     python -m lithium hangs --timeout=3 <binary> --fuzzing-safe <testcase>
 """
+
 from __future__ import annotations
 
 import logging

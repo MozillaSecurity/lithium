@@ -2,20 +2,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 """Lithium reduction strategy implementations"""
+
 from __future__ import annotations
 
 import abc
-import argparse
 import functools
 import hashlib
 import logging
 import re
 import time
-from collections.abc import Iterable, Iterator
-from pathlib import Path
-from typing import Any, Callable, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Union, cast
 
-from .testcases import Testcase
 from .util import (
     divide_rounding_up,
     is_power_of_two,
@@ -23,6 +20,13 @@ from .util import (
     quantity,
     summary_header,
 )
+
+if TYPE_CHECKING:
+    import argparse
+    from collections.abc import Iterable, Iterator
+    from pathlib import Path
+
+    from .testcases import Testcase
 
 DEFAULT = "minimize"
 LOG = logging.getLogger(__name__)
@@ -421,7 +425,7 @@ class Minimize(Strategy):
             parser.error("Max must be a power of two.")
 
     def _post_round_cb(self, iterator: ReductionIterator) -> Iterator[Testcase]:
-        return cast(Iterator[Testcase], [])
+        return cast("Iterator[Testcase]", [])
 
     # pylint: disable=arguments-renamed
     @ReductionIterator.wrap  # type: ignore[arg-type]
@@ -999,9 +1003,9 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
 
                     # Try moving the chunk after.
                     testcase_suggestion = iterator.testcase.copy()
-                    testcase_suggestion.parts = cast(list[bytes], _parts_after(parts))
+                    testcase_suggestion.parts = cast("list[bytes]", _parts_after(parts))
                     testcase_suggestion.reducible = cast(
-                        list[bool], _parts_after(reducible)
+                        "list[bool]", _parts_after(reducible)
                     )
                     worked = False
                     for test in iterator.try_testcase(
@@ -1012,7 +1016,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                             chunk_rhs_start -= chunk_size
                             chunk_rhs_end -= chunk_size
                             summary = cast(
-                                str,
+                                "str",
                                 _move_after(
                                     summary,
                                     1,
@@ -1022,7 +1026,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                                 ),
                             )
                             curly = cast(
-                                list[int],
+                                "list[int]",
                                 _move_after(
                                     curly,
                                     1,
@@ -1032,7 +1036,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                                 ),
                             )
                             square = cast(
-                                list[int],
+                                "list[int]",
                                 _move_after(
                                     square,
                                     1,
@@ -1042,7 +1046,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                                 ),
                             )
                             normal = cast(
-                                list[int],
+                                "list[int]",
                                 _move_after(
                                     normal,
                                     1,
@@ -1058,9 +1062,11 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                         continue
 
                     # Try moving the chunk before.
-                    testcase_suggestion.parts = cast(list[bytes], _parts_before(parts))
+                    testcase_suggestion.parts = cast(
+                        "list[bytes]", _parts_before(parts)
+                    )
                     testcase_suggestion.reducible = cast(
-                        list[bool], _parts_before(reducible)
+                        "list[bool]", _parts_before(reducible)
                     )
                     worked = False
                     for test in iterator.try_testcase(
@@ -1072,7 +1078,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                             chunk_lhs_end += chunk_size
                             chunk_mid_start += chunk_size
                             summary = cast(
-                                str,
+                                "str",
                                 _move_before(
                                     summary,
                                     1,
@@ -1082,7 +1088,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                                 ),
                             )
                             curly = cast(
-                                list[int],
+                                "list[int]",
                                 _move_before(
                                     curly,
                                     1,
@@ -1092,7 +1098,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                                 ),
                             )
                             square = cast(
-                                list[int],
+                                "list[int]",
                                 _move_before(
                                     square,
                                     1,
@@ -1102,7 +1108,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                                 ),
                             )
                             normal = cast(
-                                list[int],
+                                "list[int]",
                                 _move_before(
                                     normal,
                                     1,
@@ -1408,10 +1414,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 if fun is None:
                     fun = match.group(2)
 
-                if match.group(3) == b"":
-                    args = []
-                else:
-                    args = match.group(3).split(b",")
+                args = [] if match.group(3) == b"" else match.group(3).split(b",")
 
                 if fun not in functions:
                     functions[fun] = {
@@ -1429,10 +1432,7 @@ class ReplaceArgumentsByGlobals(Minimize):
             for match in re.finditer(
                 rb"\(function\s*\w*\s*\(((?:\s*\w+\s*(?:,\s*\w+\s*)*)?)\)\s*{", line
             ):
-                if match.group(1) == b"":
-                    args = []
-                else:
-                    args = match.group(1).split(b",")
+                args = [] if match.group(1) == b"" else match.group(1).split(b",")
                 anonymous_stack += [
                     {"defs": args, "chunk": chunk, "use": None, "use_chunk": 0}
                 ]
@@ -1445,10 +1445,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 anonymous_stack = anonymous_stack[:-1]
                 if match.group(1) == b"" and not anon["defs"]:
                     continue
-                if match.group(1) == b"":
-                    args = []
-                else:
-                    args = match.group(1).split(b",")
+                args = [] if match.group(1) == b"" else match.group(1).split(b",")
                 anon["use"] = args
                 anon["use_chunk"] = chunk
                 anonymous_queue += [anon]
@@ -1457,10 +1454,7 @@ class ReplaceArgumentsByGlobals(Minimize):
             for match in re.finditer(rb"((\w+)\s*\(((?:[^()]|\([^,()]*\))*)\))", line):
                 pattern = match.group(1)
                 fun = match.group(2)
-                if match.group(3) == b"":
-                    args = []
-                else:
-                    args = match.group(3).split(b",")
+                args = [] if match.group(3) == b"" else match.group(3).split(b",")
                 if fun not in functions:
                     functions[fun] = {"uses": []}
                 functions[fun]["uses"] += [
@@ -1502,7 +1496,7 @@ class ReplaceArgumentsByGlobals(Minimize):
                 if chunk == def_chunk and values == arg_defs:
                     continue
                 while len(values) < len(arg_defs):
-                    values = values + [b"undefined"]
+                    values = [*values, b"undefined"]
                 setters = b"".join(
                     (a + b" = " + v + b";\n") for (a, v) in zip(arg_defs, values)
                 )
@@ -1581,7 +1575,7 @@ class ReplaceArgumentsByGlobals(Minimize):
 
             # Replace arguments by their value in the scope of the function.
             while len(values) < len(arg_defs):
-                values = values + [b"undefined"]
+                values = [*values, b"undefined"]
             setters = b"".join(
                 b"var %s = %s;\n" % (a, v) for a, v in zip(arg_defs, values)
             )

@@ -5,17 +5,21 @@
 
 A testcase is a file to be reduced, split in a certain way (eg. bytes, lines).
 """
+
 from __future__ import annotations
 
 import abc
-import argparse
 import logging
 import os.path
 import re
-from pathlib import Path
 from re import Pattern
+from typing import TYPE_CHECKING
 
 from .util import LithiumError
+
+if TYPE_CHECKING:
+    import argparse
+    from pathlib import Path
 
 DEFAULT = "line"
 LOG = logging.getLogger(__name__)
@@ -306,7 +310,9 @@ class TestcaseJsStr(Testcase):
                 if self.parts[idx].endswith(instr) and idx not in chars:
                     break
             else:
-                raise RuntimeError("error while backtracking from unmatched " + instr)
+                raise RuntimeError(
+                    f"error while backtracking from unmatched {instr.decode()}"
+                )
             self.parts, data = self.parts[: idx + 1], b"".join(self.parts[idx + 1 :])
             chars = [c for c in chars if c < idx]
             instr = None

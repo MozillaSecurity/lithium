@@ -8,15 +8,19 @@ up.
 Example:
     python -m lithium outputs --timeout=9 FOO <binary> --fuzzing-safe <testcase>
 """
+
 from __future__ import annotations
 
 import logging
 import re
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from . import utils
 from .timed_run import BaseParser, timed_run
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 LOG = logging.getLogger(__name__)
 

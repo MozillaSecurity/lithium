@@ -6,5 +6,6 @@
 from .reducer import Lithium
 from .util import LithiumError
 
+__all__ = ("Lithium", "LithiumError")
 __author__ = "Jesse Ruderman, Gary Kwong and Jesse Schwartzentruber"
 __maintainer__ = "Jesse Schwartzentruber"
