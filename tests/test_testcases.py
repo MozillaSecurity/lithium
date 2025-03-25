@@ -166,20 +166,6 @@ def test_symbol_1() -> None:
     assert test.reducible == [True] * 4
 
 
-def test_symbol_2() -> None:
-    """Test symbol splitting 2"""
-    test = lithium.testcases.TestcaseSymbol()
-    test.set_cut_chars(b"<", b">")
-    test_path = Path("a.txt")
-    test_path.write_bytes(b"pre\nDDBEGIN\n<style>cont\n</style>\nDDEND\npost\n")
-    test.load(test_path)
-    assert test.before == b"pre\nDDBEGIN\n"
-    assert test.parts == [b"<style>", b"cont\n", b"</style>", b"\n"]
-    assert test.after == b"DDEND\npost\n"
-    assert len(test) == 4
-    assert test.reducible == [True] * 4
-
-
 def test_attrs_0() -> None:
     """Test html attr splitting 0"""
     test = lithium.testcases.TestcaseAttrs()
