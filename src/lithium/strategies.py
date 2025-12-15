@@ -11,7 +11,7 @@ import hashlib
 import logging
 import re
 import time
-from typing import TYPE_CHECKING, Any, Callable, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from .util import (
     divide_rounding_up,
@@ -23,7 +23,7 @@ from .util import (
 
 if TYPE_CHECKING:
     import argparse
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
     from pathlib import Path
 
     from .testcases import Testcase
@@ -912,7 +912,7 @@ class MinimizeBalancedPairs(MinimizeSurroundingPairs):
                 # Moving chunks is still a bit experimental, and it can introduce
                 # reducing loops.
 
-                Sliceable = Union[str, list[Any]]
+                Sliceable = str | list[Any]  # pylint: disable=C0103
                 FiveParts = tuple[Sliceable, Sliceable, Sliceable, Sliceable, Sliceable]
 
                 def _split_parts(

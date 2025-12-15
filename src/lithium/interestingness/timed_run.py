@@ -16,12 +16,12 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 from subprocess import PIPE, Popen, TimeoutExpired
-from typing import TYPE_CHECKING, BinaryIO, Callable
+from typing import TYPE_CHECKING, BinaryIO
 
 from ffpuppet import SanitizerOptions
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
 
 LOG = logging.getLogger(__name__)
 

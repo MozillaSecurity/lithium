@@ -14,11 +14,10 @@ import re
 import sys
 from pathlib import Path
 from types import ModuleType
-from typing import Union
 
 
 def file_contains_str(
-    input_file: Union[Path, str],
+    input_file: Path | str,
     regex: bytes,
     verbose: bool = True,
 ) -> bool:
@@ -49,7 +48,7 @@ def file_contains_str(
 
 
 def file_contains_regex(
-    input_file: Union[Path, str],
+    input_file: Path | str,
     regex: bytes,
     verbose: bool = True,
 ) -> tuple[bool, bytes]:
