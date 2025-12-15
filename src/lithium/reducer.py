@@ -9,6 +9,7 @@ import argparse
 import logging
 import os
 import sys
+from importlib.metadata import EntryPoint, entry_points
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -26,22 +27,15 @@ if TYPE_CHECKING:
 LOG = logging.getLogger(__name__)
 
 
-# TODO: remove this function when support for Python 3.9 is dropped
-if sys.version_info >= (3, 10):
-    from importlib.metadata import EntryPoint, entry_points
-
-    def iter_entry_points(group: str) -> Iterator[EntryPoint]:
-        """Compatibility wrapper code for importlib.metadata.entry_points()
-        Args:
-            group: See entry_points().
-        Yields:
-            EntryPoint
-        """
-        assert group
-        yield from entry_points().select(group=group)
-
-else:
-    from pkg_resources import iter_entry_points
+def iter_entry_points(group: str) -> Iterator[EntryPoint]:
+    """Compatibility wrapper code for importlib.metadata.entry_points()
+    Args:
+        group: See entry_points().
+    Yields:
+        EntryPoint
+    """
+    assert group
+    yield from entry_points().select(group=group)
 
 
 class Lithium:

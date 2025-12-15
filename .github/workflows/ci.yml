@@ -18,9 +18,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python-version: "3.9"
-            platform: ubuntu-latest
-            toxenv: py39,lint
           - python-version: "3.10"
             platform: ubuntu-latest
             toxenv: py310,lint
@@ -33,6 +30,9 @@ jobs:
           - python-version: "3.13"
             platform: ubuntu-latest
             toxenv: py313,lint
+          - python-version: "3.14"
+            platform: ubuntu-latest
+            toxenv: py314,lint
 
     steps:
       - uses: actions/checkout@v6
