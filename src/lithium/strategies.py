@@ -1299,16 +1299,16 @@ class ReplacePropertiesByGlobals(Minimize):
                         rb"[\w_.]+\." + word, word, new_tc.parts[chunk_start]
                     )
                     maybe_removed += len(new_tc.parts[chunk_start]) - len(subst)
-                    new_tc.parts = (
-                        new_tc.parts[:chunk_start]
-                        + [subst]
-                        + new_tc.parts[(chunk_start + 1) :]
-                    )
-                    new_tc.reducible = (
-                        new_tc.reducible[:chunk_start]
-                        + [True]
-                        + new_tc.reducible[(chunk_start + 1) :]
-                    )
+                    new_tc.parts = [
+                        *new_tc.parts[:chunk_start],
+                        subst,
+                        *new_tc.parts[chunk_start + 1 :],
+                    ]
+                    new_tc.reducible = [
+                        *new_tc.reducible[:chunk_start],
+                        True,
+                        *new_tc.reducible[chunk_start + 1 :],
+                    ]
 
                 for test in iterator.try_testcase(
                     new_tc, "Removing prefixes of " + description
@@ -1480,14 +1480,16 @@ class ReplaceArgumentsByGlobals(Minimize):
             arg_defs = args_map["defs"]
             def_chunk = args_map["chunk"]
             subst = new_tc.parts[def_chunk].replace(args_map["args_pattern"], b"", 1)
-            new_tc.parts = (
-                new_tc.parts[:def_chunk] + [subst] + new_tc.parts[(def_chunk + 1) :]
-            )
-            new_tc.reducible = (
-                new_tc.reducible[:def_chunk]
-                + [True]
-                + new_tc.reducible[(def_chunk + 1) :]
-            )
+            new_tc.parts = [
+                *new_tc.parts[:def_chunk],
+                subst,
+                *new_tc.parts[def_chunk + 1 :],
+            ]
+            new_tc.reducible = [
+                *new_tc.reducible[:def_chunk],
+                True,
+                *new_tc.reducible[def_chunk + 1 :],
+            ]
 
             # Copy callers arguments to globals.
             for arg_use in args_map["uses"]:
@@ -1501,12 +1503,16 @@ class ReplaceArgumentsByGlobals(Minimize):
                     (a + b" = " + v + b";\n") for (a, v) in zip(arg_defs, values)
                 )
                 subst = setters + new_tc.parts[chunk]
-                new_tc.parts = (
-                    new_tc.parts[:chunk] + [subst] + new_tc.parts[(chunk + 1) :]
-                )
-                new_tc.reducible = (
-                    new_tc.reducible[:chunk] + [True] + new_tc.reducible[(chunk + 1) :]
-                )
+                new_tc.parts = [
+                    *new_tc.parts[:chunk],
+                    subst,
+                    *new_tc.parts[chunk + 1 :],
+                ]
+                new_tc.reducible = [
+                    *new_tc.reducible[:chunk],
+                    True,
+                    *new_tc.reducible[chunk + 1 :],
+                ]
             maybe_moved_arguments += len(arg_defs)
 
             for test in iterator.try_testcase(new_tc, "Removing " + description):
@@ -1527,12 +1533,16 @@ class ReplaceArgumentsByGlobals(Minimize):
                 subst = new_tc.parts[chunk].replace(arg_use["pattern"], fun + b"()", 1)
                 if new_tc.parts[chunk] == subst:
                     continue
-                new_tc.parts = (
-                    new_tc.parts[:chunk] + [subst] + new_tc.parts[(chunk + 1) :]
-                )
-                new_tc.reducible = (
-                    new_tc.reducible[:chunk] + [True] + new_tc.reducible[(chunk + 1) :]
-                )
+                new_tc.parts = [
+                    *new_tc.parts[:chunk],
+                    subst,
+                    *new_tc.parts[chunk + 1 :],
+                ]
+                new_tc.reducible = [
+                    *new_tc.reducible[:chunk],
+                    True,
+                    *new_tc.reducible[chunk + 1 :],
+                ]
                 maybe_moved_arguments = len(values)
 
                 for test in iterator.try_testcase(
@@ -1564,14 +1574,16 @@ class ReplaceArgumentsByGlobals(Minimize):
             subst = new_tc.parts[def_chunk].replace(b",".join(arg_defs), b"", 1)
             if new_tc.parts[def_chunk] == subst:
                 noop_changes += 1
-            new_tc.parts = (
-                new_tc.parts[:def_chunk] + [subst] + new_tc.parts[(def_chunk + 1) :]
-            )
-            new_tc.reducible = (
-                new_tc.reducible[:def_chunk]
-                + [True]
-                + new_tc.reducible[(def_chunk + 1) :]
-            )
+            new_tc.parts = [
+                *new_tc.parts[:def_chunk],
+                subst,
+                *new_tc.parts[def_chunk + 1 :],
+            ]
+            new_tc.reducible = [
+                *new_tc.reducible[:def_chunk],
+                True,
+                *new_tc.reducible[def_chunk + 1 :],
+            ]
 
             # Replace arguments by their value in the scope of the function.
             while len(values) < len(arg_defs):
@@ -1582,23 +1594,27 @@ class ReplaceArgumentsByGlobals(Minimize):
             subst = new_tc.parts[def_chunk] + b"\n" + setters
             if new_tc.parts[def_chunk] == subst:
                 noop_changes += 1
-            new_tc.parts = (
-                new_tc.parts[:def_chunk] + [subst] + new_tc.parts[(def_chunk + 1) :]
-            )
-            new_tc.reducible = (
-                new_tc.reducible[:def_chunk]
-                + [True]
-                + new_tc.reducible[(def_chunk + 1) :]
-            )
+            new_tc.parts = [
+                *new_tc.parts[:def_chunk],
+                subst,
+                *new_tc.parts[def_chunk + 1 :],
+            ]
+            new_tc.reducible = [
+                *new_tc.reducible[:def_chunk],
+                True,
+                *new_tc.reducible[def_chunk + 1 :],
+            ]
 
             # Remove arguments of the anonymous function call.
             subst = new_tc.parts[chunk].replace(b",".join(anon["use"]), b"", 1)
             if new_tc.parts[chunk] == subst:
                 noop_changes += 1
-            new_tc.parts = new_tc.parts[:chunk] + [subst] + new_tc.parts[(chunk + 1) :]
-            new_tc.reducible = (
-                new_tc.reducible[:chunk] + [True] + new_tc.reducible[(chunk + 1) :]
-            )
+            new_tc.parts = [*new_tc.parts[:chunk], subst, *new_tc.parts[chunk + 1 :]]
+            new_tc.reducible = [
+                *new_tc.reducible[:chunk],
+                True,
+                *new_tc.reducible[chunk + 1 :],
+            ]
             maybe_moved_arguments += len(values)
 
             if noop_changes == 3:
