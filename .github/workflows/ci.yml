@@ -1,0 +1,99 @@
+name: Python CI
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+  release:
+    types: [ released ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }} (${{ matrix.platform }})
+    runs-on: ${{ matrix.platform }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: "3.9"
+            platform: ubuntu-latest
+            toxenv: py39,lint
+          - python-version: "3.10"
+            platform: ubuntu-latest
+            toxenv: py310,lint
+          - python-version: "3.11"
+            platform: ubuntu-latest
+            toxenv: py311,lint
+          - python-version: "3.12"
+            platform: ubuntu-latest
+            toxenv: py312,lint
+          - python-version: "3.13"
+            platform: ubuntu-latest
+            toxenv: py313,lint
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run tests
+        run: uvx tox -e ${{ matrix.toxenv }}
+
+      - uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
+
+  python-build:
+    name: Python build
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: astral-sh/setup-uv@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build Python distributions
+        run: uvx --from build pyproject-build
+
+      - name: Check Python distributions
+        run: uvx twine check dist/*
+
+      - name: Store build artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  pypi:
+    name: Publish Python distribution to PyPI
+    if: github.event_name == 'release'
+    needs: python-build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true

@@ -11,7 +11,8 @@
 .gdb_history
 
 # Code coverage
-.coverage
+/.coverage
+/coverage.xml
 
 # Linting via pytest
 /.cache/
