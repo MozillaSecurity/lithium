@@ -1,4 +1,4 @@
-[![Task Status](https://community-tc.services.mozilla.com/api/github/v1/repository/MozillaSecurity/lithium/master/badge.svg)](https://community-tc.services.mozilla.com/api/github/v1/repository/MozillaSecurity/lithium/master/latest)
+[![CI](https://github.com/MozillaSecurity/lithium/actions/workflows/ci.yml/badge.svg)](https://github.com/MozillaSecurity/lithium/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/MozillaSecurity/lithium/branch/master/graph/badge.svg)](https://codecov.io/gh/MozillaSecurity/lithium)
 [![Matrix](https://img.shields.io/badge/dynamic/json?color=green&label=chat&query=%24.chunk[%3F(%40.canonical_alias%3D%3D%22%23fuzzing%3Amozilla.org%22)].num_joined_members&suffix=%20users&url=https%3A%2F%2Fmozilla.modular.im%2F_matrix%2Fclient%2Fr0%2FpublicRooms&style=flat&logo=matrix)](https://riot.im/app/#/room/#fuzzing:mozilla.org)
 [![PyPI](https://img.shields.io/pypi/v/lithium-reducer)](https://pypi.org/project/lithium-reducer)
