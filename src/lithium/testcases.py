@@ -70,7 +70,7 @@ class Testcase(abc.ABC):
         stop = _clamp(stop, len_self)
 
         opts = [i for i in range(len(self.parts)) if self.reducible[i]]
-        opts = [0] + opts[1:] + [len(self.parts)]
+        opts = [0, *opts[1:], len(self.parts)]
 
         return opts[start], opts[stop]
 
